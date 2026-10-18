@@ -57,15 +57,16 @@
             <button class="btn btn-light d-lg-none" id="boton-menu" type="button" aria-label="Abrir menú" aria-controls="barra-lateral" aria-expanded="false">
                 <i class="bi bi-list"></i>
             </button>
-            <div class="d-none d-lg-block fw-semibold text-secondary">
-                <i class="bi bi-tools me-1 text-warning"></i> @ConfigTaller.Value.NombreTaller
+            <div class="contexto-pagina d-none d-lg-flex">
+                <span class="contexto-pagina__marca"><i class="bi bi-tools"></i></span>
+                <span><small>@ConfigTaller.Value.NombreTaller</small><strong>@ViewData["Title"]</strong></span>
             </div>
             <div class="usuario-conectado">
                 <span class="avatar">@(usuario.Length > 0 ? char.ToUpperInvariant(usuario[0]).ToString() : "U")</span>
-                <span class="d-none d-sm-inline">@usuario</span>
+                <span class="usuario-conectado__nombre d-none d-sm-inline">@usuario</span>
                 <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Cerrar sesión">
+                    <button type="submit" class="btn btn-sm btn-cerrar-sesion" title="Cerrar sesión" aria-label="Cerrar sesión">
                         <i class="bi bi-box-arrow-right"></i>
                     </button>
                 </form>

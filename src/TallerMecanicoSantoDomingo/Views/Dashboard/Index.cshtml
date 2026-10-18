@@ -5,15 +5,28 @@
                  Model.TotalTrabajadores == 0 && Model.TotalProductos == 0 && Model.FacturasEmitidas == 0;
 }
 
-<div class="encabezado-pagina">
-    <div>
-        <h1><i class="bi bi-speedometer2 me-2"></i>Resumen del taller</h1>
-        <div class="ruta">Servicios en curso, equipo y movimiento reciente</div>
+<section class="dashboard-portada">
+    <div class="dashboard-portada__contenido">
+        <div class="dashboard-portada__eyebrow"><span></span> CONTROL OPERATIVO</div>
+        <h1>El taller,<br /><em>en marcha.</em></h1>
+        <p>Una vista clara de los trabajos, el equipo y la actividad reciente de Santo Domingo.</p>
+        <div class="dashboard-portada__acciones">
+            <a asp-controller="Servicios" asp-action="Crear" class="btn btn-portada">
+                <i class="bi bi-plus-lg me-2"></i>Registrar servicio
+            </a>
+            <a asp-controller="Servicios" asp-action="Index" class="dashboard-portada__enlace">
+                Ver servicios <i class="bi bi-arrow-up-right"></i>
+            </a>
+        </div>
     </div>
-    <a asp-controller="Servicios" asp-action="Crear" class="btn btn-naranja">
-        <i class="bi bi-plus-lg me-1"></i> Nuevo servicio
-    </a>
-</div>
+    <div class="dashboard-portada__resumen" aria-label="Servicios actualmente abiertos">
+        <div class="dashboard-portada__icono"><i class="bi bi-tools"></i></div>
+        <div class="dashboard-portada__dato">@Model.ServiciosActivos</div>
+        <div class="dashboard-portada__rotulo">SERVICIOS EN CURSO</div>
+        <div class="dashboard-portada__pie"><span class="punto-en-vivo"></span> Seguimiento activo</div>
+    </div>
+    <div class="dashboard-portada__marca" aria-hidden="true"><i class="bi bi-gear-wide-connected"></i></div>
+</section>
 
 @if (vacio)
 {
@@ -24,78 +37,54 @@
     </div>
 }
 
-<div class="row g-3 mb-1">
+<div class="dashboard-indicadores">
     <div class="col-6 col-lg-3">
-        <div class="tarjeta tarjeta-indicador">
-            <div class="icono fondo-azul"><i class="bi bi-people"></i></div>
-            <div>
-                <div class="dato">@Model.TotalClientes</div>
-                <div class="etiqueta">Clientes registrados</div>
-            </div>
-        </div>
+        <a asp-controller="Clientes" asp-action="Index" class="indicador-moderno indicador-moderno--azul">
+            <div class="indicador-moderno__cabecera"><span>CLIENTES</span><i class="bi bi-people"></i></div>
+            <strong>@Model.TotalClientes</strong><div class="indicador-moderno__pie">Directorio <i class="bi bi-arrow-up-right"></i></div>
+        </a>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="tarjeta tarjeta-indicador">
-            <div class="icono fondo-gris"><i class="bi bi-car-front"></i></div>
-            <div>
-                <div class="dato">@Model.TotalVehiculos</div>
-                <div class="etiqueta">Vehículos registrados</div>
-            </div>
-        </div>
+        <a asp-controller="Vehiculos" asp-action="Index" class="indicador-moderno indicador-moderno--gris">
+            <div class="indicador-moderno__cabecera"><span>VEHÍCULOS</span><i class="bi bi-car-front"></i></div>
+            <strong>@Model.TotalVehiculos</strong><div class="indicador-moderno__pie">Parque vehicular <i class="bi bi-arrow-up-right"></i></div>
+        </a>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="tarjeta tarjeta-indicador">
-            <div class="icono fondo-naranja"><i class="bi bi-gear"></i></div>
-            <div>
-                <div class="dato">@Model.ServiciosActivos</div>
-                <div class="etiqueta">Servicios abiertos</div>
-            </div>
-        </div>
+        <a asp-controller="Servicios" asp-action="Index" class="indicador-moderno indicador-moderno--naranja">
+            <div class="indicador-moderno__cabecera"><span>EN CURSO</span><i class="bi bi-wrench-adjustable"></i></div>
+            <strong>@Model.ServiciosActivos</strong><div class="indicador-moderno__pie">Servicios abiertos <i class="bi bi-arrow-up-right"></i></div>
+        </a>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="tarjeta tarjeta-indicador">
-            <div class="icono fondo-verde"><i class="bi bi-check2-circle"></i></div>
-            <div>
-                <div class="dato">@Model.ServiciosFinalizados</div>
-                <div class="etiqueta">Servicios finalizados</div>
-            </div>
-        </div>
+        <a asp-controller="Servicios" asp-action="Index" class="indicador-moderno indicador-moderno--verde">
+            <div class="indicador-moderno__cabecera"><span>FINALIZADOS</span><i class="bi bi-check2-circle"></i></div>
+            <strong>@Model.ServiciosFinalizados</strong><div class="indicador-moderno__pie">Trabajo entregado <i class="bi bi-arrow-up-right"></i></div>
+        </a>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="tarjeta tarjeta-indicador">
-            <div class="icono fondo-gris"><i class="bi bi-person-badge"></i></div>
-            <div>
-                <div class="dato">@Model.TotalTrabajadores</div>
-                <div class="etiqueta">Trabajadores</div>
-            </div>
-        </div>
+        <a asp-controller="Trabajadores" asp-action="Index" class="indicador-moderno indicador-moderno--azul">
+            <div class="indicador-moderno__cabecera"><span>EQUIPO</span><i class="bi bi-person-badge"></i></div>
+            <strong>@Model.TotalTrabajadores</strong><div class="indicador-moderno__pie">Personal registrado <i class="bi bi-arrow-up-right"></i></div>
+        </a>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="tarjeta tarjeta-indicador">
-            <div class="icono fondo-gris"><i class="bi bi-box-seam"></i></div>
-            <div>
-                <div class="dato">@Model.TotalProductos</div>
-                <div class="etiqueta">Productos registrados</div>
-            </div>
-        </div>
+        <a asp-controller="Productos" asp-action="Index" class="indicador-moderno indicador-moderno--gris">
+            <div class="indicador-moderno__cabecera"><span>PRODUCTOS</span><i class="bi bi-box-seam"></i></div>
+            <strong>@Model.TotalProductos</strong><div class="indicador-moderno__pie">Catálogo del taller <i class="bi bi-arrow-up-right"></i></div>
+        </a>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="tarjeta tarjeta-indicador">
-            <div class="icono fondo-azul"><i class="bi bi-receipt"></i></div>
-            <div>
-                <div class="dato">@Model.FacturasEmitidas</div>
-                <div class="etiqueta">Facturas emitidas</div>
-            </div>
-        </div>
+        <a asp-controller="Facturas" asp-action="Index" class="indicador-moderno indicador-moderno--verde">
+            <div class="indicador-moderno__cabecera"><span>FACTURAS</span><i class="bi bi-receipt"></i></div>
+            <strong>@Model.FacturasEmitidas</strong><div class="indicador-moderno__pie">Emitidas <i class="bi bi-arrow-up-right"></i></div>
+        </a>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="tarjeta tarjeta-indicador">
-            <div class="icono fondo-naranja"><i class="bi bi-cash-stack"></i></div>
-            <div>
-                <div class="dato" style="font-size:1.2rem">C$ @Model.ImporteFacturado.ToString("N2")</div>
-                <div class="etiqueta">Monto en facturas emitidas</div>
-            </div>
-        </div>
+        <a asp-controller="Facturas" asp-action="Index" class="indicador-moderno indicador-moderno--naranja indicador-moderno--importe">
+            <div class="indicador-moderno__cabecera"><span>FACTURACIÓN</span><i class="bi bi-cash-stack"></i></div>
+            <strong>C$ @Model.ImporteFacturado.ToString("N2")</strong><div class="indicador-moderno__pie">Total emitido <i class="bi bi-arrow-up-right"></i></div>
+        </a>
     </div>
 </div>
 
@@ -110,7 +99,11 @@
     </div>
 }
 
-<div class="row g-3 mt-1">
+<div class="dashboard-seccion-cabecera">
+    <div><span class="dashboard-seccion-cabecera__kicker">LECTURA RÁPIDA</span><h2>Actividad del taller</h2></div>
+    <span class="dashboard-seccion-cabecera__nota">Distribución y facturación</span>
+</div>
+<div class="row g-3 dashboard-graficos">
     <div class="col-lg-4">
         <div class="tarjeta h-100">
             <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-pie-chart me-1"></i> Servicios por tipo</h2>
@@ -131,10 +124,10 @@
     </div>
 </div>
 
-<div class="tarjeta mt-3">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-        <h2 class="h6 fw-bold text-primary mb-0"><i class="bi bi-clock-history me-1"></i> Últimos servicios registrados</h2>
-        <a asp-controller="Servicios" asp-action="Index" class="btn btn-sm btn-outline-secondary">Ver todos</a>
+<div class="tarjeta dashboard-recientes mt-3">
+    <div class="dashboard-recientes__cabecera">
+        <div><span class="dashboard-seccion-cabecera__kicker">BITÁCORA</span><h2>Servicios recientes</h2></div>
+        <a asp-controller="Servicios" asp-action="Index" class="btn btn-outline-primary">Ver todos <i class="bi bi-arrow-right ms-1"></i></a>
     </div>
 
     @if (Model.UltimosServicios.Count == 0)
