@@ -7,7 +7,7 @@ using TallerMecanicoSantoDomingo.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ===================== BASE DE DATOS (SQL SERVER) =====================
+// Base de datos
 builder.Services.AddDbContext<TallerDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("TallerDB"),
@@ -17,21 +17,19 @@ builder.Services.AddDbContext<TallerDbContext>(options =>
             sql.EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(5), errorNumbersToAdd: null);
         }));
 
-// ===================== CONFIGURACIÓN DEL TALLER =====================
+// Datos del taller
 builder.Services.Configure<ConfiguracionTaller>(
     builder.Configuration.GetSection("ConfiguracionTaller"));
 
-// ===================== SEGURIDAD: IDENTITY =====================
+// Inicio de sesión y políticas de contraseña
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     {
-        // Políticas de contraseña.
         options.Password.RequiredLength = 8;
         options.Password.RequireDigit = true;
         options.Password.RequireLowercase = true;
         options.Password.RequireUppercase = true;
         options.Password.RequireNonAlphanumeric = false;
 
-        // Bloqueo por intentos fallidos.
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
         options.Lockout.MaxFailedAccessAttempts = 5;
         options.Lockout.AllowedForNewUsers = true;
@@ -42,7 +40,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     .AddEntityFrameworkStores<TallerDbContext>()
     .AddDefaultTokenProviders();
 
-// Cookie de autenticación segura.
+// Duración y opciones de la sesión autenticada.
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
@@ -55,10 +53,10 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
 
-// Token antiforgery disponible también por encabezado para las peticiones AJAX.
+// Las peticiones AJAX envían el token antiforgery en este encabezado.
 builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
 
-// Todas las páginas privadas exigen autenticación (el login es la única excepción).
+// Exigir inicio de sesión en todas las páginas salvo las marcadas como públicas.
 builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
@@ -66,7 +64,7 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
-// ===================== SERVICIOS DE NEGOCIO =====================
+// Servicios de negocio
 builder.Services.AddScoped<IClienteService, ClienteService>();
 builder.Services.AddScoped<IVehiculoService, VehiculoService>();
 builder.Services.AddScoped<IServicioService, ServicioService>();
@@ -78,15 +76,13 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 builder.Services.AddControllersWithViews(options =>
 {
-    // Protección CSRF en todas las peticiones POST de formularios.
+    // Validar el token antiforgery en los formularios POST.
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
 });
 
 var app = builder.Build();
 
-// ===================== INICIALIZACIÓN DE LA BASE DE DATOS =====================
-// El script database/TallerMecanicoSantoDomingo.sql (fuente única del esquema)
-// se aplica automáticamente si la base de datos aún no existe.
+// Crear la base y aplicar el esquema al primer arranque.
 try
 {
     DatabaseInitializer.Inicializar(app.Services);

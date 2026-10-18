@@ -2,11 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace TallerMecanicoSantoDomingo.Models;
 
-/// <summary>
-/// Entidad CLIENTE del diagrama MER.
-/// Atributos del documento: Id Cliente (PK), Nombre, Apellido, Teléfono, Dirección, RFC.
-/// Extensiones técnicas: Activo (desactivación lógica, Regla 14) y FechaRegistro (auditoría).
-/// </summary>
+/// <summary>Datos personales y fiscales de un cliente.</summary>
 public class Cliente
 {
     [Key]
@@ -24,14 +20,9 @@ public class Cliente
     [Required, MaxLength(200)]
     public string Direccion { get; set; } = string.Empty;
 
-    /// <summary>RFC / identificación fiscal del cliente (atributo del MER).</summary>
     [Required, MaxLength(20)]
     public string RFC { get; set; } = string.Empty;
-
-    /// <summary>Extensión técnica: desactivación lógica sin perder historial (Regla 14).</summary>
     public bool Activo { get; set; } = true;
-
-    /// <summary>Extensión técnica: auditoría de creación.</summary>
     public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
 
     public ICollection<Vehiculo> Vehiculos { get; set; } = new List<Vehiculo>();

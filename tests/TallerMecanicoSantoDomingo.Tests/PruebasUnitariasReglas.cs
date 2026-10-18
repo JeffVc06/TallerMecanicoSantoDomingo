@@ -5,18 +5,10 @@ using Xunit;
 
 namespace TallerMecanicoSantoDomingo.Tests;
 
-/// <summary>
-/// Pruebas unitarias de las 14 reglas de negocio, ejecutadas contra el
-/// proveedor en memoria de EF Core (rápidas, sin SQL Server). Las reglas que
-/// dependen de restricciones físicas de SQL Server (índices UNIQUE, CHECK,
-/// transacciones y bloqueos UPDLOCK/HOLDLOCK) se validan en
-/// <see cref="PruebasIntegracionSqlServerTests"/>.
-/// </summary>
+/// <summary>Reglas de negocio probadas con EF Core en memoria.</summary>
 public class PruebasUnitariasReglas
 {
-    // =====================================================================================
     // Regla 1: identificadores únicos (RFC de cliente, placa de vehículo, número de factura)
-    // =====================================================================================
 
     [Fact]
     public async Task Regla1_RFC_de_cliente_duplicado_es_rechazado()
@@ -74,10 +66,7 @@ public class PruebasUnitariasReglas
         Assert.False(resultado.EsCorrecto);
         Assert.Contains("placa", resultado.Mensaje, StringComparison.OrdinalIgnoreCase);
     }
-
-    // =====================================================================================
     // Regla 2: un vehículo pertenece a un cliente existente (1:N)
-    // =====================================================================================
 
     [Fact]
     public async Task Regla2_Vehiculo_con_cliente_inexistente_es_rechazado()
@@ -107,11 +96,8 @@ public class PruebasUnitariasReglas
         Assert.Equal(2, vehiculos.Count);
         Assert.All(vehiculos, v => Assert.Equal(1, v.IdCliente));
     }
-
-    // =====================================================================================
     // Reglas 3 y 4: cada servicio pertenece a un vehículo; el tipo solo puede ser
     // Mantenimiento o Pintura
-    // =====================================================================================
 
     [Fact]
     public async Task Regla3_Servicio_con_vehiculo_inexistente_es_rechazado()
@@ -164,10 +150,7 @@ public class PruebasUnitariasReglas
         Assert.Equal("Abierto", resultado.Datos!.Estado);
         Assert.Null(resultado.Datos.FechaFin);
     }
-
-    // =====================================================================================
     // Regla 5: el área del trabajador debe ser compatible con el tipo de servicio
-    // =====================================================================================
 
     [Fact]
     public async Task Regla5_Asignar_pintor_a_servicio_de_mecanica_es_rechazado()
@@ -184,10 +167,7 @@ public class PruebasUnitariasReglas
         Assert.Contains("Regla 5", resultado.Mensaje);
         Assert.Empty(await db.DetalleServicio.ToListAsync());
     }
-
-    // =====================================================================================
     // Regla 6: la pareja servicio–trabajador no se repite
-    // =====================================================================================
 
     [Fact]
     public async Task Regla6_No_se_repite_la_pareja_servicio_trabajador()
@@ -205,10 +185,7 @@ public class PruebasUnitariasReglas
         Assert.Contains("Regla 6", repetida.Mensaje);
         Assert.Equal(1, await db.DetalleServicio.CountAsync());
     }
-
-    // =====================================================================================
     // Regla 7: máximo dos servicios activos por trabajador
-    // =====================================================================================
 
     [Fact]
     public async Task Regla7_Un_tercer_servicio_activo_es_rechazado()
@@ -252,10 +229,7 @@ public class PruebasUnitariasReglas
         var nuevo = await asignaciones.Asignar(s3.IdServicio, 1, null);
         Assert.True(nuevo.EsCorrecto);
     }
-
-    // =====================================================================================
     // Regla 8: la fecha de fin no puede ser anterior a la de inicio
-    // =====================================================================================
 
     [Fact]
     public async Task Regla8_Servicio_con_fecha_fin_anterior_es_rechazado_al_crear()
@@ -316,10 +290,7 @@ public class PruebasUnitariasReglas
         var asignacion = await db.DetalleServicio.SingleAsync();
         Assert.Equal("Retirado", asignacion.Estado);
     }
-
-    // =====================================================================================
     // Reglas 9 y 10: productos — pareja única, cantidades y precios válidos
-    // =====================================================================================
 
     [Fact]
     public async Task Regla9_Un_producto_no_se_repite_en_el_mismo_servicio()
@@ -369,10 +340,7 @@ public class PruebasUnitariasReglas
         Assert.False(resultado.EsCorrecto);
         Assert.Contains("precio unitario", resultado.Mensaje, StringComparison.OrdinalIgnoreCase);
     }
-
-    // =====================================================================================
     // Reglas 11, 12, 13 y 14: facturación
-    // =====================================================================================
 
     [Fact]
     public async Task Regla11_Factura_sin_detalles_es_rechazada()
@@ -486,10 +454,7 @@ public class PruebasUnitariasReglas
 
         Assert.False(segunda.EsCorrecto);
     }
-
-    // =====================================================================================
     // Regla 14 (desactivación lógica): no hay borrados destructivos
-    // =====================================================================================
 
     [Fact]
     public async Task Regla14_Desactivar_un_cliente_conserva_su_registro_y_vehiculos()

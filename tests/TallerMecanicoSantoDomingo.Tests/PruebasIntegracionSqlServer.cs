@@ -7,22 +7,7 @@ using Xunit;
 
 namespace TallerMecanicoSantoDomingo.Tests;
 
-/// <summary>
-/// Pruebas de integración reales contra SQL Server. Comprueban lo que el
-/// proveedor en memoria no puede reproducir: el esquema físico, las
-/// restricciones CHECK, el procedimiento almacenado usp_AnularFactura y el
-/// bloqueo UPDLOCK/HOLDLOCK que hace cumplir la Regla 7 (máximo dos servicios
-/// activos por trabajador) incluso con solicitudes concurrentes.
-///
-/// REQUISITOS
-///   • SQL Server en ejecución con la base de datos TallerMecanicoSantoDomingo
-///     creada por database/TallerMecanicoSantoDomingo.sql.
-///   • Cadena de conexión en la variable de entorno ConnectionStrings__TallerDB
-///     (si no existe, se usa Server=localhost;Database=TallerMecanicoSantoDomingo;
-///     Integrated Security=True;TrustServerCertificate=True).
-/// Si SQL Server no está disponible, las pruebas se marcan como OMITIDAS (no fallan).
-/// Los datos temporales que crean se eliminan siempre al finalizar cada prueba.
-/// </summary>
+/// <summary>Verifica restricciones y operaciones que dependen de SQL Server.</summary>
 [Trait("Categoria", "Integracion")]
 public class PruebasIntegracionSqlServerTests
 {
@@ -92,9 +77,6 @@ public class PruebasIntegracionSqlServerTests
             resultado.Add(lector.GetString(0));
         return resultado;
     }
-
-    // =====================================================================================
-
     [SkippableFact]
     public async Task Esquema_contiene_las_tablas_del_MER_y_de_Identity()
     {
@@ -142,11 +124,7 @@ public class PruebasIntegracionSqlServerTests
 
         Assert.Contains("CK_Servicios_FechaFin", excepcion.Message);
     }
-
-    // =====================================================================================
     // Regla 7 con concurrencia real: tres asignaciones simultáneas → solo dos prosperan
-    // =====================================================================================
-
     [SkippableFact]
     public async Task Regla7_Concurrencia_real_no_permite_mas_de_dos_servicios_activos()
     {
@@ -239,11 +217,7 @@ DELETE FROM dbo.Clientes        WHERE IdCliente    = @idCliente;",
                 ("@idCliente", idCliente));
         }
     }
-
-    // =====================================================================================
     // Regla 14 sobre SQL Server: número de factura real y anulación con el procedimiento
-    // =====================================================================================
-
     [SkippableFact]
     public async Task Regla14_Factura_se_genera_y_se_anula_con_el_procedimiento_almacenado()
     {

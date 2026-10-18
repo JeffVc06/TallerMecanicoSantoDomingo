@@ -4,7 +4,7 @@ using TallerMecanicoSantoDomingo.Models;
 
 namespace TallerMecanicoSantoDomingo.Services;
 
-// ===== DTOs de reportes =====
+// DTOs de reportes
 public record FilaServicioReporte(int IdServicio, string Placa, string Cliente, string TipoServicio,
     string Estado, DateOnly FechaInicio, DateOnly? FechaFin, decimal Total);
 

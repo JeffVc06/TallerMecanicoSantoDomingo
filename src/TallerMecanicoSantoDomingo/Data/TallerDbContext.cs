@@ -4,12 +4,7 @@ using TallerMecanicoSantoDomingo.Models;
 
 namespace TallerMecanicoSantoDomingo.Data;
 
-/// <summary>
-/// Contexto de Entity Framework Core. El esquema físico es creado por el script
-/// database/TallerMecanicoSantoDomingo.sql (fuente única del esquema); esta
-/// configuración replica exactamente ese esquema para que las consultas
-/// coincidan con las tablas existentes.
-/// </summary>
+/// <summary>Contexto de datos del taller y de las cuentas de acceso.</summary>
 public class TallerDbContext : IdentityDbContext
 {
     public TallerDbContext(DbContextOptions<TallerDbContext> options) : base(options)
@@ -31,7 +26,7 @@ public class TallerDbContext : IdentityDbContext
     {
         base.OnModelCreating(builder); // Tablas de ASP.NET Core Identity (AspNet*)
 
-        // ===================== CLIENTES =====================
+        // CLIENTES
         builder.Entity<Cliente>(e =>
         {
             e.ToTable("Clientes");
@@ -52,7 +47,7 @@ public class TallerDbContext : IdentityDbContext
             e.HasCheckConstraint("CK_Clientes_Apellido_NoVacio", "LTRIM(Apellido) <> ''");
         });
 
-        // ===================== VEHICULOS =====================
+        // VEHICULOS
         builder.Entity<Vehiculo>(e =>
         {
             e.ToTable("Vehiculos");
@@ -75,7 +70,7 @@ public class TallerDbContext : IdentityDbContext
             e.HasCheckConstraint("CK_Vehiculos_Anio", "Anio >= 1950 AND Anio <= YEAR(GETDATE()) + 1");
         });
 
-        // ===================== AREAS =====================
+        // AREAS
         builder.Entity<AreaTrabajo>(e =>
         {
             e.ToTable("Areas");
@@ -85,7 +80,7 @@ public class TallerDbContext : IdentityDbContext
             e.HasIndex(a => a.Nombre).IsUnique().HasDatabaseName("UQ_Areas_Nombre");
         });
 
-        // ===================== TRABAJADORES =====================
+        // TRABAJADORES
         builder.Entity<Trabajador>(e =>
         {
             e.ToTable("Trabajadores");
@@ -104,7 +99,7 @@ public class TallerDbContext : IdentityDbContext
             e.HasIndex(t => t.IdArea).HasDatabaseName("IX_Trabajadores_IdArea");
         });
 
-        // ===================== SERVICIOS =====================
+        // SERVICIOS
         builder.Entity<Servicio>(e =>
         {
             e.ToTable("Servicios");
@@ -142,7 +137,7 @@ public class TallerDbContext : IdentityDbContext
             e.HasCheckConstraint("CK_Servicios_Total", "Total >= 0");
         });
 
-        // ===================== DETALLE_SERVICIO (ASIGNADO_A) =====================
+        // DETALLE_SERVICIO (ASIGNADO_A)
         builder.Entity<DetalleServicio>(e =>
         {
             e.ToTable("DetalleServicio");
@@ -168,7 +163,7 @@ public class TallerDbContext : IdentityDbContext
                 "Estado IN ('Activo', 'Retirado')");
         });
 
-        // ===================== PRODUCTOS (REPUESTOS) =====================
+        // PRODUCTOS (REPUESTOS)
         builder.Entity<Producto>(e =>
         {
             e.ToTable("Productos");
@@ -186,7 +181,7 @@ public class TallerDbContext : IdentityDbContext
             e.HasIndex(p => p.Nombre).HasDatabaseName("IX_Productos_Nombre");
         });
 
-        // ===================== PRODUCTOS_UTILIZADOS (UTILIZA) =====================
+        // PRODUCTOS_UTILIZADOS (UTILIZA)
         builder.Entity<ProductoUtilizado>(e =>
         {
             e.ToTable("ProductosUtilizados");
@@ -210,7 +205,7 @@ public class TallerDbContext : IdentityDbContext
             e.HasCheckConstraint("CK_ProductosUtilizados_Cantidad", "Cantidad > 0");
         });
 
-        // ===================== FACTURAS =====================
+        // FACTURAS
         builder.Entity<Factura>(e =>
         {
             e.ToTable("Facturas");
@@ -241,7 +236,7 @@ public class TallerDbContext : IdentityDbContext
                 "Subtotal >= 0 AND IVA >= 0 AND Total >= 0 AND Total = Subtotal + IVA");
         });
 
-        // ===================== DETALLE_FACTURA =====================
+        // DETALLE_FACTURA
         builder.Entity<DetalleFactura>(e =>
         {
             e.ToTable("DetalleFactura");

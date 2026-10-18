@@ -110,8 +110,7 @@ public class ReportesController : Controller
         return View();
     }
 
-    // ===== Exportación a CSV =====
-
+    // Exportación a CSV
     [HttpGet]
     public async Task<IActionResult> ExportarCsv(string tipo, DateOnly desde, DateOnly hasta, int? idCliente)
     {

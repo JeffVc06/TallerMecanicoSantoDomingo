@@ -5,13 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace TallerMecanicoSantoDomingo.Data;
 
-/// <summary>
-/// Inicializador de la base de datos.
-/// Estrategia de esquema: el archivo database/TallerMecanicoSantoDomingo.sql es la
-/// fuente única del esquema (no se usan migraciones de EF Core). Este inicializador
-/// aplica ese script automáticamente en el primer arranque si la base de datos no
-/// existe todavía, y siembra el primer administrador cuando se configura.
-/// </summary>
+/// <summary>Prepara la base de datos y crea el administrador inicial si se configuró.</summary>
 public static class DatabaseInitializer
 {
     public static void Inicializar(IServiceProvider servicios)

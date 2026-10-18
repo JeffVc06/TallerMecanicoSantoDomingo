@@ -2,12 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace TallerMecanicoSantoDomingo.Models;
 
-/// <summary>
-/// Entidad ÁREA DE TRABAJO del diagrama MER.
-/// El MER define dos áreas: Mantenimiento mecánico y Pintura.
-/// El atributo "Especialidad (Mecánico/Pintura)" de TRABAJADOR queda representado
-/// por esta relación N:1 (PERTENECE), evitando redundancia (3FN).
-/// </summary>
+/// <summary>Área en la que trabaja cada empleado.</summary>
 public class AreaTrabajo
 {
     [Key]

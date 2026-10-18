@@ -3,13 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace TallerMecanicoSantoDomingo.Models;
 
-/// <summary>
-/// Entidad de relación UTILIZA del diagrama MER: REPUESTO con HISTORIAL DE SERVICIOS
-/// (denominada Productos_Utilizados en la sección 4.7 de requisitos).
-/// Regla 9: un servicio puede utilizar varios productos y un producto puede usarse
-/// en distintos servicios; la pareja producto-servicio no se repite.
-/// Regla 10: la cantidad debe ser mayor que cero.
-/// </summary>
+/// <summary>Cantidad de un producto utilizada en un servicio.</summary>
 public class ProductoUtilizado
 {
     [Key]
@@ -19,7 +13,6 @@ public class ProductoUtilizado
 
     public int IdProducto { get; set; }
 
-    /// <summary>Cantidad del producto utilizada en el servicio. Regla 10: > 0.</summary>
     [Precision(12, 3)]
     public decimal Cantidad { get; set; }
 

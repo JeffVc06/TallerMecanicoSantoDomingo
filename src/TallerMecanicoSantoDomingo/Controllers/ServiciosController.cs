@@ -177,8 +177,7 @@ public class ServiciosController : Controller
         return RedirectToAction(nameof(Detalles), new { id = modelo.IdServicio });
     }
 
-    // ===== Productos utilizados por servicio (Reglas 9 y 10) =====
-
+    // Productos utilizados por servicio (Reglas 9 y 10)
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AgregarProducto(ProductoUtilizadoFormViewModel modelo)
