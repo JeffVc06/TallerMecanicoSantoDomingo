@@ -1,5 +1,36 @@
 /* Funcionalidad general del sistema (sin datos en memoria: todo se consulta al servidor). */
 
+// ===== Aparición progresiva de secciones =====
+(function () {
+    const elementos = document.querySelectorAll(
+        '.encabezado-pagina, .pagina > .tarjeta, .pagina > .row, .pagina > .alerta-info, .pagina > .alerta-error, .pagina > .alerta-exito'
+    );
+    const movimientoReducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (movimientoReducido || elementos.length === 0) return;
+
+    elementos.forEach(function (elemento, indice) {
+        elemento.classList.add('revelar');
+        elemento.style.setProperty('--retraso', Math.min((indice % 4) * 55, 165) + 'ms');
+    });
+
+    if (!('IntersectionObserver' in window)) {
+        elementos.forEach(function (elemento) { elemento.classList.add('visible'); });
+        return;
+    }
+
+    const observador = new IntersectionObserver(function (entradas, instancia) {
+        entradas.forEach(function (entrada) {
+            if (entrada.isIntersecting) {
+                entrada.target.classList.add('visible');
+                instancia.unobserve(entrada.target);
+            }
+        });
+    }, { threshold: .08, rootMargin: '0px 0px -24px 0px' });
+
+    elementos.forEach(function (elemento) { observador.observe(elemento); });
+})();
+
 // ===== Menú adaptable =====
 (function () {
     const boton = document.getElementById('boton-menu');

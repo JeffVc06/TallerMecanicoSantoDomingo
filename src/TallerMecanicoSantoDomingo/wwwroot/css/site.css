@@ -69,7 +69,7 @@ a:hover { text-decoration: underline; }
     min-height: 100vh;
     height: 100vh;
     height: 100dvh;
-    background: var(--color-barra);
+    background: linear-gradient(165deg, #263235 0%, #20292c 58%, #1c2527 100%);
     position: fixed;
     top: 0;
     left: 0;
@@ -144,6 +144,7 @@ a:hover { text-decoration: underline; }
     background-color: var(--color-barra-hover);
     color: #fff;
     text-decoration: none;
+    transform: translateX(2px);
 }
 
 .barra-nav a.activo {
@@ -173,8 +174,10 @@ a:hover { text-decoration: underline; }
 }
 
 .barra-superior {
-    background: rgba(255, 255, 255, .96);
+    background: rgba(255, 255, 255, .94);
     border-bottom: 1px solid var(--color-borde);
+    box-shadow: 0 2px 8px rgba(32, 42, 43, .035);
+    backdrop-filter: blur(12px);
     padding: .65rem 1.5rem;
     display: flex;
     align-items: center;
@@ -223,7 +226,7 @@ a:hover { text-decoration: underline; }
 }
 
 .encabezado-pagina h1 i { color: var(--color-naranja); font-size: .9em; }
-.encabezado-pagina .ruta { font-size: .84rem; color: var(--color-gris); margin-top: .2rem; }
+.encabezado-pagina .ruta { font-size: .84rem; color: var(--color-gris); margin-top: .28rem; }
 
 /* ================================ TARJETAS =============================== */
 .tarjeta {
@@ -232,6 +235,12 @@ a:hover { text-decoration: underline; }
     box-shadow: var(--sombra-tarjeta);
     border: 1px solid var(--color-borde);
     padding: 1.25rem;
+    transition: box-shadow .2s ease, border-color .2s ease;
+}
+
+@media (hover: hover) {
+    .tarjeta:hover { border-color: #d1d3cc; box-shadow: 0 5px 16px rgba(32, 42, 43, .075); }
+    .btn:not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(32, 42, 43, .12); }
 }
 
 .tarjeta + .tarjeta { margin-top: 1rem; }
@@ -284,6 +293,7 @@ a:hover { text-decoration: underline; }
 }
 
 .tabla-lista tbody td { padding: .68rem .85rem; vertical-align: middle; border-color: #ecece7; }
+.tabla-lista tbody tr { transition: background-color .16s ease; }
 .tabla-lista tbody tr:hover { background-color: #f7f7f4; }
 .tabla-lista .acciones { white-space: nowrap; text-align: right; }
 
@@ -301,6 +311,7 @@ a:hover { text-decoration: underline; }
 /* ================================ FORMULARIOS ============================ */
 .formulario .form-label { font-weight: 600; font-size: .85rem; color: var(--color-azul); margin-bottom: .3rem; }
 .formulario .form-control, .formulario .form-select { border-color: var(--color-borde); border-radius: 8px; padding: .5rem .8rem; }
+.formulario .form-control, .formulario .form-select { transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease; }
 .formulario .form-control:focus, .formulario .form-select:focus { border-color: var(--color-azul-claro); box-shadow: 0 0 0 .2rem rgba(45, 85, 136, .15); }
 .formulario .text-danger { font-size: .78rem; }
 
@@ -320,7 +331,8 @@ a:hover { text-decoration: underline; }
 }
 
 /* ================================= BOTONES =============================== */
-.btn { border-radius: 6px; font-weight: 600; font-size: .88rem; padding: .5rem 1rem; }
+.btn { border-radius: 6px; font-weight: 600; font-size: .88rem; padding: .5rem 1rem; transition: transform .16s ease, box-shadow .16s ease, background-color .16s ease, border-color .16s ease; }
+.btn:not(:disabled):active { transform: translateY(0); box-shadow: none; }
 .btn-azul { background: var(--color-azul); border-color: var(--color-azul); color: #fff; }
 .btn-azul:hover { background: var(--color-azul-claro); border-color: var(--color-azul-claro); color: #fff; }
 .btn-naranja { background: var(--color-naranja); border-color: var(--color-naranja); color: #fff; }
@@ -402,10 +414,6 @@ a:has(> .tarjeta-indicador):hover .tarjeta-indicador { border-color: #c6b4a5; bo
     .tarjeta-indicador .dato { font-size: 1.3rem; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
-}
-
 /* ============================== RESPONSIVE =============================== */
 @media (max-width: 991.98px) {
     .barra-lateral { transform: translateX(-100%); }
@@ -456,3 +464,36 @@ a:has(> .tarjeta-indicador):hover .tarjeta-indicador { border-color: #c6b4a5; bo
 .enlace-icono:hover { color: var(--color-azul); }
 .medidor { height: 8px; border-radius: 999px; background: var(--color-gris-claro); overflow: hidden; min-width: 90px; }
 .medidor > span { display: block; height: 100%; border-radius: 999px; }
+
+/* Aparición discreta de bloques al abrir o recorrer una página. La clase se
+   agrega desde JS: sin JavaScript el contenido permanece visible. */
+.revelar {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity .42s ease var(--retraso, 0ms), transform .42s cubic-bezier(.2, .7, .25, 1) var(--retraso, 0ms);
+}
+
+.revelar.visible { opacity: 1; transform: translateY(0); }
+
+.pagina-cuenta {
+    background-image: radial-gradient(ellipse at 18% 12%, rgba(209, 138, 78, .16), transparent 38%),
+                      radial-gradient(ellipse at 85% 88%, rgba(66, 104, 117, .22), transparent 42%);
+}
+
+.tarjeta-cuenta { animation: entrada-cuenta .48s cubic-bezier(.2, .7, .25, 1) both; }
+
+@keyframes entrada-cuenta {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+
+    .revelar { opacity: 1; transform: none; }
+}

@@ -201,7 +201,10 @@
                     borderColor: '#ffffff'
                 }]
             },
-            options: { plugins: { legend: { position: 'bottom' } } }
+            options: {
+                animation: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? false : { duration: 550 },
+                plugins: { legend: { position: 'bottom' } }
+            }
         });
 
         new Chart(document.getElementById('graficoEstado'), {
@@ -215,7 +218,10 @@
                     borderColor: '#ffffff'
                 }]
             },
-            options: { plugins: { legend: { position: 'bottom' } } }
+            options: {
+                animation: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? false : { duration: 550 },
+                plugins: { legend: { position: 'bottom' } }
+            }
         });
 
         new Chart(document.getElementById('graficoFacturacion'), {
@@ -230,6 +236,7 @@
                 }]
             },
             options: {
+                animation: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? false : { duration: 650 },
                 plugins: { legend: { display: false } },
                 scales: { y: { beginAtZero: true } }
             }
