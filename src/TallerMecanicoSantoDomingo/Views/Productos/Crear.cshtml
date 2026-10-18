@@ -1,0 +1,51 @@
+@model TallerMecanicoSantoDomingo.ViewModels.ProductoFormViewModel
+@{
+    ViewData["Title"] = "Registrar producto";
+}
+
+<div class="encabezado-pagina">
+    <div>
+        <h1><i class="bi bi-box-seam me-2"></i>Registrar producto</h1>
+        <div class="ruta"><a asp-action="Index">Productos</a> / Nuevo producto</div>
+    </div>
+</div>
+
+<div class="tarjeta" style="max-width:720px">
+    <form asp-action="Crear" method="post" class="formulario">
+        <div asp-validation-summary="ModelOnly" class="alerta-error"></div>
+
+        <div class="row g-3">
+            <div class="col-12">
+                <label asp-for="Nombre" class="form-label"></label>
+                <input asp-for="Nombre" class="form-control" autofocus placeholder="Ej.: Filtro de aceite 10W-40" />
+                <span asp-validation-for="Nombre" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Descripcion" class="form-label"></label>
+                <textarea asp-for="Descripcion" class="form-control" rows="2" placeholder="Marca, referencia o características"></textarea>
+                <span asp-validation-for="Descripcion" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="PrecioUnitario" class="form-label"></label>
+                <input asp-for="PrecioUnitario" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" />
+                <span asp-validation-for="PrecioUnitario" class="text-danger"></span>
+                <div class="form-text">Se usa para calcular los importes de los servicios (Regla 10).</div>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Stock" class="form-label"></label>
+                <input asp-for="Stock" class="form-control" type="number" step="0.001" min="0" placeholder="0" />
+                <span asp-validation-for="Stock" class="text-danger"></span>
+                <div class="form-text">Atributo del documento original; no es un módulo de inventario.</div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-naranja"><i class="bi bi-save me-1"></i> Guardar producto</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidacionScripts" />
+}

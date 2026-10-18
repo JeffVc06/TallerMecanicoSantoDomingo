@@ -1,0 +1,15 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+*.suo
+
+# Secretos locales
+appsettings.*.Local.json
+secrets.json
+
+# Datos de pruebas locales
+*.bak
+*.mdf
+*.ldf

@@ -1,0 +1,237 @@
+@model TallerMecanicoSantoDomingo.Services.DatosDashboard
+@{
+    ViewData["Title"] = "Panel principal";
+    bool vacio = Model.TotalClientes == 0 && Model.TotalVehiculos == 0 && Model.ServiciosActivos == 0 &&
+                 Model.TotalTrabajadores == 0 && Model.TotalProductos == 0 && Model.FacturasEmitidas == 0;
+}
+
+<div class="encabezado-pagina">
+    <div>
+        <h1><i class="bi bi-speedometer2 me-2"></i>Panel principal</h1>
+        <div class="ruta">Resumen general de las operaciones del taller</div>
+    </div>
+    <a asp-controller="Servicios" asp-action="Crear" class="btn btn-naranja">
+        <i class="bi bi-plus-lg me-1"></i> Nuevo servicio
+    </a>
+</div>
+
+@if (vacio)
+{
+    <div class="alerta-info">
+        <i class="bi bi-info-circle me-1"></i>
+        <strong>La base de datos está vacía.</strong> Los indicadores muestran cero porque todavía no existen
+        registros. Comience registrando clientes y vehículos.
+        <a asp-controller="Clientes" asp-action="Crear" class="fw-semibold">Registrar el primer cliente</a>.
+    </div>
+}
+
+<div class="row g-3 mb-1">
+    <div class="col-6 col-lg-3">
+        <div class="tarjeta tarjeta-indicador">
+            <div class="icono fondo-azul"><i class="bi bi-people"></i></div>
+            <div>
+                <div class="dato">@Model.TotalClientes</div>
+                <div class="etiqueta">Clientes registrados</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="tarjeta tarjeta-indicador">
+            <div class="icono fondo-gris"><i class="bi bi-car-front"></i></div>
+            <div>
+                <div class="dato">@Model.TotalVehiculos</div>
+                <div class="etiqueta">Vehículos registrados</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="tarjeta tarjeta-indicador">
+            <div class="icono fondo-naranja"><i class="bi bi-gear"></i></div>
+            <div>
+                <div class="dato">@Model.ServiciosActivos</div>
+                <div class="etiqueta">Servicios activos (abiertos)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="tarjeta tarjeta-indicador">
+            <div class="icono fondo-verde"><i class="bi bi-check2-circle"></i></div>
+            <div>
+                <div class="dato">@Model.ServiciosFinalizados</div>
+                <div class="etiqueta">Servicios finalizados</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="tarjeta tarjeta-indicador">
+            <div class="icono fondo-gris"><i class="bi bi-person-badge"></i></div>
+            <div>
+                <div class="dato">@Model.TotalTrabajadores</div>
+                <div class="etiqueta">Trabajadores</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="tarjeta tarjeta-indicador">
+            <div class="icono fondo-gris"><i class="bi bi-box-seam"></i></div>
+            <div>
+                <div class="dato">@Model.TotalProductos</div>
+                <div class="etiqueta">Productos (repuestos)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="tarjeta tarjeta-indicador">
+            <div class="icono fondo-azul"><i class="bi bi-receipt"></i></div>
+            <div>
+                <div class="dato">@Model.FacturasEmitidas</div>
+                <div class="etiqueta">Facturas emitidas</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="tarjeta tarjeta-indicador">
+            <div class="icono fondo-naranja"><i class="bi bi-cash-stack"></i></div>
+            <div>
+                <div class="dato" style="font-size:1.2rem">C$ @Model.ImporteFacturado.ToString("N2")</div>
+                <div class="etiqueta">Importe facturado (no es pago recibido)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.TrabajadoresAlLimite.Count > 0)
+{
+    <div class="alerta-error d-flex align-items-center gap-2 mt-3">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>
+            <strong>Trabajadores al límite de capacidad (2 de 2 servicios activos):</strong>
+            @string.Join(", ", Model.TrabajadoresAlLimite). Se les rechazarán nuevas asignaciones hasta finalizar o cancelar un servicio.
+        </span>
+    </div>
+}
+
+<div class="row g-3 mt-1">
+    <div class="col-lg-4">
+        <div class="tarjeta h-100">
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-pie-chart me-1"></i> Servicios por tipo</h2>
+            <canvas id="graficoTipo" height="220"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="tarjeta h-100">
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-diagram-3 me-1"></i> Servicios por estado</h2>
+            <canvas id="graficoEstado" height="220"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="tarjeta h-100">
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-graph-up me-1"></i> Facturación (12 meses)</h2>
+            <canvas id="graficoFacturacion" height="220"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="tarjeta mt-3">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="h6 fw-bold text-primary mb-0"><i class="bi bi-clock-history me-1"></i> Últimos servicios registrados</h2>
+        <a asp-controller="Servicios" asp-action="Index" class="btn btn-sm btn-outline-secondary">Ver todos</a>
+    </div>
+
+    @if (Model.UltimosServicios.Count == 0)
+    {
+        <div class="estado-vacio">
+            <i class="bi bi-inbox"></i>
+            <div>Aún no se han registrado servicios.</div>
+        </div>
+    }
+    else
+    {
+        <div class="tabla-envuelta">
+            <table class="tabla-lista">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Fecha inicio</th>
+                        <th>Placa</th>
+                        <th>Cliente</th>
+                        <th>Tipo</th>
+                        <th>Estado</th>
+                        <th class="text-end">Monto</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model.UltimosServicios)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@s.IdServicio</td>
+                            <td>@s.FechaInicio.ToString("dd/MM/yyyy")</td>
+                            <td>@s.Placa</td>
+                            <td>@s.Cliente</td>
+                            <td><span class="estado tipo-@s.TipoServicio.ToLowerInvariant()">@s.TipoServicio</span></td>
+                            <td><span class="estado estado-@s.Estado.ToLowerInvariant()">@s.Estado</span></td>
+                            <td class="text-end">@s.Total.ToString("N2")</td>
+                            <td class="acciones">
+                                <a asp-controller="Servicios" asp-action="Detalles" asp-route-id="@s.IdServicio"
+                                   class="btn btn-sm btn-outline-primary btn-icono" title="Ver detalle">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/lib/chartjs/chart.umd.min.js"></script>
+    <script>
+        const colores = ['#1e3a5f', '#f08a00', '#16a34a', '#dc2626', '#64748b'];
+
+        new Chart(document.getElementById('graficoTipo'), {
+            type: 'doughnut',
+            data: {
+                labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.EtiquetasServiciosPorTipo.Count > 0 ? Model.EtiquetasServiciosPorTipo : new List<string> { "Sin datos" })),
+                datasets: [{
+                    data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ValoresServiciosPorTipo.Count > 0 ? Model.ValoresServiciosPorTipo : new List<int> { 0 })),
+                    backgroundColor: colores,
+                    borderWidth: 2
+                }]
+            },
+            options: { plugins: { legend: { position: 'bottom' } } }
+        });
+
+        new Chart(document.getElementById('graficoEstado'), {
+            type: 'doughnut',
+            data: {
+                labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.EtiquetasServiciosPorEstado.Count > 0 ? Model.EtiquetasServiciosPorEstado : new List<string> { "Sin datos" })),
+                datasets: [{
+                    data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ValoresServiciosPorEstado.Count > 0 ? Model.ValoresServiciosPorEstado : new List<int> { 0 })),
+                    backgroundColor: ['#f08a00', '#16a34a', '#dc2626', '#1e3a5f', '#64748b'],
+                    borderWidth: 2
+                }]
+            },
+            options: { plugins: { legend: { position: 'bottom' } } }
+        });
+
+        new Chart(document.getElementById('graficoFacturacion'), {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.EtiquetasFacturacionMensual)),
+                datasets: [{
+                    label: 'Facturado (C$)',
+                    data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ValoresFacturacionMensual)),
+                    backgroundColor: '#1e3a5f',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    </script>
+}

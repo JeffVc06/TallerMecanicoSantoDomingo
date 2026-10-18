@@ -1,0 +1,104 @@
+@model TallerMecanicoSantoDomingo.Services.ResultadoPaginado<TallerMecanicoSantoDomingo.Models.Factura>
+@{
+    ViewData["Title"] = "Facturas";
+    var desde = ViewBag.Desde as DateOnly?;
+    var hasta = ViewBag.Hasta as DateOnly?;
+}
+
+<div class="encabezado-pagina">
+    <div>
+        <h1><i class="bi bi-receipt me-2"></i>Facturas</h1>
+        <div class="ruta">Emisión y consulta de facturas del taller (Reglas 11 a 14)</div>
+    </div>
+    <a asp-action="Crear" class="btn btn-naranja"><i class="bi bi-plus-lg me-1"></i> Emitir factura</a>
+</div>
+
+<div class="tarjeta">
+    <form asp-action="Index" method="get" data-busqueda class="row g-2 align-items-end mb-3">
+        <input type="hidden" name="pagina" value="1" />
+        <div class="col-md-4">
+            <label class="form-label fw-semibold text-primary" style="font-size:.85rem">Número de factura</label>
+            <input type="text" name="buscar" value="@ViewBag.Buscar" class="form-control" placeholder="FAC-2026-0001" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-semibold text-primary" style="font-size:.85rem">Fecha desde</label>
+            <input type="date" name="desde" value="@(desde?.ToString("yyyy-MM-dd"))" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-semibold text-primary" style="font-size:.85rem">Fecha hasta</label>
+            <input type="date" name="hasta" value="@(hasta?.ToString("yyyy-MM-dd"))" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-search me-1"></i> Filtrar</button>
+        </div>
+    </form>
+
+    @if (Model.Elementos.Count == 0)
+    {
+        <div class="estado-vacio">
+            <i class="bi bi-receipt"></i>
+            <div class="fw-semibold">No se encontraron facturas</div>
+            <div style="font-size:.85rem">Emita una factura seleccionando los servicios terminados de un cliente.</div>
+        </div>
+    }
+    else
+    {
+        <div class="tabla-envuelta">
+            <table class="tabla-lista">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Método de pago</th>
+                        <th class="text-end">Subtotal (C$)</th>
+                        <th class="text-end">IVA (C$)</th>
+                        <th class="text-end">Total (C$)</th>
+                        <th>Estado</th>
+                        <th class="acciones">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var f in Model.Elementos)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@f.NumeroFactura</td>
+                            <td>@f.FechaFactura.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@(f.Cliente != null ? $"{f.Cliente.Nombre} {f.Cliente.Apellido}" : "—")</td>
+                            <td>@f.MetodoPago</td>
+                            <td class="text-end">@f.Subtotal.ToString("N2")</td>
+                            <td class="text-end">@f.IVA.ToString("N2")</td>
+                            <td class="text-end fw-semibold">@f.Total.ToString("N2")</td>
+                            <td><span class="estado estado-@f.Estado.ToLowerInvariant()">@f.Estado</span></td>
+                            <td class="acciones">
+                                <a asp-action="Detalles" asp-route-id="@f.IdFactura" class="btn btn-sm btn-outline-primary btn-icono" title="Ver detalle">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a asp-action="Imprimir" asp-route-id="@f.IdFactura" class="btn btn-sm btn-outline-secondary btn-icono" title="Imprimir factura">
+                                    <i class="bi bi-printer"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPaginas > 1)
+        {
+            <nav class="mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span class="texto-secundario" style="font-size:.83rem">
+                    Página @Model.Pagina de @Model.TotalPaginas — @Model.TotalElementos registro(s)
+                </span>
+                <div class="paginacion">
+                    @for (int p = 1; p <= Model.TotalPaginas; p++)
+                    {
+                        <a class="btn btn-sm @(p == Model.Pagina ? "actual" : "btn-outline-secondary")"
+                           asp-action="Index" asp-route-pagina="@p" asp-route-buscar="@ViewBag.Buscar"
+                           asp-route-desde="@(desde?.ToString("yyyy-MM-dd"))" asp-route-hasta="@(hasta?.ToString("yyyy-MM-dd"))">@p</a>
+                    }
+                </div>
+            </nav>
+        }
+    }
+</div>

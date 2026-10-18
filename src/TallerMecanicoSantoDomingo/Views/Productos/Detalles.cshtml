@@ -1,0 +1,84 @@
+@model TallerMecanicoSantoDomingo.Models.Producto
+@{
+    ViewData["Title"] = "Ficha del producto";
+    var historial = (List<TallerMecanicoSantoDomingo.Services.ItemUsoProducto>)ViewBag.Historial;
+}
+
+<div class="encabezado-pagina">
+    <div>
+        <h1><i class="bi bi-box-seam me-2"></i>@Model.Nombre</h1>
+        <div class="ruta"><a asp-action="Index">Productos</a> / Ficha del producto</div>
+    </div>
+    <a asp-action="Editar" asp-route-id="@Model.IdProducto" class="btn btn-azul"><i class="bi bi-pencil me-1"></i> Editar</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="tarjeta">
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-card-text me-1"></i> Datos del producto</h2>
+            <dl class="row mb-0" style="font-size:.9rem">
+                <dt class="col-5 texto-secundario">Nombre</dt>
+                <dd class="col-7 fw-semibold">@Model.Nombre</dd>
+                <dt class="col-5 texto-secundario">Precio unitario</dt>
+                <dd class="col-7 fw-semibold">C$ @Model.PrecioUnitario.ToString("N2")</dd>
+                <dt class="col-5 texto-secundario">Stock</dt>
+                <dd class="col-7">@Model.Stock.ToString("0.###")</dd>
+                <dt class="col-5 texto-secundario">Estado</dt>
+                <dd class="col-7"><span class="estado @(Model.Activo ? "estado-activo" : "estado-inactivo")">@(Model.Activo ? "Activo" : "Desactivado")</span></dd>
+                <dt class="col-5 texto-secundario">Registro</dt>
+                <dd class="col-7">@Model.FechaRegistro.ToLocalTime().ToString("dd/MM/yyyy")</dd>
+            </dl>
+            <div class="mt-3" style="font-size:.88rem"><strong>Descripción:</strong> @Model.Descripcion</div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="tarjeta">
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-clock-history me-1"></i> Servicios donde se utilizó (@historial.Count)</h2>
+
+            @if (historial.Count == 0)
+            {
+                <div class="estado-vacio">
+                    <i class="bi bi-inbox"></i>
+                    <div>Este producto aún no ha sido utilizado en ningún servicio.</div>
+                </div>
+            }
+            else
+            {
+                <div class="tabla-envuelta">
+                    <table class="tabla-lista">
+                        <thead>
+                            <tr>
+                                <th>Servicio</th>
+                                <th>Fecha</th>
+                                <th>Vehículo</th>
+                                <th>Descripción del servicio</th>
+                                <th class="text-end">Cantidad</th>
+                                <th class="text-end">Importe (C$)</th>
+                                <th class="acciones"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var u in historial)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">#@u.IdServicio</td>
+                                    <td>@u.FechaServicio.ToString("dd/MM/yyyy")</td>
+                                    <td class="fw-semibold">@u.PlacaVehiculo</td>
+                                    <td style="max-width:220px">@u.DescripcionServicio</td>
+                                    <td class="text-end">@u.Cantidad.ToString("0.###")</td>
+                                    <td class="text-end">@(u.Cantidad * Model.PrecioUnitario).ToString("N2")</td>
+                                    <td class="acciones">
+                                        <a asp-controller="Servicios" asp-action="Detalles" asp-route-id="@u.IdServicio" class="btn btn-sm btn-outline-primary btn-icono" title="Ver servicio">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

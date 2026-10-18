@@ -1,0 +1,129 @@
+@{
+    ViewData["Title"] = "Historial por cliente";
+    var clientes = (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Clientes;
+    var cliente = ViewBag.Cliente as TallerMecanicoSantoDomingo.Models.Cliente;
+    var vehiculos = ViewBag.Vehiculos as List<TallerMecanicoSantoDomingo.Models.Vehiculo>;
+    var servicios = ViewBag.Servicios as List<TallerMecanicoSantoDomingo.Services.FilaServicioReporte>;
+    int? idSeleccionado = cliente?.IdCliente;
+}
+
+<div class="encabezado-pagina">
+    <div>
+        <h1><i class="bi bi-person-vcard me-2"></i>Historial por cliente</h1>
+        <div class="ruta"><a asp-action="Index">Reportes</a> / Historial completo de un cliente</div>
+    </div>
+    @if (cliente != null && servicios != null)
+    {
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i> Imprimir</button>
+    }
+</div>
+
+<div class="tarjeta">
+    <form asp-action="Cliente" method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-sm-9">
+            <label class="form-label fw-semibold text-primary" style="font-size:.85rem">Seleccione el cliente</label>
+            <select name="idCliente" class="form-select">
+                <option value="">— Seleccione un cliente —</option>
+                @foreach (var c in clientes)
+                {
+                    <option value="@c.Value" selected="@(idSeleccionado?.ToString() == c.Value)">@c.Text</option>
+                }
+            </select>
+        </div>
+        <div class="col-sm-3">
+            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-search me-1"></i> Consultar</button>
+        </div>
+    </form>
+
+    @if (cliente == null)
+    {
+        <div class="estado-vacio">
+            <i class="bi bi-person"></i>
+            <div class="fw-semibold">Seleccione un cliente para ver su historial</div>
+            <div style="font-size:.85rem">Se mostrarán sus vehículos y todos los servicios registrados.</div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3 mb-3">
+            <div class="col-md-5">
+                <div class="border rounded p-3 h-100">
+                    <div class="fw-bold text-primary mb-2" style="font-size:.85rem">DATOS DEL CLIENTE</div>
+                    <div class="fw-semibold">@cliente.NombreCompleto</div>
+                    <div style="font-size:.87rem">RFC: @cliente.RFC</div>
+                    <div style="font-size:.87rem">Tel.: @cliente.Telefono</div>
+                    <div style="font-size:.87rem">Dirección: @cliente.Direccion</div>
+                    <div style="font-size:.87rem">Estado: @(cliente.Activo ? "Activo" : "Desactivado")</div>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <div class="border rounded p-3 h-100">
+                    <div class="fw-bold text-primary mb-2" style="font-size:.85rem">VEHÍCULOS REGISTRADOS (@(vehiculos?.Count ?? 0))</div>
+                    @if (vehiculos == null || vehiculos.Count == 0)
+                    {
+                        <div class="texto-secundario" style="font-size:.85rem">Este cliente no tiene vehículos registrados.</div>
+                    }
+                    else
+                    {
+                        @foreach (var v in vehiculos)
+                        {
+                            <div class="d-flex justify-content-between" style="font-size:.88rem">
+                                <span><strong>@v.Placa</strong> — @v.Marca @v.Modelo (@v.Anio)</span>
+                                <a asp-controller="Vehiculos" asp-action="Detalles" asp-route-id="@v.IdVehiculo" class="btn btn-sm btn-outline-primary btn-icono" title="Ficha">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        <h2 class="h6 fw-bold text-primary"><i class="bi bi-gear me-1"></i> Servicios del cliente (@(servicios?.Count ?? 0))</h2>
+        @if (servicios == null || servicios.Count == 0)
+        {
+            <div class="estado-vacio py-3">
+                <i class="bi bi-inbox"></i>
+                <div>Este cliente aún no tiene servicios registrados.</div>
+            </div>
+        }
+        else
+        {
+            <div class="tabla-envuelta">
+                <table class="tabla-lista">
+                    <thead>
+                        <tr>
+                            <th>#</th><th>Placa</th><th>Tipo</th><th>Estado</th><th>Inicio</th><th>Fin</th><th class="text-end">Total (C$)</th><th class="acciones"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var s in servicios)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@s.IdServicio</td>
+                                <td class="fw-semibold">@s.Placa</td>
+                                <td><span class="estado tipo-@s.TipoServicio.ToLowerInvariant()">@s.TipoServicio</span></td>
+                                <td><span class="estado estado-@s.Estado.ToLowerInvariant()">@s.Estado</span></td>
+                                <td>@s.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                <td>@(s.FechaFin?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                <td class="text-end fw-semibold">@s.Total.ToString("N2")</td>
+                                <td class="acciones">
+                                    <a asp-controller="Servicios" asp-action="Detalles" asp-route-id="@s.IdServicio" class="btn btn-sm btn-outline-primary btn-icono" title="Ver servicio">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="6" class="text-end">Total acumulado:</th>
+                            <th class="text-end">C$ @servicios.Sum(s => s.Total).ToString("N2")</th>
+                            <th></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        }
+    }
+</div>

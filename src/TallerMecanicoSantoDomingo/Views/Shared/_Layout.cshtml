@@ -1,0 +1,98 @@
+@using Microsoft.AspNetCore.Antiforgery
+@using Microsoft.AspNetCore.Identity
+@using TallerMecanicoSantoDomingo.Services
+@inject IAntiforgery Antiforgery
+@inject Microsoft.Extensions.Options.IOptions<ConfiguracionTaller> ConfigTaller
+@{
+    var token = Antiforgery.GetAndStoreTokens(Context).RequestToken;
+    var rutaActual = $"{Context.Request.Path.Value}".ToLowerInvariant();
+    bool Activa(string controlador) => rutaActual.StartsWith($"/{controlador.ToLowerInvariant()}");
+    string Clase(string controlador) => Activa(controlador) ? "activo" : "";
+    var usuario = User.Identity?.Name ?? "Usuario";
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="csrf-token" content="@token" />
+    <title>@ViewData["Title"] — @ConfigTaller.Value.NombreTaller</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <aside class="barra-lateral" id="barra-lateral">
+        <div class="barra-marca">
+            <div class="escudo"><i class="bi bi-tools"></i></div>
+            <div class="nombre-taller">
+                Taller Mecánico Santo Domingo
+                <small>Gestión de operaciones</small>
+            </div>
+        </div>
+        <nav class="barra-nav">
+            <div class="titulo-seccion">Operaciones</div>
+            <a href="@Url.Action("Index", "Dashboard")" class="@Clase("Dashboard")"><i class="bi bi-speedometer2"></i> Panel principal</a>
+            <a href="@Url.Action("Index", "Clientes")" class="@Clase("Clientes")"><i class="bi bi-people"></i> Clientes</a>
+            <a href="@Url.Action("Index", "Vehiculos")" class="@Clase("Vehiculos")"><i class="bi bi-car-front"></i> Vehículos</a>
+            <a href="@Url.Action("Index", "Servicios")" class="@Clase("Servicios")"><i class="bi bi-gear-wide-connected"></i> Servicios</a>
+            <a href="@Url.Action("Index", "Historial")" class="@Clase("Historial")"><i class="bi bi-clock-history"></i> Historial vehículo</a>
+            <div class="titulo-seccion">Personal e inventario</div>
+            <a href="@Url.Action("Index", "Trabajadores")" class="@Clase("Trabajadores")"><i class="bi bi-person-badge"></i> Trabajadores</a>
+            <a href="@Url.Action("Index", "Asignaciones")" class="@Clase("Asignaciones")"><i class="bi bi-person-check"></i> Asignaciones</a>
+            <a href="@Url.Action("Index", "Productos")" class="@Clase("Productos")"><i class="bi bi-box-seam"></i> Productos</a>
+            <div class="titulo-seccion">Administración</div>
+            <a href="@Url.Action("Index", "Facturas")" class="@Clase("Facturas")"><i class="bi bi-receipt"></i> Facturación</a>
+            <a href="@Url.Action("Index", "Reportes")" class="@Clase("Reportes")"><i class="bi bi-graph-up"></i> Reportes</a>
+        </nav>
+        <div class="barra-pie">
+            Sistema de gestión v1.0<br />UNAN-Managua — Proyecto académico
+        </div>
+    </aside>
+
+    <div class="contenido">
+        <header class="barra-superior">
+            <button class="btn btn-light d-lg-none" id="boton-menu" type="button" aria-label="Abrir menú">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="d-none d-lg-block fw-semibold text-secondary">
+                <i class="bi bi-tools me-1 text-warning"></i> @ConfigTaller.Value.NombreTaller
+            </div>
+            <div class="usuario-conectado">
+                <span class="avatar">@(usuario.Length > 0 ? char.ToUpperInvariant(usuario[0]).ToString() : "U")</span>
+                <span class="d-none d-sm-inline">@usuario</span>
+                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Cerrar sesión">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </button>
+                </form>
+            </div>
+        </header>
+
+        <main class="pagina">
+            @if (TempData["Exito"] != null)
+            {
+                <div class="alerta-exito d-flex align-items-center gap-2">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>@TempData["Exito"]</span>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alerta-error d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span>@TempData["Error"]</span>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                </div>
+            }
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,112 @@
+@model TallerMecanicoSantoDomingo.Models.Vehiculo
+@{
+    ViewData["Title"] = "Ficha del vehículo";
+    var historial = (List<TallerMecanicoSantoDomingo.Services.ItemHistorial>)ViewBag.Historial;
+}
+
+<div class="encabezado-pagina">
+    <div>
+        <h1><i class="bi bi-car-front me-2"></i>@Model.Placa — @Model.Marca @Model.Modelo</h1>
+        <div class="ruta"><a asp-action="Index">Vehículos</a> / Ficha del vehículo</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Editar" asp-route-id="@Model.IdVehiculo" class="btn btn-azul"><i class="bi bi-pencil me-1"></i> Editar</a>
+        <a asp-controller="Servicios" asp-action="Crear" asp-route-idVehiculo="@Model.IdVehiculo" class="btn btn-naranja">
+            <i class="bi bi-plus-lg me-1"></i> Nuevo servicio
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="tarjeta">
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-card-text me-1"></i> Datos del vehículo</h2>
+            <dl class="row mb-0" style="font-size:.9rem">
+                <dt class="col-5 texto-secundario">Placa</dt>
+                <dd class="col-7 fw-semibold">@Model.Placa</dd>
+                <dt class="col-5 texto-secundario">Marca</dt>
+                <dd class="col-7">@Model.Marca</dd>
+                <dt class="col-5 texto-secundario">Modelo</dt>
+                <dd class="col-7">@Model.Modelo</dd>
+                <dt class="col-5 texto-secundario">Año</dt>
+                <dd class="col-7">@Model.Anio</dd>
+                <dt class="col-5 texto-secundario">Estado</dt>
+                <dd class="col-7"><span class="estado @(Model.Activo ? "estado-activo" : "estado-inactivo")">@(Model.Activo ? "Activo" : "Desactivado")</span></dd>
+            </dl>
+        </div>
+        <div class="tarjeta">
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-person me-1"></i> Propietario</h2>
+            @if (Model.Cliente != null)
+            {
+                <div class="fw-semibold">@Model.Cliente.NombreCompleto</div>
+                <div class="texto-secundario" style="font-size:.85rem">RFC: @Model.Cliente.RFC</div>
+                <div class="texto-secundario" style="font-size:.85rem">Tel: @Model.Cliente.Telefono</div>
+                <a asp-controller="Clientes" asp-action="Detalles" asp-route-id="@Model.Cliente.IdCliente" class="btn btn-sm btn-outline-primary mt-2">
+                    <i class="bi bi-eye me-1"></i> Ver ficha del cliente
+                </a>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="tarjeta">
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-clock-history me-1"></i> Historial de servicios (@historial.Count)</h2>
+
+            @if (historial.Count == 0)
+            {
+                <div class="estado-vacio">
+                    <i class="bi bi-inbox"></i>
+                    <div class="fw-semibold">Este vehículo aún no tiene servicios registrados</div>
+                    <div style="font-size:.85rem">Registre un mantenimiento o un trabajo de pintura para comenzar su historial.</div>
+                </div>
+            }
+            else
+            {
+                foreach (var item in historial)
+                {
+                    <div class="border rounded p-3 mb-2">
+                        <div class="d-flex justify-content-between flex-wrap gap-2">
+                            <div>
+                                <span class="estado tipo-@item.TipoServicio.ToLowerInvariant()">@item.TipoServicio</span>
+                                <span class="estado estado-@item.Estado.ToLowerInvariant()">@item.Estado</span>
+                                <span class="texto-secundario ms-2" style="font-size:.82rem">
+                                    #@item.IdServicio — Inicio: @item.FechaInicio.ToString("dd/MM/yyyy")
+                                    @(item.FechaFin.HasValue ? $"— Fin: {item.FechaFin.Value:dd/MM/yyyy}" : "")
+                                </span>
+                            </div>
+                            <div class="text-end">
+                                <span class="fw-semibold">C$ @item.Total.ToString("N2")</span>
+                                <a asp-controller="Servicios" asp-action="Detalles" asp-route-id="@item.IdServicio" class="btn btn-sm btn-outline-primary btn-icono ms-2" title="Ver detalle del servicio">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="mt-2" style="font-size:.88rem">@item.Descripcion</div>
+
+                        @if (item.Trabajadores.Count > 0)
+                        {
+                            <div class="mt-2" style="font-size:.82rem">
+                                <i class="bi bi-person-badge texto-secundario me-1"></i>
+                                <strong>Trabajadores:</strong> @string.Join(", ", item.Trabajadores)
+                            </div>
+                        }
+                        @if (item.Productos.Count > 0)
+                        {
+                            <div class="mt-1" style="font-size:.82rem">
+                                <i class="bi bi-box-seam texto-secundario me-1"></i>
+                                <strong>Productos:</strong> @string.Join(", ", item.Productos)
+                            </div>
+                        }
+                        @if (item.Facturas.Count > 0)
+                        {
+                            <div class="mt-1" style="font-size:.82rem">
+                                <i class="bi bi-receipt texto-secundario me-1"></i>
+                                <strong>Facturas:</strong> @string.Join(", ", item.Facturas)
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>

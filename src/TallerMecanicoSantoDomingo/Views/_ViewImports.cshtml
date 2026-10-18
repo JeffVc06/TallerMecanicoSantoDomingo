@@ -1,0 +1,9 @@
+@* Espacios de nombres e infraestructura compartidos por todas las vistas.
+   Sin este archivo los Tag Helpers (asp-for, asp-action, asp-items, etc.)
+   no se procesan y los formularios perderían el token antiforgery. *@
+@using TallerMecanicoSantoDomingo
+@using TallerMecanicoSantoDomingo.Models
+@using TallerMecanicoSantoDomingo.Services
+@using TallerMecanicoSantoDomingo.ViewModels
+@using Microsoft.AspNetCore.Mvc.Rendering
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers

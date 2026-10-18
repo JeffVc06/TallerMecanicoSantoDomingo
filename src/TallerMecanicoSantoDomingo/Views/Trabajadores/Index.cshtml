@@ -1,0 +1,103 @@
+@model List<TallerMecanicoSantoDomingo.Models.Trabajador>
+@{
+    ViewData["Title"] = "Trabajadores";
+    var cargas = (Dictionary<int, TallerMecanicoSantoDomingo.Services.TrabajadorCarga>)ViewBag.Cargas;
+}
+
+<div class="encabezado-pagina">
+    <div>
+        <h1><i class="bi bi-person-badge me-2"></i>Trabajadores</h1>
+        <div class="ruta">Personal del taller, áreas y carga de trabajo actual</div>
+    </div>
+    <a asp-action="Crear" class="btn btn-naranja"><i class="bi bi-plus-lg me-1"></i> Registrar trabajador</a>
+</div>
+
+<div class="tarjeta">
+    <form asp-action="Index" method="get" data-busqueda class="row g-2 align-items-end mb-3">
+        <div class="col-sm-8">
+            <label class="form-label fw-semibold text-primary" style="font-size:.85rem">Buscar por nombre, apellido o teléfono</label>
+            <input type="text" name="buscar" value="@ViewBag.Buscar" class="form-control" placeholder="Escriba para buscar..." />
+        </div>
+        <div class="col-sm-4">
+            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-search me-1"></i> Buscar</button>
+        </div>
+    </form>
+
+    @if (Model.Count == 0)
+    {
+        <div class="estado-vacio">
+            <i class="bi bi-person-badge"></i>
+            <div class="fw-semibold">No se encontraron trabajadores</div>
+            <div style="font-size:.85rem">Registre al primer trabajador indicando su área (Mantenimiento mecánico o Pintura).</div>
+        </div>
+    }
+    else
+    {
+        <div class="tabla-envuelta">
+            <table class="tabla-lista">
+                <thead>
+                    <tr>
+                        <th>Trabajador</th>
+                        <th>Teléfono</th>
+                        <th>Área</th>
+                        <th style="min-width:180px">Carga actual (Regla 7)</th>
+                        <th>Disponibilidad</th>
+                        <th>Estado</th>
+                        <th class="acciones">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in Model)
+                    {
+                        cargas.TryGetValue(t.IdTrabajador, out var carga);
+                        int activos = carga?.ServiciosActivos ?? 0;
+                        string color = activos == 0 ? "bg-success" : activos == 1 ? "bg-warning" : "bg-danger";
+                        <tr>
+                            <td class="fw-semibold">@t.NombreCompleto</td>
+                            <td>@t.Telefono</td>
+                            <td>@t.Area?.Nombre</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="medidor flex-grow-1"><span class="@color" style="width:@(activos * 50)%"></span></div>
+                                    <span style="font-size:.82rem" class="fw-semibold">@activos de 2</span>
+                                </div>
+                            </td>
+                            <td>
+                                @if (activos == 0)
+                                {
+                                    <span class="estado estado-activo">Disponible</span>
+                                }
+                                else if (activos == 1)
+                                {
+                                    <span class="estado" style="background:#fef3c7;color:#92400e">Capacidad parcial</span>
+                                }
+                                else
+                                {
+                                    <span class="estado estado-cancelado">Límite alcanzado</span>
+                                }
+                            </td>
+                            <td><span class="estado @(t.Activo ? "estado-activo" : "estado-inactivo")">@(t.Activo ? "Activo" : "Desactivado")</span></td>
+                            <td class="acciones">
+                                <a asp-action="Detalles" asp-route-id="@t.IdTrabajador" class="btn btn-sm btn-outline-primary btn-icono" title="Ver historial de asignaciones">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a asp-action="Editar" asp-route-id="@t.IdTrabajador" class="btn btn-sm btn-outline-secondary btn-icono" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form asp-action="CambiarEstado" asp-route-id="@t.IdTrabajador" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="activo" value="@(!t.Activo)" />
+                                    <button type="submit" class="btn btn-sm @(t.Activo ? "btn-outline-danger" : "btn-outline-success") btn-icono"
+                                            title="@(t.Activo ? "Desactivar (conserva el historial)" : "Reactivar")"
+                                            data-confirmar="¿Desea @(t.Activo ? "desactivar" : "reactivar") a @(t.NombreCompleto)?">
+                                        <i class="bi @(t.Activo ? "bi-person-dash" : "bi-person-check")"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

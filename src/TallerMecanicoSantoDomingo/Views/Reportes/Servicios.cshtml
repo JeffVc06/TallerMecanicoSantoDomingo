@@ -1,0 +1,159 @@
+@model List<TallerMecanicoSantoDomingo.Services.FilaServicioReporte>
+@{
+    ViewData["Title"] = "Reporte de servicios";
+    var desde = (DateOnly)ViewBag.Desde;
+    var hasta = (DateOnly)ViewBag.Hasta;
+    var porTipo = ViewBag.PorTipo as List<TallerMecanicoSantoDomingo.Services.FilaConteo> ?? new();
+    var porEstado = ViewBag.PorEstado as List<TallerMecanicoSantoDomingo.Services.FilaConteo> ?? new();
+    var clientes = (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Clientes;
+    var trabajadores = (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Trabajadores;
+    var tipos = TallerMecanicoSantoDomingo.Models.ValoresCatalogo.TiposServicio;
+    var estados = TallerMecanicoSantoDomingo.Models.ValoresCatalogo.EstadosServicio;
+    string? tipo = ViewBag.Tipo as string;
+    string? estado = ViewBag.Estado as string;
+    int? idCliente = ViewBag.IdCliente as int?;
+    int? idTrabajador = ViewBag.IdTrabajador as int?;
+}
+
+<div class="encabezado-pagina">
+    <div>
+        <h1><i class="bi bi-gear-wide-connected me-2"></i>Reporte de servicios</h1>
+        <div class="ruta"><a asp-action="Index">Reportes</a> / Servicios por período</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-outline-success" asp-action="ExportarCsv" asp-route-tipo="servicios"
+           asp-route-desde="@desde.ToString("yyyy-MM-dd")" asp-route-hasta="@hasta.ToString("yyyy-MM-dd")"
+           asp-route-idCliente="@idCliente">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Exportar CSV
+        </a>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i> Imprimir</button>
+    </div>
+</div>
+
+<div class="tarjeta">
+    <form asp-action="Servicios" method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-md-2">
+            <label class="form-label fw-semibold text-primary" style="font-size:.83rem">Desde</label>
+            <input type="date" name="desde" value="@desde.ToString("yyyy-MM-dd")" class="form-control" required />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label fw-semibold text-primary" style="font-size:.83rem">Hasta</label>
+            <input type="date" name="hasta" value="@hasta.ToString("yyyy-MM-dd")" class="form-control" required />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label fw-semibold text-primary" style="font-size:.83rem">Tipo</label>
+            <select name="tipo" class="form-select">
+                <option value="">Todos</option>
+                @foreach (var t in tipos) { <option value="@t" selected="@(tipo == t)">@t</option> }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label fw-semibold text-primary" style="font-size:.83rem">Estado</label>
+            <select name="estado" class="form-select">
+                <option value="">Todos</option>
+                @foreach (var e in estados) { <option value="@e" selected="@(estado == e)">@e</option> }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label fw-semibold text-primary" style="font-size:.83rem">Cliente</label>
+            <select name="idCliente" class="form-select">
+                <option value="">Todos</option>
+                @foreach (var c in clientes) { <option value="@c.Value" selected="@(idCliente?.ToString() == c.Value)">@c.Text</option> }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label fw-semibold text-primary" style="font-size:.83rem">Trabajador</label>
+            <select name="idTrabajador" class="form-select">
+                <option value="">Todos</option>
+                @foreach (var t in trabajadores) { <option value="@t.Value" selected="@(idTrabajador?.ToString() == t.Value)">@t.Text</option> }
+            </select>
+        </div>
+        <div class="col-12 mt-2">
+            <button type="submit" class="btn btn-azul"><i class="bi bi-funnel me-1"></i> Aplicar filtros</button>
+        </div>
+    </form>
+
+    <!-- Resúmenes -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-6">
+            <div class="border rounded p-3 h-100">
+                <div class="fw-bold text-primary mb-2" style="font-size:.85rem">SERVICIOS POR TIPO</div>
+                @if (porTipo.Count == 0)
+                {
+                    <div class="texto-secundario" style="font-size:.85rem">Sin datos en el período.</div>
+                }
+                else
+                {
+                    @foreach (var c in porTipo)
+                    {
+                        <div class="d-flex justify-content-between" style="font-size:.88rem">
+                            <span>@c.Categoria</span><strong>@c.Cantidad</strong>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="border rounded p-3 h-100">
+                <div class="fw-bold text-primary mb-2" style="font-size:.85rem">SERVICIOS POR ESTADO</div>
+                @if (porEstado.Count == 0)
+                {
+                    <div class="texto-secundario" style="font-size:.85rem">Sin datos en el período.</div>
+                }
+                else
+                {
+                    @foreach (var c in porEstado)
+                    {
+                        <div class="d-flex justify-content-between" style="font-size:.88rem">
+                            <span>@c.Categoria</span><strong>@c.Cantidad</strong>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="estado-vacio">
+            <i class="bi bi-gear"></i>
+            <div class="fw-semibold">No hay servicios que coincidan con los filtros</div>
+            <div style="font-size:.85rem">Amplíe el período o quite algún filtro.</div>
+        </div>
+    }
+    else
+    {
+        <div class="tabla-envuelta">
+            <table class="tabla-lista">
+                <thead>
+                    <tr>
+                        <th>#</th><th>Placa</th><th>Cliente</th><th>Tipo</th><th>Estado</th>
+                        <th>Inicio</th><th>Fin</th><th class="text-end">Total (C$)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@s.IdServicio</td>
+                            <td class="fw-semibold">@s.Placa</td>
+                            <td>@s.Cliente</td>
+                            <td><span class="estado tipo-@s.TipoServicio.ToLowerInvariant()">@s.TipoServicio</span></td>
+                            <td><span class="estado estado-@s.Estado.ToLowerInvariant()">@s.Estado</span></td>
+                            <td>@s.FechaInicio.ToString("dd/MM/yyyy")</td>
+                            <td>@(s.FechaFin?.ToString("dd/MM/yyyy") ?? "—")</td>
+                            <td class="text-end fw-semibold">@s.Total.ToString("N2")</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="7" class="text-end">Total acumulado de servicios (@Model.Count):</th>
+                        <th class="text-end">C$ @Model.Sum(s => s.Total).ToString("N2")</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="form-text mt-2">Período consultado: @desde.ToString("dd/MM/yyyy") al @hasta.ToString("dd/MM/yyyy").</div>
+    }
+</div>

@@ -1,0 +1,13 @@
+@model TallerMecanicoSantoDomingo.ViewModels.ErrorViewModel
+@{
+    ViewData["Title"] = "Error del sistema";
+    Layout = "_LayoutCuenta";
+}
+<div class="tarjeta-cuenta text-center">
+    <div class="marca-cuenta">
+        <div class="escudo"><i class="bi bi-exclamation-octagon"></i></div>
+        <h1>@Model.Mensaje</h1>
+    </div>
+    <p class="texto-secundario">@Model.Detalle</p>
+    <a asp-controller="Dashboard" asp-action="Index" class="btn btn-azul w-100 mt-3">Volver al panel principal</a>
+</div>

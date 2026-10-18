@@ -1,0 +1,206 @@
+@model TallerMecanicoSantoDomingo.ViewModels.FacturaCrearViewModel
+@{
+    ViewData["Title"] = "Emitir factura";
+    var clientes = (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Clientes;
+    var elegibles = ViewBag.Elegibles as List<TallerMecanicoSantoDomingo.Services.ServicioElegible>;
+    var metodos = TallerMecanicoSantoDomingo.Models.ValoresCatalogo.MetodosPago;
+}
+
+<div class="encabezado-pagina">
+    <div>
+        <h1><i class="bi bi-receipt me-2"></i>Emitir factura</h1>
+        <div class="ruta"><a asp-action="Index">Facturas</a> / Nueva factura</div>
+    </div>
+</div>
+
+<div class="alerta-info" style="font-size:.85rem">
+    <i class="bi bi-shield-lock me-1"></i>
+    <strong>Los importes se calculan en el servidor</strong> (Regla 13): el subtotal es la suma de los servicios
+    seleccionados, el IVA se aplica sobre ese subtotal (actualmente @Model.PorcentajeIVA%) y el total = subtotal + IVA.
+    Regla 12: todos los servicios de una factura deben pertenecer al mismo cliente.
+</div>
+
+<div class="tarjeta" style="max-width:900px">
+    <form asp-action="Crear" method="post" class="formulario" id="formulario-factura">
+        <div asp-validation-summary="ModelOnly" class="alerta-error"></div>
+
+        <div class="row g-3">
+            <div class="col-md-8">
+                <label asp-for="IdCliente" class="form-label"></label>
+                <select asp-for="IdCliente" class="form-select" id="selector-cliente" required>
+                    <option value="">— Seleccione el cliente propietario —</option>
+                    @foreach (var c in clientes)
+                    {
+                        <option value="@c.Value" selected="@((Model.IdCliente.ToString() == c.Value))">@c.Text</option>
+                    }
+                </select>
+                <span asp-validation-for="IdCliente" class="text-danger"></span>
+                <div class="form-text">Solo se listan servicios abiertos o finalizados que aún no estén en una factura emitida.</div>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="MetodoPago" class="form-label"></label>
+                <select asp-for="MetodoPago" class="form-select">
+                    @foreach (var m in metodos)
+                    {
+                        <option value="@m" selected="@(Model.MetodoPago == m)">@m</option>
+                    }
+                </select>
+                <span asp-validation-for="MetodoPago" class="text-danger"></span>
+            </div>
+        </div>
+
+        <!-- Paso 2: servicios del cliente -->
+        <div class="mt-4">
+            <h2 class="h6 fw-bold text-primary"><i class="bi bi-list-check me-1"></i> Servicios a facturar (Reglas 11 y 12)</h2>
+
+            <div id="zona-servicios">
+                @if (elegibles != null)
+                {
+                    if (elegibles.Count == 0)
+                    {
+                        <div class="alerta-info mb-0" style="font-size:.85rem">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Este cliente no tiene servicios elegibles para facturar (deben estar abiertos o finalizados y sin facturar).
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="tabla-envuelta">
+                            <table class="tabla-lista">
+                                <thead>
+                                    <tr><th style="width:40px"></th><th>#</th><th>Vehículo</th><th>Tipo</th><th>Descripción</th><th>Inicio</th><th>Estado</th><th class="text-end">Monto (C$)</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var s in elegibles)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <input type="checkbox" class="form-check-input casilla-servicio"
+                                                       name="IdServicios" value="@s.IdServicio"
+                                                       data-total="@s.Total.ToString("0.00")"
+                                                       @(Model.IdServicios.Contains(s.IdServicio) ? "checked" : "") />
+                                            </td>
+                                            <td class="fw-semibold">@s.IdServicio</td>
+                                            <td class="fw-semibold">@s.Placa</td>
+                                            <td><span class="estado tipo-@s.TipoServicio.ToLowerInvariant()">@s.TipoServicio</span></td>
+                                            <td style="max-width:200px">@s.Descripcion</td>
+                                            <td>@s.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                            <td><span class="estado estado-@s.Estado.ToLowerInvariant()">@s.Estado</span></td>
+                                            <td class="text-end">@s.Total.ToString("N2")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="estado-vacio py-3">
+                        <i class="bi bi-person-check"></i>
+                        <div>Seleccione un cliente para listar sus servicios elegibles.</div>
+                    </div>
+                }
+            </div>
+            <span asp-validation-for="IdServicios" class="text-danger"></span>
+        </div>
+
+        <!-- Resumen de cálculo (informativo; el servidor recalcula) -->
+        <div class="border rounded p-3 mt-3 bg-light">
+            <div class="d-flex justify-content-between"><span>Subtotal (suma de servicios):</span><strong id="resumen-subtotal">C$ 0.00</strong></div>
+            <div class="d-flex justify-content-between"><span>IVA (@Model.PorcentajeIVA%):</span><strong id="resumen-iva">C$ 0.00</strong></div>
+            <div class="d-flex justify-content-between fs-5"><span class="fw-bold text-primary">Total:</span><strong class="text-primary" id="resumen-total">C$ 0.00</strong></div>
+            <div class="form-text">Vista previa solamente; la factura definitiva se genera con los valores calculados por el backend.</div>
+        </div>
+
+        <div class="mt-3">
+            <label asp-for="Notas" class="form-label"></label>
+            <input asp-for="Notas" class="form-control" maxlength="200" placeholder="Condiciones o comentarios (opcional)" />
+            <span asp-validation-for="Notas" class="text-danger"></span>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-naranja"><i class="bi bi-printer me-1"></i> Emitir y imprimir</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidacionScripts" />
+    <script>
+        (function () {
+            const ivaPorcentaje = @Model.PorcentajeIVA;
+            const selectorCliente = document.getElementById('selector-cliente');
+            const zona = document.getElementById('zona-servicios');
+            const form = document.getElementById('formulario-factura');
+
+            function moneda(v) { return 'C$ ' + v.toLocaleString('ni-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+            function recalcular() {
+                let subtotal = 0;
+                document.querySelectorAll('.casilla-servicio:checked').forEach(c => {
+                    subtotal += parseFloat(c.getAttribute('data-total')) || 0;
+                });
+                const iva = Math.round(subtotal * ivaPorcentaje) / 100;
+                document.getElementById('resumen-subtotal').textContent = moneda(subtotal);
+                document.getElementById('resumen-iva').textContent = moneda(iva);
+                document.getElementById('resumen-total').textContent = moneda(subtotal + iva);
+            }
+
+            function cargando() {
+                zona.innerHTML = '<div class="estado-vacio py-3"><div class="spinner-border text-primary mb-2"></div><div>Cargando servicios del cliente...</div></div>';
+            }
+
+            async function cargarServicios() {
+                const id = selectorCliente.value;
+                if (!id) {
+                    zona.innerHTML = '<div class="estado-vacio py-3"><i class="bi bi-person-check"></i><div>Seleccione un cliente para listar sus servicios elegibles.</div></div>';
+                    recalcular();
+                    return;
+                }
+                cargando();
+                try {
+                    const respuesta = await fetch('@Url.Action("ServiciosElegibles", "Facturas")' + '?idCliente=' + encodeURIComponent(id), {
+                        headers: { 'X-CSRF-TOKEN': document.querySelector('input[name="__RequestVerificationToken"]')?.value || '' }
+                    });
+                    const datos = await respuesta.json();
+                    if (!datos.servicios || datos.servicios.length === 0) {
+                        zona.innerHTML = '<div class="alerta-info mb-0" style="font-size:.85rem"><i class="bi bi-info-circle me-1"></i> Este cliente no tiene servicios elegibles para facturar.</div>';
+                        recalcular();
+                        return;
+                    }
+                    let html = '<div class="tabla-envuelta"><table class="tabla-lista"><thead><tr><th style="width:40px"></th><th>#</th><th>Vehículo</th><th>Tipo</th><th>Descripción</th><th>Inicio</th><th>Estado</th><th class="text-end">Monto (C$)</th></tr></thead><tbody>';
+                    datos.servicios.forEach(s => {
+                        html += '<tr>' +
+                            '<td><input type="checkbox" class="form-check-input casilla-servicio" name="IdServicios" value="' + s.idServicio + '" data-total="' + s.total + '"></td>' +
+                            '<td class="fw-semibold">' + s.idServicio + '</td>' +
+                            '<td class="fw-semibold">' + s.placa + '</td>' +
+                            '<td><span class="estado tipo-' + s.tipoServicio.toLowerCase() + '">' + s.tipoServicio + '</span></td>' +
+                            '<td style="max-width:200px">' + s.descripcion + '</td>' +
+                            '<td>' + s.fechaInicio + '</td>' +
+                            '<td><span class="estado estado-' + s.estado.toLowerCase() + '">' + s.estado + '</span></td>' +
+                            '<td class="text-end">' + parseFloat(s.total).toLocaleString('ni-NI', { minimumFractionDigits: 2 }) + '</td>' +
+                            '</tr>';
+                    });
+                    html += '</tbody></table></div>';
+                    zona.innerHTML = html;
+                    recalcular();
+                } catch (e) {
+                    zona.innerHTML = '<div class="alerta-error">No fue posible cargar los servicios. Intente de nuevo.</div>';
+                }
+            }
+
+            selectorCliente.addEventListener('change', cargarServicios);
+            zona.addEventListener('change', e => { if (e.target.classList.contains('casilla-servicio')) recalcular(); });
+            form.addEventListener('submit', e => {
+                const marcadas = document.querySelectorAll('.casilla-servicio:checked').length;
+                if (marcadas === 0) {
+                    e.preventDefault();
+                    alert('Debe seleccionar al menos un servicio para facturar (Regla 11).');
+                }
+            });
+            recalcular();
+        })();
+    </script>
+}

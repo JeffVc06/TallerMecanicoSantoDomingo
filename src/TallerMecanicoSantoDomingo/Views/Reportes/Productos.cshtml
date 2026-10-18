@@ -1,0 +1,102 @@
+@{
+    ViewData["Title"] = "Reporte de productos";
+    var productos = ViewBag.Productos as List<TallerMecanicoSantoDomingo.Services.FilaProductoReporte> ?? new();
+    var desde = ViewBag.Desde as DateOnly?;
+    var hasta = ViewBag.Hasta as DateOnly?;
+    decimal montoTotal = productos.Sum(p => p.MontoEstimado ?? 0);
+}
+
+<div class="encabezado-pagina">
+    <div>
+        <h1><i class="bi bi-box-seam me-2"></i>Productos más utilizados</h1>
+        <div class="ruta"><a asp-action="Index">Reportes</a> / Consumo de repuestos y materiales en servicios</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-outline-success" asp-action="ExportarCsv" asp-route-tipo="productos"
+           asp-route-desde="@((desde ?? DateOnly.FromDateTime(DateTime.Today)).ToString("yyyy-MM-dd"))"
+           asp-route-hasta="@((hasta ?? DateOnly.FromDateTime(DateTime.Today)).ToString("yyyy-MM-dd"))">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Exportar CSV
+        </a>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i> Imprimir</button>
+    </div>
+</div>
+
+<div class="tarjeta">
+    <form asp-action="Productos" method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-md-3">
+            <label class="form-label fw-semibold text-primary" style="font-size:.83rem">Desde (opcional)</label>
+            <input type="date" name="desde" value="@(desde?.ToString("yyyy-MM-dd"))" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-semibold text-primary" style="font-size:.83rem">Hasta (opcional)</label>
+            <input type="date" name="hasta" value="@(hasta?.ToString("yyyy-MM-dd"))" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-funnel me-1"></i> Filtrar</button>
+        </div>
+    </form>
+
+    @if (desde.HasValue || hasta.HasValue)
+    {
+        <div class="alerta-info" style="font-size:.85rem">
+            <i class="bi bi-calendar-range me-1"></i>
+            Período aplicado: @(desde?.ToString("dd/MM/yyyy") ?? "inicio") al @(hasta?.ToString("dd/MM/yyyy") ?? "hoy").
+        </div>
+    }
+
+    @if (productos.Count == 0)
+    {
+        <div class="estado-vacio">
+            <i class="bi bi-box"></i>
+            <div class="fw-semibold">No hay productos utilizados en el período</div>
+            <div style="font-size:.85rem">Los productos se registran al gestionar cada servicio.</div>
+        </div>
+    }
+    else
+    {
+        <div class="tabla-envuelta">
+            <table class="tabla-lista">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Producto</th>
+                        <th class="text-end">Cantidad total</th>
+                        <th class="text-end">Veces utilizado</th>
+                        <th class="text-end">Monto estimado (C$)</th>
+                        <th style="min-width:160px">Frecuencia</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int i = 1; decimal maximo = productos.Count > 0 ? productos.Max(p => p.CantidadTotal) : 1; }
+                    @foreach (var p in productos.OrderByDescending(p => p.CantidadTotal))
+                    {
+                        int porcentaje = maximo > 0 ? (int)Math.Round(p.CantidadTotal / maximo * 100) : 0;
+                        <tr>
+                            <td class="fw-semibold">@i</td>
+                            <td class="fw-semibold">@p.Producto</td>
+                            <td class="text-end">@p.CantidadTotal.ToString("0.###")</td>
+                            <td class="text-end">@p.VecesUtilizado</td>
+                            <td class="text-end">@(p.MontoEstimado?.ToString("N2") ?? "—")</td>
+                            <td>
+                                <div class="progress" style="height:10px" title="@porcentaje%">
+                                    <div class="progress-bar bg-primary" style="width:@porcentaje%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        i++;
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="4" class="text-end">Monto estimado total:</th>
+                        <th class="text-end">C$ @montoTotal.ToString("N2")</th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="form-text mt-2">
+            El monto estimado usa el precio unitario actual del producto multiplicado por la cantidad utilizada en cada servicio.
+        </div>
+    }
+</div>
