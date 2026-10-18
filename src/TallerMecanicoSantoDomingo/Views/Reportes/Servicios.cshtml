@@ -7,8 +7,8 @@
     var porEstado = ViewBag.PorEstado as List<TallerMecanicoSantoDomingo.Services.FilaConteo> ?? new();
     var clientes = (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Clientes;
     var trabajadores = (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Trabajadores;
-    var tipos = TallerMecanicoSantoDomingo.Models.ValoresCatalogo.TiposServicio;
-    var estados = TallerMecanicoSantoDomingo.Models.ValoresCatalogo.EstadosServicio;
+    var tipos = (new[] { "Mantenimiento", "Pintura" });
+    var estados = (new[] { "Abierto", "Finalizado", "Cancelado" });
     string? tipo = ViewBag.Tipo as string;
     string? estado = ViewBag.Estado as string;
     int? idCliente = ViewBag.IdCliente as int?;

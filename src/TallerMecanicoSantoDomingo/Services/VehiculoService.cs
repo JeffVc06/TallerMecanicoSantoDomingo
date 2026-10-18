@@ -102,7 +102,7 @@ public class VehiculoService : IVehiculoService
         if (!activo)
         {
             var tieneServiciosAbiertos = await _db.Servicios
-                .AnyAsync(s => s.IdVehiculo == idVehiculo && s.Estado == ValoresCatalogo.ServicioAbierto);
+                .AnyAsync(s => s.IdVehiculo == idVehiculo && s.Estado == "Abierto");
             if (tieneServiciosAbiertos)
                 return Resultado.Fallo("No se puede desactivar el vehículo porque tiene servicios abiertos.");
         }

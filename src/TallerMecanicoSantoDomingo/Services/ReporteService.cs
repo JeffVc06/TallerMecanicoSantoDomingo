@@ -52,9 +52,9 @@ public class ReporteService : IReporteService
             .Include(s => s.Vehiculo).ThenInclude(v => v!.Cliente)
             .Where(s => s.FechaInicio >= desde && s.FechaInicio <= hasta);
 
-        if (!string.IsNullOrWhiteSpace(tipo) && ValoresCatalogo.TiposServicio.Contains(tipo))
+        if (!string.IsNullOrWhiteSpace(tipo) && (new[] { "Mantenimiento", "Pintura" }).Contains(tipo))
             query = query.Where(s => s.TipoServicio == tipo);
-        if (!string.IsNullOrWhiteSpace(estado) && ValoresCatalogo.EstadosServicio.Contains(estado))
+        if (!string.IsNullOrWhiteSpace(estado) && (new[] { "Abierto", "Finalizado", "Cancelado" }).Contains(estado))
             query = query.Where(s => s.Estado == estado);
         if (idCliente.HasValue)
             query = query.Where(s => s.Vehiculo!.IdCliente == idCliente.Value);
@@ -131,8 +131,8 @@ public class ReporteService : IReporteService
         return trabajadores.Select(t => new FilaTrabajadorReporte(
             t.NombreCompleto,
             t.Area?.Nombre ?? "",
-            t.DetalleServicios.Count(d => d.Estado == ValoresCatalogo.AsignacionActiva),
-            t.DetalleServicios.Count(d => d.Estado == ValoresCatalogo.AsignacionRetirada),
+            t.DetalleServicios.Count(d => d.Estado == "Activo"),
+            t.DetalleServicios.Count(d => d.Estado == "Retirado"),
             t.DetalleServicios.Count))
             .OrderByDescending(f => f.TotalAsignaciones)
             .ToList();
@@ -146,7 +146,7 @@ public class ReporteService : IReporteService
             .ToListAsync();
 
         var activos = await _db.DetalleServicio.AsNoTracking()
-            .Where(d => d.Estado == ValoresCatalogo.AsignacionActiva && d.Servicio!.Estado == ValoresCatalogo.ServicioAbierto)
+            .Where(d => d.Estado == "Activo" && d.Servicio!.Estado == "Abierto")
             .GroupBy(d => d.IdTrabajador)
             .Select(g => new { g.Key, Total = g.Count() })
             .ToListAsync();
@@ -205,7 +205,7 @@ public class ReporteService : IReporteService
         var fin = hasta.AddDays(1).ToDateTime(TimeOnly.MinValue);
 
         var facturas = await _db.Facturas.AsNoTracking()
-            .Where(f => f.FechaFactura >= inicio && f.FechaFactura < fin && f.Estado == ValoresCatalogo.FacturaEmitida)
+            .Where(f => f.FechaFactura >= inicio && f.FechaFactura < fin && f.Estado == "Emitida")
             .ToListAsync();
 
         return facturas

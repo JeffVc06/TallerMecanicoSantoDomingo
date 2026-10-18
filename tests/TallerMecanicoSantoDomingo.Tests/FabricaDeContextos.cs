@@ -78,7 +78,7 @@ public static class FabricaDeContextos
 
     /// <summary>Crea un servicio abierto directamente en la base en memoria (sin pasar por el servicio de negocio).</summary>
     public static Servicio NuevoServicio(TallerDbContext db, int idVehiculo, string tipo, decimal total,
-        string descripcion = "Trabajo de prueba", string estado = ValoresCatalogo.ServicioAbierto)
+        string descripcion = "Trabajo de prueba", string estado = "Abierto")
     {
         var servicio = new Servicio
         {

@@ -7,6 +7,9 @@
     <RootNamespace>TallerMecanicoSantoDomingo</RootNamespace>
     <AssemblyName>TallerMecanicoSantoDomingo</AssemblyName>
     <LangVersion>latest</LangVersion>
+    <!-- F5 ejecuta el DLL con vsdbg; no se necesita apphost.exe y así se evita
+         el error de copia cuando Windows mantiene ese ejecutable bloqueado. -->
+    <UseAppHost>false</UseAppHost>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,6 +19,12 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <!-- Anula la versión vulnerable transitiva requerida por Microsoft.Data.SqlClient. -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.0.21" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TallerMecanicoSantoDomingo.Tests" />
   </ItemGroup>
 
   <!-- El script SQL (fuente única del esquema) queda incrustado en la aplicación

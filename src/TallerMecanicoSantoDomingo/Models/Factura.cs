@@ -41,11 +41,11 @@ public class Factura
 
     /// <summary>MER: Método_Pago (dato registrado; el sistema no controla pagos).</summary>
     [Required, MaxLength(30)]
-    public string MetodoPago { get; set; } = ValoresCatalogo.PagoEfectivo;
+    public string MetodoPago { get; set; } = "Efectivo";
 
     /// <summary>MER: Estado. Valores: Emitida | Anulada.</summary>
     [Required, MaxLength(20)]
-    public string Estado { get; set; } = ValoresCatalogo.FacturaEmitida;
+    public string Estado { get; set; } = "Emitida";
 
     [MaxLength(200)]
     public string? Notas { get; set; }

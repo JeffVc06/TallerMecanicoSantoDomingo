@@ -45,7 +45,7 @@ public class AsignacionService : IAsignacionService
             .FirstOrDefaultAsync(s => s.IdServicio == idServicio);
         if (servicio is null)
             return Resultado.Fallo("El servicio indicado no existe.");
-        if (servicio.Estado != ValoresCatalogo.ServicioAbierto)
+        if (servicio.Estado != "Abierto")
             return Resultado.Fallo("Solo se pueden asignar trabajadores a servicios abiertos.");
 
         var trabajador = await _db.Trabajadores.AsNoTracking()
@@ -58,7 +58,9 @@ public class AsignacionService : IAsignacionService
 
         // Regla 5: el área del trabajador debe ser compatible con el tipo de servicio.
         var area = trabajador.Area?.Nombre ?? "";
-        if (!ValoresCatalogo.EsAreaCompatibleConTipo(area, servicio.TipoServicio))
+        var compatible = (area == "Mantenimiento mecánico" && servicio.TipoServicio == "Mantenimiento")
+            || (area == "Pintura" && servicio.TipoServicio == "Pintura");
+        if (!compatible)
             return Resultado.Fallo($"El trabajador pertenece al área '{area}' y no puede recibir servicios de tipo '{servicio.TipoServicio}' (Regla 5).");
 
         var yaAsignado = await _db.DetalleServicio
@@ -82,14 +84,14 @@ public class AsignacionService : IAsignacionService
                 activos = await _db.Database.SqlQueryRaw<int>(
                     "SELECT COUNT(*) AS Value FROM DetalleServicio WITH (UPDLOCK, HOLDLOCK) " +
                     "WHERE IdTrabajador = {0} AND Estado = {1}",
-                    idTrabajador, ValoresCatalogo.AsignacionActiva).SingleAsync();
+                    idTrabajador, "Activo").SingleAsync();
             }
             else
             {
                 // Proveedores sin SQL Server (por ejemplo, el proveedor en memoria
                 // usado por las pruebas unitarias): no hay bloqueo disponible.
                 activos = await _db.DetalleServicio.CountAsync(d =>
-                    d.IdTrabajador == idTrabajador && d.Estado == ValoresCatalogo.AsignacionActiva);
+                    d.IdTrabajador == idTrabajador && d.Estado == "Activo");
             }
 
             if (activos >= 2)
@@ -103,7 +105,7 @@ public class AsignacionService : IAsignacionService
                 IdServicio = idServicio,
                 IdTrabajador = idTrabajador,
                 FechaAsignacion = DateTime.UtcNow,
-                Estado = ValoresCatalogo.AsignacionActiva,
+                Estado = "Activo",
                 Observaciones = string.IsNullOrWhiteSpace(observaciones) ? null : observaciones.Trim()
             });
 
@@ -136,12 +138,12 @@ public class AsignacionService : IAsignacionService
             .FirstOrDefaultAsync(d => d.IdDetalleServicio == idDetalleServicio);
         if (asignacion is null)
             return Resultado.Fallo("La asignación indicada no existe.");
-        if (asignacion.Estado == ValoresCatalogo.AsignacionRetirada)
+        if (asignacion.Estado == "Retirado")
             return Resultado.Fallo("La asignación ya fue retirada.");
-        if (asignacion.Servicio?.Estado != ValoresCatalogo.ServicioAbierto)
+        if (asignacion.Servicio?.Estado != "Abierto")
             return Resultado.Fallo("Solo se pueden retirar asignaciones de servicios abiertos.");
 
-        asignacion.Estado = ValoresCatalogo.AsignacionRetirada;
+        asignacion.Estado = "Retirado";
         await _db.SaveChangesAsync();
         return Resultado.Ok($"Se retiró a {asignacion.Trabajador?.NombreCompleto} del servicio.");
     }
@@ -180,7 +182,7 @@ public class AsignacionService : IAsignacionService
         if (servicio is null)
             return new List<TrabajadorCarga>();
 
-        var nombreArea = servicio.TipoServicio == ValoresCatalogo.TipoMantenimiento
+        var nombreArea = servicio.TipoServicio == "Mantenimiento"
             ? "Mantenimiento mecánico" : "Pintura";
 
         var trabajadores = await _db.Trabajadores.AsNoTracking()
@@ -191,14 +193,14 @@ public class AsignacionService : IAsignacionService
         var ids = trabajadores.Select(t => t.IdTrabajador).ToList();
 
         var asignadosAlServicio = await _db.DetalleServicio.AsNoTracking()
-            .Where(d => d.IdServicio == idServicio && d.Estado == ValoresCatalogo.AsignacionActiva)
+            .Where(d => d.IdServicio == idServicio && d.Estado == "Activo")
             .Select(d => d.IdTrabajador)
             .ToListAsync();
 
         var conteos = await _db.DetalleServicio.AsNoTracking()
-            .Where(d => d.Estado == ValoresCatalogo.AsignacionActiva &&
+            .Where(d => d.Estado == "Activo" &&
                         ids.Contains(d.IdTrabajador) &&
-                        d.Servicio!.Estado == ValoresCatalogo.ServicioAbierto)
+                        d.Servicio!.Estado == "Abierto")
             .GroupBy(d => d.IdTrabajador)
             .Select(g => new { Id = g.Key, Total = g.Count() })
             .ToListAsync();

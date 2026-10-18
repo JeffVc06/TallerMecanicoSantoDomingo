@@ -30,7 +30,7 @@ public class AsignacionesController : Controller
     {
         var serviciosAbiertos = await _db.Servicios.AsNoTracking()
             .Include(s => s.Vehiculo).ThenInclude(v => v!.Cliente)
-            .Where(s => s.Estado == ValoresCatalogo.ServicioAbierto)
+            .Where(s => s.Estado == "Abierto")
             .OrderByDescending(s => s.FechaRegistro)
             .Select(s => new
             {

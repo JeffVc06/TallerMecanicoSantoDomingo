@@ -4,6 +4,7 @@ obj/
 *.user
 .vs/
 *.suo
+.vscode/build/
 
 # Secretos locales
 appsettings.*.Local.json

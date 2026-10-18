@@ -125,7 +125,7 @@ public class ProductoService : IProductoService
         var servicio = await _db.Servicios.FindAsync(idServicio);
         if (servicio is null)
             return Resultado.Fallo("El servicio indicado no existe.");
-        if (servicio.Estado != ValoresCatalogo.ServicioAbierto)
+        if (servicio.Estado != "Abierto")
             return Resultado.Fallo("Solo se pueden agregar productos a servicios abiertos.");
 
         var producto = await _db.Productos.FindAsync(idProducto);
@@ -159,7 +159,7 @@ public class ProductoService : IProductoService
             .FirstOrDefaultAsync(pu => pu.IdProductoUtilizado == idProductoUtilizado);
         if (registro is null)
             return Resultado.Fallo("El registro de producto indicado no existe.");
-        if (registro.Servicio?.Estado != ValoresCatalogo.ServicioAbierto)
+        if (registro.Servicio?.Estado != "Abierto")
             return Resultado.Fallo("Solo se pueden modificar productos de servicios abiertos.");
 
         registro.Cantidad = cantidad;
@@ -174,7 +174,7 @@ public class ProductoService : IProductoService
             .FirstOrDefaultAsync(pu => pu.IdProductoUtilizado == idProductoUtilizado);
         if (registro is null)
             return Resultado.Fallo("El registro de producto indicado no existe.");
-        if (registro.Servicio?.Estado != ValoresCatalogo.ServicioAbierto)
+        if (registro.Servicio?.Estado != "Abierto")
             return Resultado.Fallo("Solo se pueden quitar productos de servicios abiertos.");
 
         _db.ProductosUtilizados.Remove(registro);

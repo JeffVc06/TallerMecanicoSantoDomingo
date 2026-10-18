@@ -283,7 +283,7 @@ SELECT @idCliente, @idVehiculo, @idServicio;";
             await using var contexto = NuevoContexto();
             var facturacion = new FacturacionService(contexto, FabricaDeContextos.Configuracion(15m));
 
-            var creada = await facturacion.CrearFactura(idCliente, ValoresCatalogo.PagoEfectivo, new List<int> { idServicio }, null);
+            var creada = await facturacion.CrearFactura(idCliente, "Efectivo", new List<int> { idServicio }, null);
             Assert.True(creada.EsCorrecto, creada.Mensaje);
             Assert.Matches(@"^FAC-\d{4}-\d{4}$", creada.Datos!.NumeroFactura);
             Assert.Equal(1150m, creada.Datos.Total); // 1000 de subtotal + 15 % de IVA = 1150

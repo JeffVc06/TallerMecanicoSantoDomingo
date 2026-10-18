@@ -55,7 +55,7 @@ public class FacturacionService : IFacturacionService
         if (ids.Count == 0)
             return Resultado<Factura>.Fallo("Debe seleccionar al menos un servicio para facturar (Regla 11).");
 
-        if (!ValoresCatalogo.MetodosPago.Contains(metodoPago))
+        if (!(new[] { "Efectivo", "Tarjeta", "Transferencia" }).Contains(metodoPago))
             return Resultado<Factura>.Fallo("El método de pago no es válido.");
 
         var cliente = await _db.Clientes.AsNoTracking().FirstOrDefaultAsync(c => c.IdCliente == idCliente);
@@ -78,7 +78,7 @@ public class FacturacionService : IFacturacionService
 
             foreach (var servicio in servicios)
             {
-                if (servicio.Estado == ValoresCatalogo.ServicioCancelado)
+                if (servicio.Estado == "Cancelado")
                     return Resultado<Factura>.Fallo($"El servicio #{servicio.IdServicio} está cancelado y no puede facturarse.");
 
                 // Regla 12: todos los servicios deben pertenecer al mismo cliente,
@@ -89,7 +89,7 @@ public class FacturacionService : IFacturacionService
 
             // Un servicio no puede facturarse dos veces mientras la factura esté emitida.
             var yaFacturados = await _db.DetalleFactura.AsNoTracking()
-                .Where(df => ids.Contains(df.IdServicio) && df.Factura!.Estado == ValoresCatalogo.FacturaEmitida)
+                .Where(df => ids.Contains(df.IdServicio) && df.Factura!.Estado == "Emitida")
                 .Select(df => df.IdServicio)
                 .ToListAsync();
             if (yaFacturados.Count > 0)
@@ -111,7 +111,7 @@ public class FacturacionService : IFacturacionService
                 IVA = iva,
                 Total = total,
                 MetodoPago = metodoPago,
-                Estado = ValoresCatalogo.FacturaEmitida,
+                Estado = "Emitida",
                 Notas = string.IsNullOrWhiteSpace(notas) ? null : notas.Trim()
             };
             _db.Facturas.Add(factura);
@@ -147,7 +147,7 @@ public class FacturacionService : IFacturacionService
         var factura = await _db.Facturas.AsNoTracking().FirstOrDefaultAsync(f => f.IdFactura == idFactura);
         if (factura is null)
             return Resultado.Fallo("La factura indicada no existe.");
-        if (factura.Estado == ValoresCatalogo.FacturaAnulada)
+        if (factura.Estado == "Anulada")
             return Resultado.Fallo("La factura ya está anulada.");
 
         if (_db.Database.IsSqlServer())
@@ -163,7 +163,7 @@ public class FacturacionService : IFacturacionService
             var existente = await _db.Facturas.FindAsync(idFactura);
             if (existente is null)
                 return Resultado.Fallo("La factura indicada no existe.");
-            existente.Estado = ValoresCatalogo.FacturaAnulada;
+            existente.Estado = "Anulada";
             if (!string.IsNullOrWhiteSpace(motivo))
                 existente.Notas = $"Anulada: {motivo.Trim()}";
             await _db.SaveChangesAsync();
@@ -236,13 +236,13 @@ public class FacturacionService : IFacturacionService
     public async Task<List<ServicioElegible>> ServiciosElegibles(int idCliente)
     {
         var idsYaFacturados = _db.DetalleFactura
-            .Where(df => df.Factura!.Estado == ValoresCatalogo.FacturaEmitida)
+            .Where(df => df.Factura!.Estado == "Emitida")
             .Select(df => df.IdServicio);
 
         var servicios = await _db.Servicios.AsNoTracking()
             .Include(s => s.Vehiculo)
             .Where(s => s.Vehiculo!.IdCliente == idCliente &&
-                        s.Estado != ValoresCatalogo.ServicioCancelado &&
+                        s.Estado != "Cancelado" &&
                         !idsYaFacturados.Contains(s.IdServicio))
             .OrderByDescending(s => s.FechaInicio)
             .ToListAsync();

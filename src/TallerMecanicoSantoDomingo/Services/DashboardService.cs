@@ -43,13 +43,13 @@ public class DashboardService : IDashboardService
         // Tarjetas: cifras reales; 0 cuando la base está vacía.
         var totalClientes = await _db.Clientes.CountAsync();
         var totalVehiculos = await _db.Vehiculos.CountAsync();
-        var serviciosActivos = await _db.Servicios.CountAsync(s => s.Estado == ValoresCatalogo.ServicioAbierto);
-        var serviciosFinalizados = await _db.Servicios.CountAsync(s => s.Estado == ValoresCatalogo.ServicioFinalizado);
+        var serviciosActivos = await _db.Servicios.CountAsync(s => s.Estado == "Abierto");
+        var serviciosFinalizados = await _db.Servicios.CountAsync(s => s.Estado == "Finalizado");
         var totalTrabajadores = await _db.Trabajadores.CountAsync();
         var totalProductos = await _db.Productos.CountAsync();
-        var facturasEmitidas = await _db.Facturas.CountAsync(f => f.Estado == ValoresCatalogo.FacturaEmitida);
+        var facturasEmitidas = await _db.Facturas.CountAsync(f => f.Estado == "Emitida");
         var importeFacturado = await _db.Facturas
-            .Where(f => f.Estado == ValoresCatalogo.FacturaEmitida)
+            .Where(f => f.Estado == "Emitida")
             .SumAsync(f => (decimal?)f.Total) ?? 0m;
 
         // Servicios por tipo y por estado (histórico completo).
@@ -66,7 +66,7 @@ public class DashboardService : IDashboardService
         var hoy = DateTime.Today;
         var inicio = new DateTime(hoy.Year, hoy.Month, 1).AddMonths(-11);
         var facturasUltimos12Meses = await _db.Facturas.AsNoTracking()
-            .Where(f => f.Estado == ValoresCatalogo.FacturaEmitida && f.FechaFactura >= inicio)
+            .Where(f => f.Estado == "Emitida" && f.FechaFactura >= inicio)
             .ToListAsync();
 
         var etiquetasMes = new List<string>();
@@ -97,8 +97,8 @@ public class DashboardService : IDashboardService
         // memoria, porque NombreCompleto es una propiedad calculada y no se puede
         // traducir a SQL.
         var trabajadoresAlLimite = (await _db.DetalleServicio.AsNoTracking()
-                .Where(d => d.Estado == ValoresCatalogo.AsignacionActiva
-                            && d.Servicio!.Estado == ValoresCatalogo.ServicioAbierto)
+                .Where(d => d.Estado == "Activo"
+                            && d.Servicio!.Estado == "Abierto")
                 .GroupBy(d => new { d.IdTrabajador, d.Trabajador!.Nombre, d.Trabajador.Apellido })
                 .Where(g => g.Count() >= 2)
                 .Select(g => new { g.Key.Nombre, g.Key.Apellido })

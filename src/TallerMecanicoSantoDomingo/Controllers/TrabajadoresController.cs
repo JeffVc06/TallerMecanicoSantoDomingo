@@ -161,8 +161,8 @@ public class TrabajadoresController : Controller
         if (!activo)
         {
             var tieneActivos = await _db.DetalleServicio.AnyAsync(d =>
-                d.IdTrabajador == id && d.Estado == ValoresCatalogo.AsignacionActiva &&
-                d.Servicio!.Estado == ValoresCatalogo.ServicioAbierto);
+                d.IdTrabajador == id && d.Estado == "Activo" &&
+                d.Servicio!.Estado == "Abierto");
             if (tieneActivos)
             {
                 TempData["Error"] = "No se puede desactivar el trabajador porque tiene servicios activos.";

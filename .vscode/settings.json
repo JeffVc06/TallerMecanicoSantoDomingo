@@ -14,6 +14,14 @@
   "csharp.semanticHighlighting.enabled": true,
   "csharp.updateImportsOnFileMove.enabled": "always",
   "dotnet.checkForUpdates": "Prompt",
+  "cSpell.language": "es,en",
+  "cSpell.words": [
+    "Esquema",
+    "Mecanico",
+    "Santo",
+    "TallerMecanicoSantoDomingo",
+    "contentfiles"
+  ],
   "terminal.integrated.defaultProfile.windows": "PowerShell",
   "terminal.integrated.profiles.windows": {
     "PowerShell": {

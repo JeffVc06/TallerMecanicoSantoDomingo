@@ -1,14 +1,14 @@
 @model TallerMecanicoSantoDomingo.Services.DatosDashboard
 @{
-    ViewData["Title"] = "Panel principal";
+    ViewData["Title"] = "Resumen del taller";
     bool vacio = Model.TotalClientes == 0 && Model.TotalVehiculos == 0 && Model.ServiciosActivos == 0 &&
                  Model.TotalTrabajadores == 0 && Model.TotalProductos == 0 && Model.FacturasEmitidas == 0;
 }
 
 <div class="encabezado-pagina">
     <div>
-        <h1><i class="bi bi-speedometer2 me-2"></i>Panel principal</h1>
-        <div class="ruta">Actividad y trabajo del taller</div>
+        <h1><i class="bi bi-speedometer2 me-2"></i>Resumen del taller</h1>
+        <div class="ruta">Servicios en curso, equipo y movimiento reciente</div>
     </div>
     <a asp-controller="Servicios" asp-action="Crear" class="btn btn-naranja">
         <i class="bi bi-plus-lg me-1"></i> Nuevo servicio

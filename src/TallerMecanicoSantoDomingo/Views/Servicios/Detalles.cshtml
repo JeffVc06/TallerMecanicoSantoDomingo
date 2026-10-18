@@ -3,7 +3,6 @@
     ViewData["Title"] = $"Servicio #{Model.IdServicio}";
     var asignaciones = (List<TallerMecanicoSantoDomingo.Services.ItemAsignacion>)ViewBag.Asignaciones;
     var compatibles = (List<TallerMecanicoSantoDomingo.Services.TrabajadorCarga>)ViewBag.TrabajadoresCompatibles;
-    var productosDisponibles = (List<TallerMecanicoSantoDomingo.Models.Producto>)null;
     bool abierto = Model.Estado == "Abierto";
 }
 

@@ -41,8 +41,8 @@ public class ServiciosController : Controller
         ViewBag.Buscar = buscar;
         ViewBag.Tipo = tipo;
         ViewBag.Estado = estado;
-        ViewBag.Tipos = ValoresCatalogo.TiposServicio;
-        ViewBag.Estados = ValoresCatalogo.EstadosServicio;
+        ViewBag.Tipos = (new[] { "Mantenimiento", "Pintura" });
+        ViewBag.Estados = (new[] { "Abierto", "Finalizado", "Cancelado" });
         return View(resultado);
     }
 
@@ -68,9 +68,9 @@ public class ServiciosController : Controller
             IdVehiculo = modelo.IdVehiculo,
             TipoServicio = modelo.TipoServicio,
             Descripcion = modelo.Descripcion,
-            DescripcionFalla = modelo.TipoServicio == ValoresCatalogo.TipoMantenimiento ? modelo.DescripcionFalla : null,
-            TipoPintura = modelo.TipoServicio == ValoresCatalogo.TipoPintura ? modelo.TipoPintura : null,
-            Color = modelo.TipoServicio == ValoresCatalogo.TipoPintura ? modelo.Color : null,
+            DescripcionFalla = modelo.TipoServicio == "Mantenimiento" ? modelo.DescripcionFalla : null,
+            TipoPintura = modelo.TipoServicio == "Pintura" ? modelo.TipoPintura : null,
+            Color = modelo.TipoServicio == "Pintura" ? modelo.Color : null,
             FechaInicio = modelo.FechaInicio,
             Total = modelo.Total
         };
@@ -140,9 +140,9 @@ public class ServiciosController : Controller
             IdVehiculo = modelo.IdVehiculo,
             TipoServicio = modelo.TipoServicio,
             Descripcion = modelo.Descripcion,
-            DescripcionFalla = modelo.TipoServicio == ValoresCatalogo.TipoMantenimiento ? modelo.DescripcionFalla : null,
-            TipoPintura = modelo.TipoServicio == ValoresCatalogo.TipoPintura ? modelo.TipoPintura : null,
-            Color = modelo.TipoServicio == ValoresCatalogo.TipoPintura ? modelo.Color : null,
+            DescripcionFalla = modelo.TipoServicio == "Mantenimiento" ? modelo.DescripcionFalla : null,
+            TipoPintura = modelo.TipoServicio == "Pintura" ? modelo.TipoPintura : null,
+            Color = modelo.TipoServicio == "Pintura" ? modelo.Color : null,
             FechaInicio = modelo.FechaInicio,
             Total = modelo.Total
         });

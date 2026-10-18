@@ -34,6 +34,7 @@ body {
     color: var(--color-texto);
     font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
     min-height: 100vh;
+    line-height: 1.5;
 }
 
 a { color: var(--color-azul-claro); text-decoration: none; }
@@ -48,10 +49,26 @@ a:hover { text-decoration: underline; }
 .texto-secundario { color: var(--color-gris); }
 .moneda::before { content: "C$ "; font-weight: 600; }
 
+.salto-contenido {
+    position: fixed;
+    top: .5rem;
+    left: .5rem;
+    z-index: 1100;
+    padding: .6rem .85rem;
+    border-radius: 6px;
+    background: #fff;
+    color: var(--color-azul);
+    box-shadow: var(--sombra-tarjeta);
+}
+
+.pagina:focus { outline: none; }
+
 /* ============================== BARRA LATERAL ============================= */
 .barra-lateral {
     width: var(--ancho-barra);
     min-height: 100vh;
+    height: 100vh;
+    height: 100dvh;
     background: var(--color-barra);
     position: fixed;
     top: 0;
@@ -136,12 +153,16 @@ a:hover { text-decoration: underline; }
     box-shadow: inset 3px 0 0 var(--color-naranja);
 }
 
+.barra-nav a[aria-current="page"] i { color: var(--color-naranja-claro); }
+
 .barra-pie {
     padding: .9rem 1.25rem;
     border-top: 1px solid rgba(255, 255, 255, .08);
     color: rgba(255, 255, 255, .45);
     font-size: .75rem;
 }
+
+.fondo-menu { display: none; }
 
 /* ================================ CONTENIDO ============================== */
 .contenido {
@@ -389,9 +410,25 @@ a:has(> .tarjeta-indicador):hover .tarjeta-indicador { border-color: #c6b4a5; bo
 @media (max-width: 991.98px) {
     .barra-lateral { transform: translateX(-100%); }
     .barra-lateral.abierta { transform: translateX(0); box-shadow: 0 0 40px rgba(0, 0, 0, .4); }
+    .fondo-menu.visible {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 1035;
+        border: 0;
+        background: rgba(22, 29, 31, .48);
+        backdrop-filter: blur(1px);
+    }
+    body.menu-abierto { overflow: hidden; }
     .contenido { margin-left: 0; }
     .pagina { padding: 1rem; }
     .barra-superior { padding: .6rem 1rem; }
+}
+
+@media (max-width: 380px) {
+    .tarjeta-cuenta { padding: 1.35rem; }
+    .barra-superior { padding-inline: .7rem; }
+    .pagina { padding: .75rem; }
 }
 
 /* ================================ IMPRESIÓN ============================== */

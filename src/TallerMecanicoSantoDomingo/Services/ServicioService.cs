@@ -32,7 +32,7 @@ public class ServicioService : IServicioService
 
     public async Task<Resultado<Servicio>> Crear(Servicio servicio)
     {
-        if (!ValoresCatalogo.TiposServicio.Contains(servicio.TipoServicio))
+        if (!(new[] { "Mantenimiento", "Pintura" }).Contains(servicio.TipoServicio))
             return Resultado<Servicio>.Fallo("El tipo de servicio debe ser Mantenimiento o Pintura.");
 
         if (string.IsNullOrWhiteSpace(servicio.Descripcion))
@@ -54,7 +54,7 @@ public class ServicioService : IServicioService
         if (!vehiculo.Activo)
             return Resultado<Servicio>.Fallo("El vehículo seleccionado está desactivado.");
 
-        servicio.Estado = ValoresCatalogo.ServicioAbierto;
+        servicio.Estado = "Abierto";
         servicio.FechaRegistro = DateTime.UtcNow;
         _db.Servicios.Add(servicio);
         await _db.SaveChangesAsync();
@@ -73,10 +73,10 @@ public class ServicioService : IServicioService
         if (existente is null)
             return Resultado.Fallo("El servicio indicado no existe.");
 
-        if (existente.Estado != ValoresCatalogo.ServicioAbierto)
+        if (existente.Estado != "Abierto")
             return Resultado.Fallo("Solo se pueden editar servicios abiertos.");
 
-        if (existente.DetalleFacturas.Any(df => df.Factura != null && df.Factura.Estado == ValoresCatalogo.FacturaEmitida))
+        if (existente.DetalleFacturas.Any(df => df.Factura != null && df.Factura.Estado == "Emitida"))
             return Resultado.Fallo("El servicio ya forma parte de una factura emitida y no puede modificarse (Regla 14).");
 
         if (string.IsNullOrWhiteSpace(servicio.Descripcion))
@@ -114,20 +114,20 @@ public class ServicioService : IServicioService
         var servicio = await _db.Servicios.FindAsync(idServicio);
         if (servicio is null)
             return Resultado.Fallo("El servicio indicado no existe.");
-        if (servicio.Estado != ValoresCatalogo.ServicioAbierto)
+        if (servicio.Estado != "Abierto")
             return Resultado.Fallo("Solo se pueden finalizar servicios abiertos.");
         if (fechaFin < servicio.FechaInicio)
             return Resultado.Fallo("La fecha de finalización no puede ser anterior a la fecha de inicio (Regla 8).");
 
-        servicio.Estado = ValoresCatalogo.ServicioFinalizado;
+        servicio.Estado = "Finalizado";
         servicio.FechaFin = fechaFin;
 
         // La finalización del servicio y el cierre de sus asignaciones son una sola operación transaccional.
         var asignaciones = await _db.DetalleServicio
-            .Where(d => d.IdServicio == idServicio && d.Estado == ValoresCatalogo.AsignacionActiva)
+            .Where(d => d.IdServicio == idServicio && d.Estado == "Activo")
             .ToListAsync();
         foreach (var asignacion in asignaciones)
-            asignacion.Estado = ValoresCatalogo.AsignacionRetirada;
+            asignacion.Estado = "Retirado";
 
         await _db.SaveChangesAsync();
         return Resultado.Ok("Servicio finalizado correctamente.");
@@ -141,19 +141,19 @@ public class ServicioService : IServicioService
             .FirstOrDefaultAsync(s => s.IdServicio == idServicio);
         if (servicio is null)
             return Resultado.Fallo("El servicio indicado no existe.");
-        if (servicio.Estado != ValoresCatalogo.ServicioAbierto)
+        if (servicio.Estado != "Abierto")
             return Resultado.Fallo("Solo se pueden cancelar servicios abiertos.");
-        if (servicio.DetalleFacturas.Any(df => df.Factura != null && df.Factura.Estado == ValoresCatalogo.FacturaEmitida))
+        if (servicio.DetalleFacturas.Any(df => df.Factura != null && df.Factura.Estado == "Emitida"))
             return Resultado.Fallo("El servicio ya forma parte de una factura emitida y no puede cancelarse (Regla 14).");
 
-        servicio.Estado = ValoresCatalogo.ServicioCancelado;
+        servicio.Estado = "Cancelado";
 
         var asignaciones = await _db.DetalleServicio
-            .Where(d => d.IdServicio == idServicio && d.Estado == ValoresCatalogo.AsignacionActiva)
+            .Where(d => d.IdServicio == idServicio && d.Estado == "Activo")
             .ToListAsync();
         foreach (var asignacion in asignaciones)
         {
-            asignacion.Estado = ValoresCatalogo.AsignacionRetirada;
+            asignacion.Estado = "Retirado";
             if (!string.IsNullOrWhiteSpace(motivo))
                 asignacion.Observaciones = $"Cancelación: {motivo.Trim()}";
         }
@@ -171,9 +171,9 @@ public class ServicioService : IServicioService
             .Include(s => s.Vehiculo).ThenInclude(v => v!.Cliente)
             .Include(s => s.DetalleServicios).ThenInclude(d => d.Trabajador);
 
-        if (!string.IsNullOrWhiteSpace(tipo) && ValoresCatalogo.TiposServicio.Contains(tipo))
+        if (!string.IsNullOrWhiteSpace(tipo) && (new[] { "Mantenimiento", "Pintura" }).Contains(tipo))
             query = query.Where(s => s.TipoServicio == tipo);
-        if (!string.IsNullOrWhiteSpace(estado) && ValoresCatalogo.EstadosServicio.Contains(estado))
+        if (!string.IsNullOrWhiteSpace(estado) && (new[] { "Abierto", "Finalizado", "Cancelado" }).Contains(estado))
             query = query.Where(s => s.Estado == estado);
         if (idVehiculo.HasValue)
             query = query.Where(s => s.IdVehiculo == idVehiculo.Value);
@@ -236,9 +236,9 @@ public class ServicioService : IServicioService
             .ToListAsync();
 
         var conteos = await _db.DetalleServicio.AsNoTracking()
-            .Where(d => d.Estado == ValoresCatalogo.AsignacionActiva &&
+            .Where(d => d.Estado == "Activo" &&
                         idsTrabajadores.Contains(d.IdTrabajador) &&
-                        d.Servicio!.Estado == ValoresCatalogo.ServicioAbierto)
+                        d.Servicio!.Estado == "Abierto")
             .GroupBy(d => d.IdTrabajador)
             .Select(g => new { Id = g.Key, Total = g.Count() })
             .ToListAsync();

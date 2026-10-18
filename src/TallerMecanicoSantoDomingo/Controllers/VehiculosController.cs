@@ -45,28 +45,28 @@ public class VehiculosController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Crear([Bind(Prefix = "")] VehiculoFormViewModel modelo)
+    public async Task<IActionResult> Crear([Bind(Prefix = "")] VehiculoFormViewModel formulario)
     {
         if (!ModelState.IsValid)
         {
             ViewBag.Clientes = await ListaDeClientes();
-            return View(modelo);
+            return View(formulario);
         }
 
         var resultado = await _vehiculos.Crear(new Vehiculo
         {
-            IdCliente = modelo.IdCliente,
-            Placa = modelo.Placa,
-            Marca = modelo.Marca,
-            Modelo = modelo.Modelo,
-            Anio = modelo.Anio
+            IdCliente = formulario.IdCliente,
+            Placa = formulario.Placa,
+            Marca = formulario.Marca,
+            Modelo = formulario.Modelo,
+            Anio = formulario.Anio
         });
 
         if (!resultado.EsCorrecto)
         {
             ModelState.AddModelError(string.Empty, resultado.Mensaje ?? "No se pudo registrar el vehículo.");
             ViewBag.Clientes = await ListaDeClientes();
-            return View(modelo);
+            return View(formulario);
         }
 
         TempData["Exito"] = resultado.Mensaje;
@@ -94,33 +94,33 @@ public class VehiculosController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Editar(VehiculoFormViewModel modelo)
+    public async Task<IActionResult> Editar(VehiculoFormViewModel formulario)
     {
         if (!ModelState.IsValid)
         {
             ViewBag.Clientes = await ListaDeClientes();
-            return View(modelo);
+            return View(formulario);
         }
 
         var resultado = await _vehiculos.Editar(new Vehiculo
         {
-            IdVehiculo = modelo.IdVehiculo,
-            IdCliente = modelo.IdCliente,
-            Placa = modelo.Placa,
-            Marca = modelo.Marca,
-            Modelo = modelo.Modelo,
-            Anio = modelo.Anio
+            IdVehiculo = formulario.IdVehiculo,
+            IdCliente = formulario.IdCliente,
+            Placa = formulario.Placa,
+            Marca = formulario.Marca,
+            Modelo = formulario.Modelo,
+            Anio = formulario.Anio
         });
 
         if (!resultado.EsCorrecto)
         {
             ModelState.AddModelError(string.Empty, resultado.Mensaje ?? "No se pudo actualizar el vehículo.");
             ViewBag.Clientes = await ListaDeClientes();
-            return View(modelo);
+            return View(formulario);
         }
 
         TempData["Exito"] = resultado.Mensaje;
-        return RedirectToAction(nameof(Detalles), new { id = modelo.IdVehiculo });
+        return RedirectToAction(nameof(Detalles), new { id = formulario.IdVehiculo });
     }
 
     [HttpGet]

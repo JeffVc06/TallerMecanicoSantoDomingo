@@ -1,6 +1,5 @@
 using System.Data;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
@@ -42,7 +41,8 @@ public static class DatabaseInitializer
         }
 
         SemillarAreas(db, logger);
-        SemillarAdministradorInicial(db, config, logger).GetAwaiter().GetResult();
+        var gestorUsuarios = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        SemillarAdministradorInicial(db, gestorUsuarios, config, logger).GetAwaiter().GetResult();
     }
 
     private static void CrearBaseDeDatosSiNoExiste(string cadenaConexion, string nombreBase, ILogger logger)
@@ -78,7 +78,7 @@ public static class DatabaseInitializer
                 (SELECT COUNT(*)
                  FROM INFORMATION_SCHEMA.TABLES
                  WHERE TABLE_SCHEMA = 'dbo'
-                   AND TABLE_NAME IN (
+                 AND TABLE_NAME IN (
                        'AspNetRoles', 'AspNetUsers', 'AspNetRoleClaims', 'AspNetUserClaims',
                        'AspNetUserLogins', 'AspNetUserRoles', 'AspNetUserTokens',
                        'Clientes', 'Vehiculos', 'Areas', 'Trabajadores', 'Servicios',
@@ -120,7 +120,12 @@ public static class DatabaseInitializer
         return sinLineas.Trim().Length == 0;
     }
 
-    /// <summary>Crea las dos áreas de trabajo del documento si no existen.</summary>
+    /// <summary>
+    /// Crea el primer administrador si no existe ningún usuario y se configuró
+    /// "AdministradorInicial:Email" y "AdministradorInicial:Password"
+    /// (recomendado: dotnet user-secrets). Si no se configura, el sistema ofrece
+    /// la página de configuración inicial la primera vez.
+    /// </summary>
     private static void SemillarAreas(TallerDbContext db, ILogger logger)
     {
         if (!db.Areas.Any())
@@ -132,17 +137,13 @@ public static class DatabaseInitializer
             logger.LogInformation("Catálogo de áreas de trabajo inicializado.");
         }
     }
-
-    /// <summary>
-    /// Crea el primer administrador si no existe ningún usuario y se configuró
-    /// "AdministradorInicial:Email" y "AdministradorInicial:Password"
-    /// (recomendado: dotnet user-secrets). Si no se configura, el sistema ofrece
-    /// la página de configuración inicial la primera vez.
-    /// </summary>
-    private static async Task SemillarAdministradorInicial(TallerDbContext db, IConfiguration config, ILogger logger)
+    internal static async Task SemillarAdministradorInicial(
+        TallerDbContext db,
+        UserManager<IdentityUser> gestor,
+        IConfiguration config,
+        ILogger logger)
     {
-        var usuarios = db.Users;
-        if (usuarios.Any())
+        if (await db.Users.AnyAsync())
             return;
 
         var email = config["AdministradorInicial:Email"];
@@ -152,10 +153,6 @@ public static class DatabaseInitializer
             logger.LogInformation("No hay usuarios registrados. El sistema habilitará la página de configuración inicial para crear el primer administrador.");
             return;
         }
-
-        var gestor = new UserManager<IdentityUser>(
-            new UserStore<IdentityUser>(db),
-            null!, null!, null!, null!, null!, null!, null!, null!);
 
         var usuario = new IdentityUser { UserName = email, Email = email, EmailConfirmed = true };
         var resultado = await gestor.CreateAsync(usuario, password);

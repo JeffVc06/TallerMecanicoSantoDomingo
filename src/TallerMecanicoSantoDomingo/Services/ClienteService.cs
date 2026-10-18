@@ -136,7 +136,7 @@ public class ClienteService : IClienteService
     public async Task<Resultado<decimal>> TotalFacturadoDelCliente(int idCliente)
     {
         var total = await _db.Facturas.AsNoTracking()
-            .Where(f => f.IdCliente == idCliente && f.Estado == ValoresCatalogo.FacturaEmitida)
+            .Where(f => f.IdCliente == idCliente && f.Estado == "Emitida")
             .SumAsync(f => (decimal?)f.Total) ?? 0m;
         return Resultado<decimal>.Ok(total);
     }

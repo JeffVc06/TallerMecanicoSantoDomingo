@@ -22,7 +22,7 @@ public class Servicio
 
     /// <summary>MER: Tipo_Servicio. Valores: Mantenimiento | Pintura (Regla 4).</summary>
     [Required, MaxLength(20)]
-    public string TipoServicio { get; set; } = ValoresCatalogo.TipoMantenimiento;
+    public string TipoServicio { get; set; } = "Mantenimiento";
 
     /// <summary>MER: Descripción del trabajo.</summary>
     [Required, MaxLength(500)]
@@ -42,7 +42,7 @@ public class Servicio
 
     /// <summary>Estado del servicio: Abierto | Finalizado | Cancelado (Reglas 4 y 8).</summary>
     [Required, MaxLength(20)]
-    public string Estado { get; set; } = ValoresCatalogo.ServicioAbierto;
+    public string Estado { get; set; } = "Abierto";
 
     /// <summary>MER: Fecha / Fecha_Entrada (Regla 8).</summary>
     public DateOnly FechaInicio { get; set; }

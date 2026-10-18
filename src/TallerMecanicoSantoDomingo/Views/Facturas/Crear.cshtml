@@ -3,7 +3,7 @@
     ViewData["Title"] = "Emitir factura";
     var clientes = (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Clientes;
     var elegibles = ViewBag.Elegibles as List<TallerMecanicoSantoDomingo.Services.ServicioElegible>;
-    var metodos = TallerMecanicoSantoDomingo.Models.ValoresCatalogo.MetodosPago;
+    var metodos = (new[] { "Efectivo", "Tarjeta", "Transferencia" });
 }
 
 <div class="encabezado-pagina">

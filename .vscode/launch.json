@@ -6,7 +6,7 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
-      "program": "${workspaceFolder}/src/TallerMecanicoSantoDomingo/bin/Debug/net10.0/TallerMecanicoSantoDomingo.dll",
+      "program": "${workspaceFolder}/.vscode/build/TallerMecanicoSantoDomingo.dll",
       "args": ["--urls", "http://localhost:5080"],
       "cwd": "${workspaceFolder}/src/TallerMecanicoSantoDomingo",
       "console": "internalConsole",

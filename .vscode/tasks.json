@@ -10,7 +10,8 @@
         "${workspaceFolder}/src/TallerMecanicoSantoDomingo/TallerMecanicoSantoDomingo.csproj",
         "--configuration",
         "Debug",
-        "--no-restore"
+        "--output",
+        "${workspaceFolder}/.vscode/build"
       ],
       "group": {
         "kind": "build",

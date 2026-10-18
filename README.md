@@ -198,8 +198,8 @@ corresponde, también como restricciones físicas de SQL Server.
 | 1 | Identificadores únicos (cliente, vehículo, factura) | `ClienteService`, `VehiculoService`, `FacturacionService` + `PRIMARY KEY`/`UNIQUE` en `TallerMecanicoSantoDomingo.sql` |
 | 2 | Un vehículo pertenece a un único cliente (1:N) | `VehiculoService.Crear` + clave foránea `Vehiculos → Clientes` |
 | 3 | Un vehículo puede tener muchos servicios (historial) | `ServicioService`, `VehiculoService.ObtenerHistorial` + FK `Servicios → Vehiculos` |
-| 4 | Tipificación del servicio (Mantenimiento / Pintura) | `ServicioService` + `ValoresCatalogo` + `CHECK` de `TipoServicio` |
-| 5 | Compatibilidad área del trabajador ↔ tipo de servicio | `AsignacionService.Asignar` + `ValoresCatalogo.EsAreaCompatibleConTipo` |
+| 4 | Tipificación del servicio (Mantenimiento / Pintura) | `ServicioService` + `CHECK` de `TipoServicio` |
+| 5 | Compatibilidad área del trabajador ↔ tipo de servicio | `AsignacionService.Asignar` valida la combinación directamente |
 | 6 | No repetir la pareja servicio–trabajador | `AsignacionService.Asignar` + índice `UNIQUE` en `DetalleServicio` |
 | 7 | Máximo 2 servicios activos por trabajador, con concurrencia segura | `AsignacionService.Asignar` (transacción + `UPDLOCK`/`HOLDLOCK`) |
 | 8 | `FechaFin` no anterior a `FechaInicio` | `ServicioService` + `CHECK CK_Servicios_FechaFin` |

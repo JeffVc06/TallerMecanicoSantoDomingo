@@ -24,7 +24,7 @@ public class DetalleServicio
 
     /// <summary>MER: Estado de la asignación. Valores: Activo | Retirado.</summary>
     [Required, MaxLength(20)]
-    public string Estado { get; set; } = ValoresCatalogo.AsignacionActiva;
+    public string Estado { get; set; } = "Activo";
 
     /// <summary>MER: Observaciones de la asignación.</summary>
     [MaxLength(200)]

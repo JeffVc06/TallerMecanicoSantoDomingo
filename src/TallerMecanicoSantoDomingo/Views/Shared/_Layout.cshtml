@@ -22,37 +22,39 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
-    <aside class="barra-lateral" id="barra-lateral">
+    <a class="visually-hidden-focusable salto-contenido" href="#contenido-principal">Saltar al contenido</a>
+    <aside class="barra-lateral" id="barra-lateral" aria-label="Menú principal">
         <div class="barra-marca">
             <div class="escudo"><i class="bi bi-tools"></i></div>
             <div class="nombre-taller">
                 Taller Mecánico Santo Domingo
-                <small>Gestión de operaciones</small>
+                <small>Recepción · Taller · Repuestos</small>
             </div>
         </div>
-        <nav class="barra-nav">
+        <nav class="barra-nav" aria-label="Secciones del taller">
             <div class="titulo-seccion">Operaciones</div>
-            <a href="@Url.Action("Index", "Dashboard")" class="@Clase("Dashboard")"><i class="bi bi-speedometer2"></i> Panel principal</a>
-            <a href="@Url.Action("Index", "Clientes")" class="@Clase("Clientes")"><i class="bi bi-people"></i> Clientes</a>
-            <a href="@Url.Action("Index", "Vehiculos")" class="@Clase("Vehiculos")"><i class="bi bi-car-front"></i> Vehículos</a>
-            <a href="@Url.Action("Index", "Servicios")" class="@Clase("Servicios")"><i class="bi bi-gear-wide-connected"></i> Servicios</a>
-            <a href="@Url.Action("Index", "Historial")" class="@Clase("Historial")"><i class="bi bi-clock-history"></i> Historial vehículo</a>
+            <a href="@Url.Action("Index", "Dashboard")" class="@Clase("Dashboard")" aria-current="@(Activa("Dashboard") ? "page" : null)"><i class="bi bi-speedometer2"></i> Resumen del taller</a>
+            <a href="@Url.Action("Index", "Clientes")" class="@Clase("Clientes")" aria-current="@(Activa("Clientes") ? "page" : null)"><i class="bi bi-people"></i> Clientes</a>
+            <a href="@Url.Action("Index", "Vehiculos")" class="@Clase("Vehiculos")" aria-current="@(Activa("Vehiculos") ? "page" : null)"><i class="bi bi-car-front"></i> Vehículos</a>
+            <a href="@Url.Action("Index", "Servicios")" class="@Clase("Servicios")" aria-current="@(Activa("Servicios") ? "page" : null)"><i class="bi bi-gear-wide-connected"></i> Servicios</a>
+            <a href="@Url.Action("Index", "Historial")" class="@Clase("Historial")" aria-current="@(Activa("Historial") ? "page" : null)"><i class="bi bi-clock-history"></i> Historial del vehículo</a>
             <div class="titulo-seccion">Personal e inventario</div>
-            <a href="@Url.Action("Index", "Trabajadores")" class="@Clase("Trabajadores")"><i class="bi bi-person-badge"></i> Trabajadores</a>
-            <a href="@Url.Action("Index", "Asignaciones")" class="@Clase("Asignaciones")"><i class="bi bi-person-check"></i> Asignaciones</a>
-            <a href="@Url.Action("Index", "Productos")" class="@Clase("Productos")"><i class="bi bi-box-seam"></i> Productos</a>
+            <a href="@Url.Action("Index", "Trabajadores")" class="@Clase("Trabajadores")" aria-current="@(Activa("Trabajadores") ? "page" : null)"><i class="bi bi-person-badge"></i> Trabajadores</a>
+            <a href="@Url.Action("Index", "Asignaciones")" class="@Clase("Asignaciones")" aria-current="@(Activa("Asignaciones") ? "page" : null)"><i class="bi bi-person-check"></i> Asignaciones</a>
+            <a href="@Url.Action("Index", "Productos")" class="@Clase("Productos")" aria-current="@(Activa("Productos") ? "page" : null)"><i class="bi bi-box-seam"></i> Inventario</a>
             <div class="titulo-seccion">Administración</div>
-            <a href="@Url.Action("Index", "Facturas")" class="@Clase("Facturas")"><i class="bi bi-receipt"></i> Facturación</a>
-            <a href="@Url.Action("Index", "Reportes")" class="@Clase("Reportes")"><i class="bi bi-graph-up"></i> Reportes</a>
+            <a href="@Url.Action("Index", "Facturas")" class="@Clase("Facturas")" aria-current="@(Activa("Facturas") ? "page" : null)"><i class="bi bi-receipt"></i> Facturación</a>
+            <a href="@Url.Action("Index", "Reportes")" class="@Clase("Reportes")" aria-current="@(Activa("Reportes") ? "page" : null)"><i class="bi bi-graph-up"></i> Reportes</a>
         </nav>
         <div class="barra-pie">
-            Sistema de gestión v1.0<br />UNAN-Managua — Proyecto académico
+            Control diario del taller
         </div>
     </aside>
+    <button class="fondo-menu" id="fondo-menu" type="button" aria-label="Cerrar menú" tabindex="-1"></button>
 
     <div class="contenido">
         <header class="barra-superior">
-            <button class="btn btn-light d-lg-none" id="boton-menu" type="button" aria-label="Abrir menú">
+            <button class="btn btn-light d-lg-none" id="boton-menu" type="button" aria-label="Abrir menú" aria-controls="barra-lateral" aria-expanded="false">
                 <i class="bi bi-list"></i>
             </button>
             <div class="d-none d-lg-block fw-semibold text-secondary">
@@ -70,7 +72,7 @@
             </div>
         </header>
 
-        <main class="pagina">
+        <main class="pagina" id="contenido-principal" tabindex="-1">
             @if (TempData["Exito"] != null)
             {
                 <div class="alerta-exito d-flex align-items-center gap-2">
