@@ -54,6 +54,7 @@ public class AccountController : Controller
         if (usuario is null)
         {
             ModelState.AddModelError(string.Empty, "Credenciales incorrectas. Verifique su usuario y contraseña.");
+            LimpiarCredenciales(model);
             return View(model);
         }
 
@@ -70,11 +71,21 @@ public class AccountController : Controller
         if (resultado.IsLockedOut)
         {
             ModelState.AddModelError(string.Empty, "La cuenta está bloqueada por demasiados intentos fallidos. Espere 15 minutos e intente nuevamente.");
+            LimpiarCredenciales(model);
             return View(model);
         }
 
         ModelState.AddModelError(string.Empty, "Credenciales incorrectas. Verifique su usuario y contraseña.");
+        LimpiarCredenciales(model);
         return View(model);
+    }
+
+    private void LimpiarCredenciales(LoginViewModel model)
+    {
+        model.Email = string.Empty;
+        model.Password = string.Empty;
+        ModelState.Remove(nameof(model.Email));
+        ModelState.Remove(nameof(model.Password));
     }
 
     [HttpPost]
