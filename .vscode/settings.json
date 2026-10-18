@@ -1,0 +1,45 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.encoding": "utf8",
+  "csharp.semanticHighlighting.enabled": true,
+  "csharp.updateImportsOnFileMove.enabled": "always",
+  "dotnet.checkForUpdates": "Prompt",
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "terminal.integrated.profiles.windows": {
+    "PowerShell": {
+      "path": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "args": ["-NoExit", "-Command", "Set-Location '${workspaceFolder}'"]
+    }
+  },
+  "search.exclude": {
+    "**/bin": true,
+    "**/obj": true,
+    "**/.vs": true,
+    "**/node_modules": true
+  },
+  "files.watcherExclude": {
+    "**/bin/**": true,
+    "**/obj/**": true,
+    "**/.vs/**": true
+  },
+  "sqltools.connections": [
+    {
+      "name": "TallerMecanicoSantoDomingo (local)",
+      "driver": "MSSQL",
+      "server": "localhost",
+      "database": "TallerMecanicoSantoDomingo",
+      "authentication": "Integrated",
+      "trustServerCertificate": true
+    }
+  ]
+}

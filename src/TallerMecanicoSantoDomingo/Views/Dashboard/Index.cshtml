@@ -8,7 +8,7 @@
 <div class="encabezado-pagina">
     <div>
         <h1><i class="bi bi-speedometer2 me-2"></i>Panel principal</h1>
-        <div class="ruta">Resumen general de las operaciones del taller</div>
+        <div class="ruta">Actividad y trabajo del taller</div>
     </div>
     <a asp-controller="Servicios" asp-action="Crear" class="btn btn-naranja">
         <i class="bi bi-plus-lg me-1"></i> Nuevo servicio
@@ -19,9 +19,8 @@
 {
     <div class="alerta-info">
         <i class="bi bi-info-circle me-1"></i>
-        <strong>La base de datos está vacía.</strong> Los indicadores muestran cero porque todavía no existen
-        registros. Comience registrando clientes y vehículos.
-        <a asp-controller="Clientes" asp-action="Crear" class="fw-semibold">Registrar el primer cliente</a>.
+        <strong>Aún no hay actividad.</strong> Registra el primer cliente para comenzar.
+        <a asp-controller="Clientes" asp-action="Crear" class="fw-semibold">Agregar cliente</a>.
     </div>
 }
 
@@ -49,7 +48,7 @@
             <div class="icono fondo-naranja"><i class="bi bi-gear"></i></div>
             <div>
                 <div class="dato">@Model.ServiciosActivos</div>
-                <div class="etiqueta">Servicios activos (abiertos)</div>
+                <div class="etiqueta">Servicios abiertos</div>
             </div>
         </div>
     </div>
@@ -76,7 +75,7 @@
             <div class="icono fondo-gris"><i class="bi bi-box-seam"></i></div>
             <div>
                 <div class="dato">@Model.TotalProductos</div>
-                <div class="etiqueta">Productos (repuestos)</div>
+                <div class="etiqueta">Productos registrados</div>
             </div>
         </div>
     </div>
@@ -94,7 +93,7 @@
             <div class="icono fondo-naranja"><i class="bi bi-cash-stack"></i></div>
             <div>
                 <div class="dato" style="font-size:1.2rem">C$ @Model.ImporteFacturado.ToString("N2")</div>
-                <div class="etiqueta">Importe facturado (no es pago recibido)</div>
+                <div class="etiqueta">Monto en facturas emitidas</div>
             </div>
         </div>
     </div>
@@ -189,7 +188,7 @@
 @section Scripts {
     <script src="~/lib/chartjs/chart.umd.min.js"></script>
     <script>
-        const colores = ['#1e3a5f', '#f08a00', '#16a34a', '#dc2626', '#64748b'];
+        const colores = ['#426875', '#b96320', '#65816e', '#ad5c50', '#8c9692'];
 
         new Chart(document.getElementById('graficoTipo'), {
             type: 'doughnut',
@@ -198,7 +197,8 @@
                 datasets: [{
                     data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ValoresServiciosPorTipo.Count > 0 ? Model.ValoresServiciosPorTipo : new List<int> { 0 })),
                     backgroundColor: colores,
-                    borderWidth: 2
+                    borderWidth: 3,
+                    borderColor: '#ffffff'
                 }]
             },
             options: { plugins: { legend: { position: 'bottom' } } }
@@ -210,8 +210,9 @@
                 labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.EtiquetasServiciosPorEstado.Count > 0 ? Model.EtiquetasServiciosPorEstado : new List<string> { "Sin datos" })),
                 datasets: [{
                     data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ValoresServiciosPorEstado.Count > 0 ? Model.ValoresServiciosPorEstado : new List<int> { 0 })),
-                    backgroundColor: ['#f08a00', '#16a34a', '#dc2626', '#1e3a5f', '#64748b'],
-                    borderWidth: 2
+                    backgroundColor: ['#b96320', '#65816e', '#ad5c50', '#426875', '#8c9692'],
+                    borderWidth: 3,
+                    borderColor: '#ffffff'
                 }]
             },
             options: { plugins: { legend: { position: 'bottom' } } }
@@ -224,8 +225,8 @@
                 datasets: [{
                     label: 'Facturado (C$)',
                     data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ValoresFacturacionMensual)),
-                    backgroundColor: '#1e3a5f',
-                    borderRadius: 6
+                    backgroundColor: '#426875',
+                    borderRadius: 4
                 }]
             },
             options: {

@@ -1,0 +1,111 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "${workspaceFolder}/src/TallerMecanicoSantoDomingo/TallerMecanicoSantoDomingo.csproj",
+        "--configuration",
+        "Debug",
+        "--no-restore"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": "$msCompile",
+      "detail": "Compila el proyecto principal"
+    },
+    {
+      "label": "build:release",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "publish",
+        "${workspaceFolder}/src/TallerMecanicoSantoDomingo/TallerMecanicoSantoDomingo.csproj",
+        "--configuration",
+        "Release",
+        "--output",
+        "${workspaceFolder}/publish"
+      ],
+      "group": "build",
+      "detail": "Publica en carpeta publish/"
+    },
+    {
+      "label": "db:apply-schema",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S", "localhost",
+        "-E",
+        "-C",
+        "-d", "TallerMecanicoSantoDomingo",
+        "-i", "${workspaceFolder}/database/TallerMecanicoSantoDomingo.sql",
+        "-b",
+        "-f", "65001"
+      ],
+      "group": "none",
+      "detail": "Aplica esquema SQL (requiere SQL Server corriendo)"
+    },
+    {
+      "label": "db:seed-demo",
+      "type": "shell",
+      "command": "sqlcmd",
+      "args": [
+        "-S", "localhost",
+        "-E",
+        "-C",
+        "-d", "TallerMecanicoSantoDomingo",
+        "-i", "${workspaceFolder}/database/DatosDemostracion.sql",
+        "-b",
+        "-f", "65001"
+      ],
+      "group": "none",
+      "detail": "Carga datos de demostración"
+    },
+    {
+      "label": "test",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "test",
+        "${workspaceFolder}/tests/TallerMecanicoSantoDomingo.Tests/TallerMecanicoSantoDomingo.Tests.csproj",
+        "--no-build",
+        "--verbosity",
+        "normal"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": "$msCompile",
+      "detail": "Ejecuta todas las pruebas (unitarias + integración)"
+    },
+    {
+      "label": "test:watch",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "watch",
+        "test",
+        "${workspaceFolder}/tests/TallerMecanicoSantoDomingo.Tests/TallerMecanicoSantoDomingo.Tests.csproj"
+      ],
+      "group": "test",
+      "detail": "Ejecuta tests en modo watch (recompila al guardar)"
+    },
+    {
+      "label": "clean",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "clean",
+        "${workspaceFolder}/src/TallerMecanicoSantoDomingo/TallerMecanicoSantoDomingo.csproj"
+      ],
+      "group": "none",
+      "detail": "Limpia bin/obj"
+    }
+  ]
+}
