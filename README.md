@@ -1,280 +1,161 @@
 # Taller Mecánico Santo Domingo
 
-Sistema web de gestión para un taller mecánico (vehículos, servicios, trabajadores,
-repuestos y facturación), desarrollado en **ASP.NET Core MVC (.NET 10)** con
-**SQL Server** y **Entity Framework Core**.
+Aplicación web para clientes, vehículos, trabajadores, servicios, productos y
+facturación. Usa C#, ASP.NET Core MVC, .NET 10 y SQL Server. Las pantallas son
+Razor con Bootstrap y las librerías se incluyen en `wwwroot/lib`.
 
-El modelo de datos se construyó a partir del documento **"MER y Relacional"**
-(entidades CLIENTE, VEHÍCULO, SERVICIO, TRABAJADOR, DETALLE_SERVICIO, REPUESTO,
-PRODUCTOS_UTILIZADOS, FACTURA, DETALLE_FACTURA y ÁREA DE TRABAJO) y aplica las
-**14 reglas de negocio** indicadas en dicho documento.
+## Cómo está organizado
 
----
-
-## 1. Tecnologías utilizadas
-
-| Capa | Tecnología |
-|------|------------|
-| Lenguaje / Servidor | C# 13 · ASP.NET Core MVC · .NET 10 |
-| Base de datos | SQL Server (Microsoft SQL Server) |
-| Acceso a datos | Entity Framework Core 10 (proveedor SqlServer) |
-| Seguridad | ASP.NET Core Identity + cookies seguras + antiforgery (CSRF) |
-| Vistas | Razor (.cshtml) + Tag Helpers |
-| Front-end | Bootstrap 5.3, Bootstrap Icons, Chart.js, jQuery + jQuery Validation |
-| Pruebas | xUnit (unitarias con proveedor InMemory + integración contra SQL Server) |
-
-Todas las librerías de front-end están **descargadas localmente** en
-`wwwroot/lib`, por lo que la aplicación funciona sin conexión a Internet.
-
----
-
-## 2. Requisitos previos
-
-- **.NET SDK 10** (`dotnet --version` debe mostrar `10.x`).
-- **SQL Server** en ejecución (Express, Developer o superior) accesible como
-  `localhost` con autenticación de Windows, o bien una instancia con usuario y
-  contraseña.
-- **sqlcmd** (opcional, para ejecutar los scripts SQL manualmente).
-
-Verificación rápida:
-
-```powershell
-dotnet --version
-sqlcmd -S localhost -E -C -Q "SELECT @@VERSION"
+```text
+TallerMecanicoSantoDomingo.sln
+src/
+  Program.cs               Arranque, acceso y servicios
+  Controllers/             Reciben los formularios y muestran las páginas
+  Services/                Reglas del taller y consultas
+  Models/                  Datos del diagrama
+  ViewModels/              Datos y validaciones de los formularios
+  Data/                    Conexión, esquema y almacenamiento de usuarios
+  Views/                   Pantallas
+  wwwroot/                 Estilos, JavaScript y librerías
+  appsettings.json         Configuración común, sin contraseñas
+  TallerMecanicoSantoDomingo.csproj
+database/
+  TallerMecanicoSantoDomingo.sql   Tablas y procedimiento de anulación
+  DatosDemostracion.sql           Datos de ejemplo opcionales
+  Consultas.sql                  Consultas de lectura y reportes de ejemplo
+tests/                     Pruebas de negocio, acceso e integración
 ```
 
----
+Una solicitud sigue este recorrido: **pantalla → controlador → servicio → base
+de datos**. Los servicios son clases concretas; no hay repositorios ni interfaces
+que repitan sus métodos. El contexto utiliza los atributos de los modelos y solo
+configura explícitamente las relaciones y restricciones.
 
-## 3. Estructura del proyecto
+## Base de datos y diagrama
 
-```
-TallerMecanicoSantoDomingo/
-├─ TallerMecanicoSantoDomingo.sln          Solución (app + pruebas)
-├─ README.md
-├─ database/
-│  ├─ TallerMecanicoSantoDomingo.sql       Esquema completo (fuente única de verdad)
-│  └─ DatosDemostracion.sql                Datos de ejemplo (NO se cargan solos)
-├─ src/TallerMecanicoSantoDomingo/
-│  ├─ Program.cs                           Configuración, seguridad e inyección de dependencias
-│  ├─ appsettings.json                     Cadena de conexión y configuración del taller
-│  ├─ Controllers/                          Account, Dashboard, Clientes, Vehiculos,
-│  │                                        Servicios, Trabajadores, Asignaciones,
-│  │                                        Productos, Facturas, Historial, Reportes
-│  ├─ Data/
-│  │  ├─ TallerDbContext.cs                Mapeo EF Core (replica el script SQL)
-│  │  └─ DatabaseInitializer.cs            Crea la BD/áreas y el primer administrador
-│  ├─ Models/                              Entidades del MER
-│  ├─ Services/                            Lógica de negocio y reglas 1–14
-│  ├─ ViewModels/                          Modelos de formulario y de cuenta
-│  ├─ Views/                               Vistas Razor (Tag Helpers)
-│  └─ wwwroot/                             CSS, JS e imágenes + librerías locales
-└─ tests/TallerMecanicoSantoDomingo.Tests/ Pruebas unitarias y de integración
-```
+El esquema contiene las nueve tablas del diagrama y una tabla de cuentas:
 
----
+| Tabla | Contenido |
+|---|---|
+| Cliente | Identificación, nombre, teléfono y RUC |
+| Vehiculo | Datos del vehículo y su propietario |
+| Trabajador | Personal, contacto, estado y fechas |
+| Servicio | Trabajo realizado a un vehículo |
+| Detalle_Servicio | Pareja servicio–trabajador |
+| Producto | Repuestos, precio de venta y costo |
+| Productos_Utilizados | Pareja producto–servicio y cantidad |
+| Factura | Fecha, datos fiscales, IVA e importe |
+| Detalle_Factura | Pareja servicio–factura y subtotal |
+| Usuarios | Cuentas que pueden entrar al sistema |
 
-## 4. Puesta en marcha (comandos exactos)
+Las tres tablas intermedias usan claves primarias compuestas. No necesitan un
+identificador adicional. Cada vehículo pertenece a un cliente; cada servicio a
+un vehículo. Las relaciones impiden borrar datos que tienen historial asociado.
 
-Abra **PowerShell** y ejecute, en orden:
+Se mantienen algunas columnas adicionales para conservar las pantallas y las
+funciones existentes: apellidos, dirección, stock, especialidad del trabajador,
+estados de asignación, observaciones, número y método de pago de la factura,
+y campos de auditoría/desactivación. La relación `Factura.IdCliente` evita perder
+la asociación original al cliente. No hay una tabla `Areas`: la especialidad se
+guarda directamente en `Trabajador.Area` con dos valores permitidos.
 
-```powershell
-# 1) Ir a la carpeta del proyecto
-cd C:\Users\JeffWin\Desktop\TallerMecanicoSantoDomingo
+Los campos del diagrama que no tienen controles en las pantallas actuales
+(cédula, kilometraje, color y chasis del vehículo, correo y salida del trabajador,
+y costo de compra del producto) están en el esquema y en los modelos, como datos
+opcionales o con valor inicial. No se añadieron controles ni pantallas.
+`Trabajador.Estado` es un indicador activo/inactivo, como en la interfaz existente.
 
-# 2) Restaurar paquetes NuGet
-dotnet restore TallerMecanicoSantoDomingo.sln
+Para conservar los formularios actuales, algunos nombres de C# se mapean a los
+del diagrama: `RFC` → `RUC`, `PrecioUnitario` → `Precio`, `Servicio.Total` → `Costo`,
+`FechaFactura` → `Fecha` y `Trabajador.FechaRegistro` → `FechaIngreso`.
+`Factura.RUC` conserva la identificación fiscal del cliente al emitir la factura.
 
-# 3) Compilar
-dotnet build TallerMecanicoSantoDomingo.sln
+El script SQL es la fuente del esquema; **no se usan migraciones de EF Core**.
+`TallerMecanicoSantoDomingo.sql` contiene `CREATE DATABASE`, `CREATE TABLE`,
+claves y validaciones. Se ejecuta una sola vez sobre una base nueva.
+`DatosDemostracion.sql` contiene los `INSERT INTO ... VALUES`; se usa una sola vez
+sobre el esquema vacío. `Consultas.sql` contiene únicamente consultas `SELECT`
+para ver los datos y ejemplos de relaciones y totales; puede repetirse.
 
-# 4) Ejecutar (crea la base de datos automáticamente la primera vez)
-dotnet run --project src\TallerMecanicoSantoDomingo\TallerMecanicoSantoDomingo.csproj --urls http://localhost:5080
-```
+La aplicación comprueba si las tablas ya existen antes de ejecutar el archivo de
+creación. No carga datos de demostración ni modifica columnas de tablas existentes.
+Los cambios futuros de estructura requieren un script explícito de actualización.
 
-Abra el navegador en **http://localhost:5080**.
+**Bases anteriores:** esta versión cambia nombres y claves. Si ya existe el
+esquema anterior (`Clientes`, `Areas`, `AspNetUsers`, etc.) o está incompleto,
+el arranque se detiene con un mensaje antes de crear tablas nuevas. Hay que
+preparar su migración por separado si contiene información que se deba conservar. Este cambio de código
+no ejecuta ni borra nada en el servidor de desarrollo.
 
-> La aplicación **crea sola la base de datos** `TallerMecanicoSantoDomingo` y su
-> esquema la primera vez que arranca (leyendo el script incrustado
-> `database/TallerMecanicoSantoDomingo.sql`). No se requieren migraciones de EF.
+## Usuarios y trabajadores
 
-### 4.1. Crear la base de datos manualmente (alternativa con sqlcmd)
+Se recomienda mantenerlos separados. Un trabajador representa a un empleado;
+un usuario representa a quien puede iniciar sesión. Un empleado puede trabajar
+en el taller sin tener acceso al programa, y el administrador puede tener una
+cuenta sin aparecer como mecánico.
 
-Si prefiere crear el esquema y cargar los datos de ejemplo "a mano":
+`Usuarios` es la única tabla de autenticación. `UsuarioStore` adapta su
+almacenamiento a ASP.NET Core Identity. **Identity mantiene el hash de las
+contraseñas, el bloqueo tras cinco intentos fallidos, las cookies y el sello de
+seguridad**. No se implementan contraseñas ni cifrado propios. No se necesitan
+tablas de roles, acceso con proveedores externos ni permisos por usuario porque
+la aplicación no ofrece esas funciones.
 
-```powershell
-# Esquema (crea la base de datos y todas las tablas, índices y restricciones)
-sqlcmd -S localhost -E -C -b -f 65001 -i database\TallerMecanicoSantoDomingo.sql
+La página de configuración inicial permite crear la primera cuenta y se cierra
+cuando ya existe un usuario. No se incluyen usuarios ni claves predeterminados.
+La contraseña de una cuenta del sistema es independiente del acceso a SQL Server.
 
-# Datos de demostración (opcional; el script no se ejecuta automáticamente)
-sqlcmd -S localhost -E -C -b -f 65001 -d TallerMecanicoSantoDomingo -i database\DatosDemostracion.sql
-```
+## Reglas que se conservan
 
-> **Importante:** la opción `-f 65001` fuerza la lectura de los scripts en UTF-8
-> para que los acentos (`mecánico`, `Pérez`, etc.) se guarden correctamente.
-> Si ejecuta los scripts sin ella, use una versión de `sqlcmd` que detecte el BOM
-> UTF-8 (incluido en los archivos) o los textos acentuados se corromperán.
+- Identificación fiscal y placas únicas; relaciones entre clientes y vehículos.
+- Servicios de mantenimiento o pintura con fechas e importes válidos.
+- Personal compatible con el servicio; máximo dos asignaciones activas por
+  trabajador. La asignación usa una transacción y bloqueo por trabajador.
+- Productos sin duplicados por servicio, cantidades positivas y precios válidos.
+- Facturas con servicios del mismo cliente, sin facturarlos dos veces mientras
+  exista una factura emitida. Subtotal, IVA y total se calculan en el servidor.
+- Anulación sin borrar facturas ni detalles. El procedimiento SQL usa una sola
+  actualización; los servicios quedan disponibles para volver a facturarse.
+- Historial, reportes, exportación CSV, impresión y desactivación lógica.
 
-Para empezar de cero (borra y recrea):
+## Requisitos y comprobaciones
 
-```powershell
-sqlcmd -S localhost -E -C -Q "ALTER DATABASE [TallerMecanicoSantoDomingo] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [TallerMecanicoSantoDomingo];"
-```
+Se necesita el SDK de .NET 10 y SQL Server accesible por TCP. La conexión se
+configura localmente mediante `user-secrets` o `ConnectionStrings__TallerDB`;
+las contraseñas no se guardan en el repositorio. La base se llama exactamente
+`TallerMecanicoSantoDomingo`, igual que en el script.
 
-### 4.2. Cadena de conexión
+La preparación del entorno y la conexión se realizan por separado. Para revisar
+el código sin conectar una base se pueden ejecutar las pruebas en memoria:
 
-El valor predeterminado está en `src/TallerMecanicoSantoDomingo/appsettings.json`:
-
-```
-Server=localhost;Database=TallerMecanicoSantoDomingo;Integrated Security=True;TrustServerCertificate=True;MultipleActiveResultSets=true
-```
-
-Puede sobreescribirse sin tocar el código con la variable de entorno
-`ConnectionStrings__TallerDB`, por ejemplo para usar usuario y contraseña:
-
-```powershell
-$env:ConnectionStrings__TallerDB = "Server=localhost;Database=TallerMecanicoSantoDomingo;User Id=sa;Password=SU_CONTRASENA;TrustServerCertificate=True"
-```
-
----
-
-## 5. Crear el primer administrador
-
-El sistema **no incluye usuarios ni contraseñas por defecto**. Elija una opción:
-
-### Opción A — Página de configuración inicial (recomendada)
-
-1. Ejecute la aplicación y abra **http://localhost:5080**.
-2. Mientras **no exista ningún usuario**, el inicio de sesión muestra el enlace
-   **"Todavía no existe ningún usuario" → Crear el primer administrador**
-   (o abra directamente **/Account/ConfiguracionInicial**).
-3. Complete el correo y una contraseña (mínimo 8 caracteres, con mayúscula,
-   minúscula y número). La página deja de estar disponible en cuanto se crea el
-   primer usuario.
-
-### Opción B — Configuración con `dotnet user-secrets` (sin guardar claves en el repo)
-
-```powershell
-cd C:\Users\JeffWin\Desktop\TallerMecanicoSantoDomingo
-dotnet user-secrets init --project src\TallerMecanicoSantoDomingo
-dotnet user-secrets set "AdministradorInicial:Email"    "admin@taller.local"      --project src\TallerMecanicoSantoDomingo
-dotnet user-secrets set "AdministradorInicial:Password" "SuClaveSegura123"        --project src\TallerMecanicoSantoDomingo
+```bash
+dotnet test TallerMecanicoSantoDomingo.sln --filter 'Categoria!=Integracion'
 ```
 
-Al arrancar, si no existe ningún usuario y estas claves están configuradas, el
-administrador se crea automáticamente.
+Las pruebas de integración solo se habilitan con la variable
+`ConnectionStrings__TallerDB` o `TALLERMECANICO_CADENA` apuntando a una base de
+pruebas preparada. No leen automáticamente los secretos de la aplicación. Crean
+y eliminan sus propios registros; no deben apuntar a datos de producción.
 
----
+## Trabajo en equipo
 
-## 6. Funcionalidades incluidas
+Se comparten el código, los scripts y los cambios de estructura mediante Git.
+Cada integrante mantiene su contenedor, datos y conexión local. Los cambios de
+una tabla deben acompañarse de sus ajustes en modelos y consultas. Las vistas,
+el CSS y el JavaScript se mantienen separados de esos cambios de datos.
 
-- **Inicio de sesión** con mostrar/ocultar contraseña, protección antiforgery y
-  bloqueo tras 5 intentos fallidos.
-- **Panel (Dashboard)** con conteos reales de la base de datos, gráficos
-  (Chart.js) y **alertas de carga de trabajadores** (con 2 servicios activos).
-- **Clientes**: alta, edición, ficha con sus vehículos e historial de facturas;
-  desactivación lógica.
-- **Vehículos**: alta, edición, ficha con su **historial completo de servicios**
-  (trabajadores, productos y facturas asociadas).
-- **Servicios**: registrados por tipo (Mantenimiento / Pintura), con estados
-  Abierto / Finalizado / Cancelado, asignación de trabajadores y consumo de
-  productos.
-- **Trabajadores** y **Asignaciones** (relación N:M servicio–trabajador).
-- **Productos (repuestos)** y **Productos utilizados**.
-- **Facturación**: asistente que solo muestra servicios elegibles del cliente,
-  **cálculo de subtotal, IVA y total en el servidor**, impresión de la factura y
-  **anulación** (conserva el histórico).
-- **Historial del vehículo** y **Reportes** (servicios, vehículos, por cliente,
-  trabajadores, facturas y productos) con **exportación a CSV** e impresión.
+## Editar con recarga automática
 
----
+Desde la raíz del proyecto, con SQL Server encendido y la conexión configurada:
 
-## 7. Reglas de negocio (implementación)
-
-Las 14 reglas se aplican **en el servidor** (nunca solo en el navegador) y, donde
-corresponde, también como restricciones físicas de SQL Server.
-
-| # | Regla | Dónde se implementa |
-|---|-------|---------------------|
-| 1 | Identificadores únicos (cliente, vehículo, factura) | `ClienteService`, `VehiculoService`, `FacturacionService` + `PRIMARY KEY`/`UNIQUE` en `TallerMecanicoSantoDomingo.sql` |
-| 2 | Un vehículo pertenece a un único cliente (1:N) | `VehiculoService.Crear` + clave foránea `Vehiculos → Clientes` |
-| 3 | Un vehículo puede tener muchos servicios (historial) | `ServicioService`, `VehiculoService.ObtenerHistorial` + FK `Servicios → Vehiculos` |
-| 4 | Tipificación del servicio (Mantenimiento / Pintura) | `ServicioService` + `CHECK` de `TipoServicio` |
-| 5 | Compatibilidad área del trabajador ↔ tipo de servicio | `AsignacionService.Asignar` valida la combinación directamente |
-| 6 | No repetir la pareja servicio–trabajador | `AsignacionService.Asignar` + índice `UNIQUE` en `DetalleServicio` |
-| 7 | Máximo 2 servicios activos por trabajador, con concurrencia segura | `AsignacionService.Asignar` (transacción + `UPDLOCK`/`HOLDLOCK`) |
-| 8 | `FechaFin` no anterior a `FechaInicio` | `ServicioService` + `CHECK CK_Servicios_FechaFin` |
-| 9 | No repetir un producto dentro del mismo servicio | `ProductoService.AgregarAlServicio` + `UNIQUE` en `ProductosUtilizados` |
-| 10 | Cantidades > 0, precios ≥ 0 y dinero en `DECIMAL` (nunca `float`) | `ProductoService` + `CHECK` + columnas `decimal(12,2)` / `decimal(12,3)` |
-| 11 | Factura con al menos un detalle y sin doble facturación de un servicio | `FacturacionService.CrearFactura` (el servicio se libera al anular) |
-| 12 | Todos los servicios de una factura pertenecen al mismo cliente | `FacturacionService.CrearFactura` |
-| 13 | Total = suma de subtotales + IVA configurable (valor inicial 15 %) | `FacturacionService` + `ConfiguracionTaller.PorcentajeIVA` |
-| 14 | Sin borrados destructivos: integridad referencial + desactivación lógica | Campos `Activo`, claves foráneas sin cascada y `usp_AnularFactura` |
-
-La **anulación de facturas** se realiza con el procedimiento almacenado
-`dbo.usp_AnularFactura`, que conserva el registro y libera los servicios para
-volver a facturarlos.
-
----
-
-## 8. Pruebas
-
-```powershell
-# Todas las pruebas (unitarias + integración)
-dotnet test TallerMecanicoSantoDomingo.sln
-
-# Solo las unitarias (no necesitan SQL Server)
-dotnet test TallerMecanicoSantoDomingo.sln --filter "Categoria!=Integracion"
+```bash
+dotnet watch --project src
 ```
 
-- **Pruebas unitarias** (`PruebasUnitariasReglas.cs`): validan las 14 reglas de
-  negocio usando el proveedor **InMemory** de EF Core (rápidas, sin base de datos).
-- **Pruebas de integración** (`PruebasIntegracionSqlServer.cs`): se ejecutan
-  contra **SQL Server** y comprueban el esquema físico, las restricciones `CHECK`,
-  el procedimiento `usp_AnularFactura` y la **Regla 7 con concurrencia real**
-  (tres asignaciones simultáneas: solo dos prosperan).
+Abra `http://localhost:5080` y guarde los cambios para verlos en el navegador.
+`dotnet watch` aplica Hot Reload o reinicia cuando el cambio lo requiere. Si
+solicita reiniciar, acepte en la terminal. Los cambios de estructura de la base
+requieren su script SQL correspondiente.
 
-> Las pruebas de integración **requieren** SQL Server con la base
-> `TallerMecanicoSantoDomingo` creada (sección 4). Si SQL Server no está
-> disponible, se marcan como **omitidas** en lugar de fallar. Los datos
-> temporales que crean se eliminan siempre al terminar cada prueba.
-
----
-
-## 9. Seguridad
-
-- Autenticación mediante **ASP.NET Core Identity**; contraseñas con hash.
-- **Antiforgery/CSRF** activo en todas las peticiones POST (formularios y AJAX).
-- **Cookies** de autenticación `HttpOnly`, `SameSite=Lax` y `Secure` cuando el
-  sitio usa HTTPS.
-- **Autorización por omisión**: toda la aplicación exige usuario autenticado
-  (política de respaldo); el inicio de sesión es la única excepción.
-- Codificación automática de salidas Razor (anti-XSS).
-- Validación **en el servidor** de todos los formularios.
-- Los mensajes de error **no exponen** detalles internos de SQL Server.
-- No hay cadenas de conexión ni contraseñas versionadas: la configuración
-  sensible recomendada es `dotnet user-secrets` o variables de entorno.
-
----
-
-## 9.1. Extensiones técnicas respecto al documento original
-
-El documento "MER y Relacional" define las entidades y la mayoría de los
-atributos. Se añadieron, **sin eliminar ni fusionar entidades**, los siguientes
-elementos auxiliares, señalados explícitamente como extensiones técnicas:
-
-- Campos de **desactivación lógica y auditoría** (`Activo`, `FechaRegistro`) para
-  cumplir la Regla 14 (no borrar registros).
-- Tabla catálogo **`Areas`** (`Mantenimiento mecánico`, `Pintura`) que representa
-  la especialidad del trabajador mediante clave foránea (3FN).
-- Atributos de facturación necesarios para el cálculo real de totales
-  (`Subtotal`, `IVA`, `Estado`, `MetodoPago`, `Notas`).
-
----
-
-## 10. Notas
-
-- La base de datos se llama exactamente **`TallerMecanicoSantoDomingo`**.
-- El **esquema SQL es la fuente única de verdad**; `TallerDbContext` lo replica
-  y no se usan migraciones de EF Core.
-- El porcentaje de IVA es **configurable** (`ConfiguracionTaller:PorcentajeIVA`);
-  el documento original no fija una tasa, por lo que el valor inicial es **15 %**.
+También puede ejecutar la tarea `dev` desde **Terminal → Ejecutar tarea** en
+VS Code. Detenga cualquier instancia anterior con Ctrl+C para liberar el puerto.

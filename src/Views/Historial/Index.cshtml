@@ -1,0 +1,94 @@
+@{
+    ViewData["Title"] = "Historial del vehículo";
+    var vehiculos = (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Vehiculos;
+    var historial = ViewBag.Historial as List<TallerMecanicoSantoDomingo.Services.ItemHistorial>;
+    var vehiculo = ViewBag.Vehiculo as TallerMecanicoSantoDomingo.Models.Vehiculo;
+}
+
+<div class="encabezado-pagina">
+    <div>
+        <h1><i class="bi bi-clock-history me-2"></i>Historial del vehículo</h1>
+        <div class="ruta">Servicios realizados al vehículo</div>
+    </div>
+</div>
+
+<div class="tarjeta mb-3">
+    <form asp-action="Index" method="get" class="row g-2 align-items-end">
+        <div class="col-sm-9">
+            <label class="form-label fw-semibold text-primary" style="font-size:.85rem">Seleccione el vehículo</label>
+            <select name="idVehiculo" class="form-select" asp-items="vehiculos">
+                <option value="">— Seleccione un vehículo —</option>
+            </select>
+        </div>
+        <div class="col-sm-3">
+            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-search me-1"></i> Consultar</button>
+        </div>
+    </form>
+</div>
+
+@if (vehiculo != null && historial != null)
+{
+    <div class="tarjeta">
+        <div class="d-flex justify-content-between flex-wrap gap-2 mb-3">
+            <h2 class="h6 fw-bold text-primary mb-0">
+                <i class="bi bi-car-front me-1"></i> @vehiculo.Placa — @vehiculo.Marca @vehiculo.Modelo (@vehiculo.Anio)
+                <span class="texto-secundario fw-normal">Propietario: @vehiculo.Cliente?.NombreCompleto</span>
+            </h2>
+            <a asp-controller="Vehiculos" asp-action="Detalles" asp-route-id="@vehiculo.IdVehiculo" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-eye me-1"></i> Ficha completa
+            </a>
+        </div>
+
+        @if (historial.Count == 0)
+        {
+            <div class="estado-vacio">
+                <i class="bi bi-inbox"></i>
+                <div>Este vehículo aún no tiene servicios en su historial.</div>
+            </div>
+        }
+        else
+        {
+            <div class="tabla-envuelta">
+                <table class="tabla-lista">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Inicio</th>
+                            <th>Fin</th>
+                            <th>Tipo</th>
+                            <th>Descripción</th>
+                            <th>Estado</th>
+                            <th>Trabajadores</th>
+                            <th>Productos</th>
+                            <th>Facturas</th>
+                            <th class="text-end">Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in historial.OrderBy(h => h.FechaInicio))
+                        {
+                            <tr>
+                                <td class="fw-semibold">@item.IdServicio</td>
+                                <td>@item.FechaInicio.ToString("dd/MM/yyyy")</td>
+                                <td>@(item.FechaFin?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                <td><span class="estado tipo-@item.TipoServicio.ToLowerInvariant()">@item.TipoServicio</span></td>
+                                <td style="max-width:260px">@item.Descripcion</td>
+                                <td><span class="estado estado-@item.Estado.ToLowerInvariant()">@item.Estado</span></td>
+                                <td style="max-width:200px; font-size:.82rem">@(item.Trabajadores.Count > 0 ? string.Join(", ", item.Trabajadores) : "—")</td>
+                                <td style="max-width:200px; font-size:.82rem">@(item.Productos.Count > 0 ? string.Join(", ", item.Productos) : "—")</td>
+                                <td style="font-size:.82rem">@(item.Facturas.Count > 0 ? string.Join(", ", item.Facturas) : "—")</td>
+                                <td class="text-end fw-semibold">@item.Total.ToString("N2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+}
+else if (Context.Request.Query["idVehiculo"].Count > 0)
+{
+    <div class="alerta-error">
+        <i class="bi bi-exclamation-triangle me-1"></i> El vehículo indicado no fue encontrado.
+    </div>
+}

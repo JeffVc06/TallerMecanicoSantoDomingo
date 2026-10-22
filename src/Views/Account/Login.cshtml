@@ -1,0 +1,66 @@
+@model TallerMecanicoSantoDomingo.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Inicio de sesión";
+    Layout = "_LayoutCuenta";
+}
+
+<div class="tarjeta-cuenta">
+    <div class="marca-cuenta">
+        <div class="escudo"><i class="bi bi-tools"></i></div>
+        <h1>Taller Mecánico Santo Domingo</h1>
+        <div class="subtitulo">Acceso para el equipo del taller</div>
+    </div>
+
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alerta-exito"><i class="bi bi-check-circle me-1"></i> @TempData["Exito"]</div>
+    }
+
+    <form asp-controller="Account" asp-action="Login" method="post" class="formulario" autocomplete="off">
+        <input type="hidden" asp-for="UrlRetorno" />
+        <div asp-validation-summary="ModelOnly" class="alerta-error mb-3"></div>
+
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label"></label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                <input asp-for="Email" class="form-control" autofocus autocomplete="off" placeholder="Correo o usuario" />
+            </div>
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Password" class="form-label"></label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                <input asp-for="Password" class="form-control" id="campo-password" autocomplete="off" />
+                <button class="btn btn-outline-secondary" type="button" data-ver-password="campo-password" title="Mostrar u ocultar contraseña">
+                    <i class="bi bi-eye"></i>
+                </button>
+            </div>
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3 d-flex align-items-center justify-content-between">
+            <label class="d-flex align-items-center gap-2 texto-secundario" style="font-size:.85rem">
+                <input asp-for="Recordarme" class="form-check-input" /> Recordarme
+            </label>
+        </div>
+
+        <button type="submit" class="btn btn-naranja w-100 py-2">
+            <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar sesión
+        </button>
+    </form>
+
+    @if (ViewBag.PrimeraConfiguracion == true)
+    {
+        <div class="alerta-info mt-3 mb-0" style="font-size:.85rem">
+            <i class="bi bi-info-circle me-1"></i>
+            Todavía no existe ningún usuario. <a asp-controller="Account" asp-action="ConfiguracionInicial">Cree el primer administrador</a>.
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

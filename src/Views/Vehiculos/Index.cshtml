@@ -1,0 +1,107 @@
+@model TallerMecanicoSantoDomingo.Services.ResultadoPaginado<TallerMecanicoSantoDomingo.Models.Vehiculo>
+@{
+    ViewData["Title"] = "Vehículos";
+    var clientes = (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Clientes;
+    var clientesSeleccion = new SelectList(clientes, "Value", "Text", ViewBag.IdCliente);
+}
+
+<div class="encabezado-pagina">
+    <div>
+        <h1><i class="bi bi-car-front me-2"></i>Vehículos</h1>
+        <div class="ruta">Vehículos registrados y sus propietarios</div>
+    </div>
+    <a asp-action="Crear" class="btn btn-naranja"><i class="bi bi-plus-lg me-1"></i> Registrar vehículo</a>
+</div>
+
+<div class="tarjeta">
+    <form asp-action="Index" method="get" data-busqueda class="row g-2 align-items-end mb-3">
+        <input type="hidden" name="pagina" value="1" />
+        <div class="col-sm-5 col-md-5">
+            <label class="form-label fw-semibold text-primary" style="font-size:.85rem">Buscar por placa, marca, modelo o cliente</label>
+            <input type="text" name="buscar" value="@ViewBag.Buscar" class="form-control" placeholder="Escriba para buscar..." />
+        </div>
+        <div class="col-sm-4 col-md-4">
+            <label class="form-label fw-semibold text-primary" style="font-size:.85rem">Cliente</label>
+            <select name="idCliente" class="form-select" asp-items="clientesSeleccion">
+                <option value="">Todos los clientes</option>
+            </select>
+        </div>
+        <div class="col-sm-3 col-md-3">
+            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-search me-1"></i> Buscar</button>
+        </div>
+    </form>
+
+    @if (Model.Elementos.Count == 0)
+    {
+        <div class="estado-vacio">
+            <i class="bi bi-car-front"></i>
+            <div class="fw-semibold">No se encontraron vehículos</div>
+            <div style="font-size:.85rem">Registre el primer vehículo vinculado a un cliente existente.</div>
+        </div>
+    }
+    else
+    {
+        <div class="tabla-envuelta">
+            <table class="tabla-lista">
+                <thead>
+                    <tr>
+                        <th>Placa</th>
+                        <th>Marca y modelo</th>
+                        <th>Año</th>
+                        <th>Propietario</th>
+                        <th>Estado</th>
+                        <th class="acciones">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var v in Model.Elementos)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@v.Placa</td>
+                            <td>@v.Marca @v.Modelo</td>
+                            <td>@v.Anio</td>
+                            <td>@v.Cliente?.NombreCompleto</td>
+                            <td><span class="estado @(v.Activo ? "estado-activo" : "estado-inactivo")">@(v.Activo ? "Activo" : "Desactivado")</span></td>
+                            <td class="acciones">
+                                <a asp-action="Detalles" asp-route-id="@v.IdVehiculo" class="btn btn-sm btn-outline-primary btn-icono" title="Ver ficha e historial">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a asp-action="Editar" asp-route-id="@v.IdVehiculo" class="btn btn-sm btn-outline-secondary btn-icono" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a asp-controller="Servicios" asp-action="Crear" asp-route-idVehiculo="@v.IdVehiculo" class="btn btn-sm btn-outline-warning btn-icono" title="Nuevo servicio para este vehículo">
+                                    <i class="bi bi-gear"></i>
+                                </a>
+                                <form asp-action="CambiarEstado" asp-route-id="@v.IdVehiculo" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="activo" value="@(!v.Activo)" />
+                                    <button type="submit" class="btn btn-sm @(v.Activo ? "btn-outline-danger" : "btn-outline-success") btn-icono"
+                                            title="@(v.Activo ? "Desactivar" : "Reactivar")"
+                                            data-confirmar="¿Desea @(v.Activo ? "desactivar" : "reactivar") el vehículo @(v.Placa)?">
+                                        <i class="bi @(v.Activo ? "bi-slash-circle" : "bi-arrow-counterclockwise")"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPaginas > 1)
+        {
+            <nav class="mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span class="texto-secundario" style="font-size:.83rem">
+                    Página @Model.Pagina de @Model.TotalPaginas — @Model.TotalElementos registro(s)
+                </span>
+                <div class="paginacion">
+                    @for (int p = 1; p <= Model.TotalPaginas; p++)
+                    {
+                        <a class="btn btn-sm @(p == Model.Pagina ? "actual" : "btn-outline-secondary")"
+                           asp-action="Index" asp-route-pagina="@p" asp-route-buscar="@ViewBag.Buscar" asp-route-idCliente="@ViewBag.IdCliente">@p</a>
+                    }
+                </div>
+            </nav>
+        }
+    }
+</div>

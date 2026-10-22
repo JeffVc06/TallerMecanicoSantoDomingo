@@ -2,12 +2,32 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "dev",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "watch",
+        "--project",
+        "${workspaceFolder}/src",
+        "run"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "ASPNETCORE_ENVIRONMENT": "Development",
+          "ASPNETCORE_URLS": "http://localhost:5080"
+        }
+      },
+      "problemMatcher": "$msCompile",
+      "detail": "Ejecuta la aplicación y actualiza los cambios al guardar."
+    },
+    {
       "label": "build",
       "type": "shell",
       "command": "dotnet",
       "args": [
         "build",
-        "${workspaceFolder}/src/TallerMecanicoSantoDomingo/TallerMecanicoSantoDomingo.csproj",
+        "${workspaceFolder}/src/TallerMecanicoSantoDomingo.csproj",
         "--configuration",
         "Debug",
         "--output",
@@ -26,7 +46,7 @@
       "command": "dotnet",
       "args": [
         "publish",
-        "${workspaceFolder}/src/TallerMecanicoSantoDomingo/TallerMecanicoSantoDomingo.csproj",
+        "${workspaceFolder}/src/TallerMecanicoSantoDomingo.csproj",
         "--configuration",
         "Release",
         "--output",
@@ -40,13 +60,17 @@
       "type": "shell",
       "command": "sqlcmd",
       "args": [
-        "-S", "localhost",
+        "-S",
+        "localhost",
         "-E",
         "-C",
-        "-d", "TallerMecanicoSantoDomingo",
-        "-i", "${workspaceFolder}/database/TallerMecanicoSantoDomingo.sql",
+        "-d",
+        "TallerMecanicoSantoDomingo",
+        "-i",
+        "${workspaceFolder}/database/TallerMecanicoSantoDomingo.sql",
         "-b",
-        "-f", "65001"
+        "-f",
+        "65001"
       ],
       "group": "none",
       "detail": "Aplica esquema SQL (requiere SQL Server corriendo)"
@@ -56,13 +80,17 @@
       "type": "shell",
       "command": "sqlcmd",
       "args": [
-        "-S", "localhost",
+        "-S",
+        "localhost",
         "-E",
         "-C",
-        "-d", "TallerMecanicoSantoDomingo",
-        "-i", "${workspaceFolder}/database/DatosDemostracion.sql",
+        "-d",
+        "TallerMecanicoSantoDomingo",
+        "-i",
+        "${workspaceFolder}/database/DatosDemostracion.sql",
         "-b",
-        "-f", "65001"
+        "-f",
+        "65001"
       ],
       "group": "none",
       "detail": "Carga datos de demostración"
@@ -73,7 +101,7 @@
       "command": "dotnet",
       "args": [
         "test",
-        "${workspaceFolder}/tests/TallerMecanicoSantoDomingo.Tests/TallerMecanicoSantoDomingo.Tests.csproj",
+        "${workspaceFolder}/tests/TallerMecanicoSantoDomingo.Tests.csproj",
         "--no-build",
         "--verbosity",
         "normal"
@@ -92,7 +120,7 @@
       "args": [
         "watch",
         "test",
-        "${workspaceFolder}/tests/TallerMecanicoSantoDomingo.Tests/TallerMecanicoSantoDomingo.Tests.csproj"
+        "${workspaceFolder}/tests/TallerMecanicoSantoDomingo.Tests.csproj"
       ],
       "group": "test",
       "detail": "Ejecuta tests en modo watch (recompila al guardar)"
@@ -103,7 +131,7 @@
       "command": "dotnet",
       "args": [
         "clean",
-        "${workspaceFolder}/src/TallerMecanicoSantoDomingo/TallerMecanicoSantoDomingo.csproj"
+        "${workspaceFolder}/src/TallerMecanicoSantoDomingo.csproj"
       ],
       "group": "none",
       "detail": "Limpia bin/obj"

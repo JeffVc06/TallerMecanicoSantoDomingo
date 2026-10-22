@@ -1,0 +1,91 @@
+@model TallerMecanicoSantoDomingo.ViewModels.ServicioFormViewModel
+@{
+    ViewData["Title"] = "Registrar servicio";
+    var vehiculos = (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Vehiculos;
+}
+
+<div class="encabezado-pagina">
+    <div>
+        <h1><i class="bi bi-gear-wide-connected me-2"></i>Registrar servicio</h1>
+        <div class="ruta"><a asp-action="Index">Servicios</a> / Nuevo servicio</div>
+    </div>
+</div>
+
+<div class="tarjeta" style="max-width:820px">
+    <form asp-action="Crear" method="post" class="formulario">
+        <div asp-validation-summary="ModelOnly" class="alerta-error"></div>
+
+        <div class="row g-3">
+            <div class="col-12">
+                <label asp-for="IdVehiculo" class="form-label"></label>
+                <select asp-for="IdVehiculo" class="form-select" asp-items="vehiculos">
+                    <option value="">— Seleccione el vehículo —</option>
+                </select>
+                <span asp-validation-for="IdVehiculo" class="text-danger"></span>
+                <div class="form-text">Seleccione el vehículo que recibirá el servicio.</div>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="TipoServicio" class="form-label"></label>
+                <select asp-for="TipoServicio" class="form-select" id="campo-tipo">
+                    <option value="Mantenimiento">Mantenimiento mecánico</option>
+                    <option value="Pintura">Trabajo de pintura</option>
+                </select>
+                <span asp-validation-for="TipoServicio" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="FechaInicio" class="form-label"></label>
+                <input asp-for="FechaInicio" class="form-control" type="date" />
+                <span asp-validation-for="FechaInicio" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Descripcion" class="form-label"></label>
+                <textarea asp-for="Descripcion" class="form-control" rows="2" placeholder="Detalle del trabajo a realizar"></textarea>
+                <span asp-validation-for="Descripcion" class="text-danger"></span>
+            </div>
+            <div class="col-12 div-mantenimiento">
+                <label asp-for="DescripcionFalla" class="form-label"></label>
+                <textarea asp-for="DescripcionFalla" class="form-control" rows="2" placeholder="Síntomas reportados por el cliente"></textarea>
+            </div>
+            <div class="col-md-6 div-pintura d-none">
+                <label asp-for="TipoPintura" class="form-label"></label>
+                <input asp-for="TipoPintura" class="form-control" placeholder="Base de agua, base solvente, barniz..." />
+            </div>
+            <div class="col-md-6 div-pintura d-none">
+                <label asp-for="Color" class="form-label"></label>
+                <input asp-for="Color" class="form-control" placeholder="Blanco perla, rojo, azul..." />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Total" class="form-label"></label>
+                <input asp-for="Total" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" />
+                <span asp-validation-for="Total" class="text-danger"></span>
+                <div class="form-text">Importe a cobrar por el servicio.</div>
+            </div>
+        </div>
+
+        <div class="alerta-info mt-3" style="font-size:.85rem">
+            <i class="bi bi-info-circle me-1"></i>
+            Después de guardar podrá asignar trabajadores compatibles con el área del servicio y registrar los productos utilizados.
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-naranja"><i class="bi bi-save me-1"></i> Guardar servicio</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const tipo = document.getElementById('campo-tipo');
+            function actualizar() {
+                const esPintura = tipo.value === 'Pintura';
+                document.querySelectorAll('.div-pintura').forEach(e => e.classList.toggle('d-none', !esPintura));
+                document.querySelectorAll('.div-mantenimiento').forEach(e => e.classList.toggle('d-none', esPintura));
+            }
+            tipo.addEventListener('change', actualizar);
+            actualizar();
+        })();
+    </script>
+}

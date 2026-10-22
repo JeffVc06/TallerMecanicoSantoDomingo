@@ -1,0 +1,122 @@
+@model TallerMecanicoSantoDomingo.Services.FacturaCompleta
+@{
+    ViewData["Title"] = $"Imprimir {Model.Factura.NumeroFactura}";
+    Layout = null;
+    var f = Model.Factura;
+    string nombreTaller = (string)(ViewBag.NombreTaller ?? "Taller Mecánico Santo Domingo");
+    string direccionTaller = (string)(ViewBag.DireccionTaller ?? "");
+    string telefonoTaller = (string)(ViewBag.TelefonoTaller ?? "");
+    decimal ivaPorcentaje = (decimal)(ViewBag.PorcentajeIVA ?? 15m);
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Factura @f.NumeroFactura — @nombreTaller</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/css/bootstrap.min.css" />
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; color: #1e293b; background: #fff; }
+        .hoja { max-width: 800px; margin: 24px auto; padding: 0 16px; }
+        .encabezado-factura { border-bottom: 3px solid #1d4ed8; padding-bottom: 12px; margin-bottom: 18px; }
+        .nombre-taller { font-size: 1.5rem; font-weight: 800; color: #1d4ed8; }
+        .caja-factura { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 18px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #1d4ed8; color: #fff; padding: 8px 10px; font-size: .85rem; text-align: left; }
+        td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; font-size: .88rem; }
+        .totales { max-width: 320px; margin-left: auto; }
+        .totales .fila { display: flex; justify-content: space-between; padding: 5px 0; }
+        .totales .total { font-size: 1.2rem; font-weight: 800; color: #1d4ed8; border-top: 2px solid #1d4ed8; }
+        .anulada { color: #b91c1c; font-weight: 700; }
+        @@media print {
+            .sin-imprimir { display: none !important; }
+            body { margin: 0; }
+            .hoja { margin: 0; max-width: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="hoja">
+        <div class="d-flex justify-content-end gap-2 sin-imprimir mb-3 no-print" style="padding-top:16px">
+            <button onclick="window.print()" class="btn btn-primary"><i class="bi bi-printer me-1"></i> Imprimir / Guardar PDF</button>
+            <a href="javascript:history.back()" class="btn btn-outline-secondary">Volver</a>
+        </div>
+
+        <div class="encabezado-factura d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <div class="nombre-taller">@nombreTaller</div>
+                <div style="font-size:.85rem" class="texto-secundario">@direccionTaller</div>
+                <div style="font-size:.85rem" class="texto-secundario">Tel.: @telefonoTaller</div>
+            </div>
+            <div class="text-end">
+                <div style="font-size:1.2rem; font-weight:800">FACTURA</div>
+                <div class="fw-bold">@f.NumeroFactura</div>
+                <div style="font-size:.85rem">Fecha: @f.FechaFactura.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                @if (f.Estado == "Anulada")
+                {
+                    <div class="anulada">*** ANULADA ***</div>
+                }
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-7">
+                <div class="caja-factura h-100">
+                    <div class="fw-bold text-primary mb-1" style="font-size:.8rem">DATOS DEL CLIENTE</div>
+                    <div class="fw-semibold">@(f.Cliente != null ? f.Cliente.NombreCompleto : "—")</div>
+                    <div style="font-size:.87rem">RFC: @(f.Cliente?.RFC ?? "—")</div>
+                    <div style="font-size:.87rem">Tel.: @(f.Cliente?.Telefono ?? "—")</div>
+                    <div style="font-size:.87rem">Dirección: @(f.Cliente?.Direccion ?? "—")</div>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div class="caja-factura h-100">
+                    <div class="fw-bold text-primary mb-1" style="font-size:.8rem">INFORMACIÓN DE PAGO</div>
+                    <div style="font-size:.87rem"><strong>Método:</strong> @f.MetodoPago</div>
+                    <div style="font-size:.87rem"><strong>Servicios:</strong> @Model.Detalles.Count</div>
+                    @if (!string.IsNullOrEmpty(f.Notas))
+                    {
+                        <div style="font-size:.87rem"><strong>Notas:</strong> @f.Notas</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <table class="mb-3">
+            <thead>
+                <tr>
+                    <th style="width:60px">#</th>
+                    <th>Vehículo</th>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th style="width:90px">Inicio</th>
+                    <th style="width:120px" class="text-end">Subtotal (C$)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model.Detalles)
+                {
+                    <tr>
+                        <td>@d.IdServicio</td>
+                        <td class="fw-semibold">@d.Placa</td>
+                        <td>@d.TipoServicio</td>
+                        <td>@d.Descripcion</td>
+                        <td>@d.FechaInicio.ToString("dd/MM/yyyy")</td>
+                        <td class="text-end">@d.Subtotal.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="totales">
+            <div class="fila"><span>Subtotal:</span><strong>C$ @f.Subtotal.ToString("N2")</strong></div>
+            <div class="fila"><span>IVA (@ivaPorcentaje%):</span><strong>C$ @f.IVA.ToString("N2")</strong></div>
+            <div class="fila total"><span>TOTAL A PAGAR:</span><span>C$ @f.Total.ToString("N2")</span></div>
+        </div>
+
+        <div class="text-center mt-4" style="font-size:.78rem; color:#64748b">
+            <div>Gracias por su preferencia.</div>
+        </div>
+    </div>
+</body>
+</html>

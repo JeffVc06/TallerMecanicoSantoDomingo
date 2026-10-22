@@ -8,7 +8,7 @@
       "preLaunchTask": "build",
       "program": "${workspaceFolder}/.vscode/build/TallerMecanicoSantoDomingo.dll",
       "args": ["--urls", "http://localhost:5080"],
-      "cwd": "${workspaceFolder}/src/TallerMecanicoSantoDomingo",
+      "cwd": "${workspaceFolder}/src",
       "console": "internalConsole",
       "stopAtEntry": false,
       "serverReadyAction": {
@@ -20,7 +20,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "sourceFileMap": {
-        "/Views": "${workspaceFolder}/src/TallerMecanicoSantoDomingo/Views"
+        "/Views": "${workspaceFolder}/src/Views"
       }
     },
     {
@@ -31,7 +31,7 @@
       "program": "dotnet",
       "args": [
         "test",
-        "${workspaceFolder}/tests/TallerMecanicoSantoDomingo.Tests/TallerMecanicoSantoDomingo.Tests.csproj",
+        "${workspaceFolder}/tests/TallerMecanicoSantoDomingo.Tests.csproj",
         "--no-build",
         "--logger:console;verbosity=normal"
       ],

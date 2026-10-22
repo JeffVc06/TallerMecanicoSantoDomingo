@@ -1,0 +1,101 @@
+@{
+    ViewData["Title"] = "Reporte de trabajadores";
+    var porTrabajador = ViewBag.PorTrabajador as List<TallerMecanicoSantoDomingo.Services.FilaTrabajadorReporte> ?? new();
+    var carga = ViewBag.CargaActual as List<TallerMecanicoSantoDomingo.Services.FilaTrabajadorReporte> ?? new();
+}
+
+<div class="encabezado-pagina">
+    <div>
+        <h1><i class="bi bi-people me-2"></i>Reporte de trabajadores</h1>
+        <div class="ruta"><a asp-action="Index">Reportes</a> / Carga y trabajos por personal</div>
+    </div>
+    <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i> Imprimir</button>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="tarjeta">
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-lightning-charge me-1"></i> Carga actual de personal</h2>
+
+            @if (carga.Count == 0)
+            {
+                <div class="estado-vacio py-3"><i class="bi bi-person-badge"></i><div>No hay trabajadores registrados.</div></div>
+            }
+            else
+            {
+                <div class="tabla-envuelta">
+                    <table class="tabla-lista">
+                        <thead>
+                            <tr><th>Trabajador</th><th>Área</th><th class="text-end">Activos</th><th>Disponibilidad</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var c in carga.OrderByDescending(c => c.AsignacionesActivas))
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@c.Trabajador</td>
+                                    <td>@c.Area</td>
+                                    <td class="text-end fw-semibold">@c.AsignacionesActivas de 2</td>
+                                    <td>
+                                        @if (c.AsignacionesActivas == 0)
+                                        {
+                                            <span class="estado estado-activo">Disponible</span>
+                                        }
+                                        else if (c.AsignacionesActivas == 1)
+                                        {
+                                            <span class="estado" style="background:#fef3c7;color:#92400e">Capacidad parcial</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="estado estado-cancelado">Límite alcanzado</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="tarjeta">
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-list-check me-1"></i> Trabajos acumulados por trabajador</h2>
+
+            @if (porTrabajador.Count == 0)
+            {
+                <div class="estado-vacio py-3"><i class="bi bi-inbox"></i><div>No hay asignaciones registradas.</div></div>
+            }
+            else
+            {
+                <div class="tabla-envuelta">
+                    <table class="tabla-lista">
+                        <thead>
+                            <tr><th>Trabajador</th><th>Área</th><th class="text-end">Asignaciones activas</th><th class="text-end">Retiradas/cerradas</th><th class="text-end">Total histórico</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var t in porTrabajador.OrderByDescending(t => t.TotalAsignaciones))
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@t.Trabajador</td>
+                                    <td>@t.Area</td>
+                                    <td class="text-end">@t.AsignacionesActivas</td>
+                                    <td class="text-end">@t.AsignacionesRetiradas</td>
+                                    <td class="text-end fw-semibold">@t.TotalAsignaciones</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="2" class="text-end">Totales:</th>
+                                <th class="text-end">@porTrabajador.Sum(t => t.AsignacionesActivas)</th>
+                                <th class="text-end">@porTrabajador.Sum(t => t.AsignacionesRetiradas)</th>
+                                <th class="text-end">@porTrabajador.Sum(t => t.TotalAsignaciones)</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

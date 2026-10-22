@@ -1,0 +1,55 @@
+@model TallerMecanicoSantoDomingo.ViewModels.ProductoFormViewModel
+@{
+    ViewData["Title"] = "Editar producto";
+}
+
+<div class="encabezado-pagina">
+    <div>
+        <h1><i class="bi bi-pencil-square me-2"></i>Editar producto</h1>
+        <div class="ruta"><a asp-action="Index">Productos</a> / Editar producto</div>
+    </div>
+</div>
+
+<div class="tarjeta" style="max-width:720px">
+    <form asp-action="Editar" method="post" class="formulario">
+        <input type="hidden" asp-for="IdProducto" />
+        <div asp-validation-summary="ModelOnly" class="alerta-error"></div>
+
+        <div class="row g-3">
+            <div class="col-12">
+                <label asp-for="Nombre" class="form-label"></label>
+                <input asp-for="Nombre" class="form-control" />
+                <span asp-validation-for="Nombre" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Descripcion" class="form-label"></label>
+                <textarea asp-for="Descripcion" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="Descripcion" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="PrecioUnitario" class="form-label"></label>
+                <input asp-for="PrecioUnitario" class="form-control" type="number" step="0.01" min="0" />
+                <span asp-validation-for="PrecioUnitario" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Stock" class="form-label"></label>
+                <input asp-for="Stock" class="form-control" type="number" step="0.001" min="0" />
+                <span asp-validation-for="Stock" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="alerta-info mt-3" style="font-size:.85rem">
+            <i class="bi bi-info-circle me-1"></i>
+            Revise el precio y las existencias antes de guardar.
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-azul"><i class="bi bi-save me-1"></i> Guardar cambios</button>
+            <a asp-action="Detalles" asp-route-id="@Model.IdProducto" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
