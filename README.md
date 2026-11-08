@@ -23,6 +23,8 @@ database/
   TallerMecanicoSantoDomingo.sql   Tablas y procedimiento de anulación
   DatosDemostracion.sql           Datos de ejemplo opcionales
   Consultas.sql                  Consultas de lectura y reportes de ejemplo
+  practica.sql                   Diez ejercicios de consultas sin soluciones
+  AnalisisBaseDatos.md            Relaciones, datos y restricciones del esquema
 tests/                     Pruebas de negocio, acceso e integración
 ```
 
@@ -76,6 +78,9 @@ claves y validaciones. Se ejecuta una sola vez sobre una base nueva.
 `DatosDemostracion.sql` contiene los `INSERT INTO ... VALUES`; se usa una sola vez
 sobre el esquema vacío. `Consultas.sql` contiene únicamente consultas `SELECT`
 para ver los datos y ejemplos de relaciones y totales; puede repetirse.
+`AnalisisBaseDatos.md` describe las tablas y los datos de demostración;
+`practica.sql` contiene diez ejercicios de consultas, de menor a mayor dificultad,
+con espacio para resolverlos y sin soluciones incluidas.
 
 La aplicación comprueba si las tablas ya existen antes de ejecutar el archivo de
 creación. No carga datos de demostración ni modifica columnas de tablas existentes.
