@@ -7,21 +7,21 @@
 
 <div class="encabezado-pagina">
     <div>
-        <h1><i class="bi bi-receipt me-2"></i>Factura @f.NumeroFactura</h1>
+        <h1><i class="bi bi-receipt me-2" aria-hidden="true"></i>Factura @f.NumeroFactura</h1>
         <div class="ruta"><a asp-action="Index">Facturas</a> / Detalle de la factura</div>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a asp-action="Imprimir" asp-route-id="@f.IdFactura" class="btn btn-azul" target="_blank">
-            <i class="bi bi-printer me-1"></i> Imprimir / PDF
+            <i class="bi bi-printer me-1" aria-hidden="true"></i> Imprimir / PDF
         </a>
         @if (emitida)
         {
-            <form asp-action="Anular" asp-route-id="@f.IdFactura" method="post" class="d-flex gap-2">
+            <form asp-action="Anular" asp-route-id="@f.IdFactura" method="post" class="d-flex gap-2 formulario-anulacion">
                 @Html.AntiForgeryToken()
-                <input type="text" name="motivo" class="form-control" placeholder="Motivo de anulación (opcional)" maxlength="200" style="max-width:260px" />
+                <input type="text" name="motivo" class="form-control" placeholder="Motivo de anulación (opcional)" maxlength="200" aria-label="Motivo de anulación (opcional)" />
                 <button type="submit" class="btn btn-outline-danger"
                         data-confirmar="¿Anular la factura @f.NumeroFactura?">
-                    <i class="bi bi-x-octagon me-1"></i> Anular
+                    <i class="bi bi-x-octagon me-1" aria-hidden="true"></i> Anular
                 </button>
             </form>
         }
@@ -31,7 +31,7 @@
 @if (f.Estado == "Anulada")
 {
     <div class="alerta-error">
-        <i class="bi bi-exclamation-triangle me-1"></i>
+        <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
         <strong>Factura anulada.</strong>
     </div>
 }
@@ -39,7 +39,7 @@
 <div class="row g-3">
     <div class="col-lg-4">
         <div class="tarjeta">
-            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-card-text me-1"></i> Datos de la factura</h2>
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-card-text me-1" aria-hidden="true"></i> Datos de la factura</h2>
             <dl class="row mb-0" style="font-size:.9rem">
                 <dt class="col-5 texto-secundario">Número</dt>
                 <dd class="col-7 fw-semibold">@f.NumeroFactura</dd>
@@ -57,7 +57,7 @@
         </div>
 
         <div class="tarjeta">
-            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-person me-1"></i> Cliente</h2>
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-person me-1" aria-hidden="true"></i> Cliente</h2>
             @if (f.Cliente != null)
             {
                 <div class="fw-semibold">@f.Cliente.NombreCompleto</div>
@@ -65,7 +65,7 @@
                 <div class="texto-secundario" style="font-size:.85rem">Tel: @f.Cliente.Telefono</div>
                 <div class="texto-secundario" style="font-size:.85rem">@f.Cliente.Direccion</div>
                 <a asp-controller="Clientes" asp-action="Detalles" asp-route-id="@f.IdCliente" class="btn btn-sm btn-outline-primary mt-2">
-                    <i class="bi bi-eye me-1"></i> Ficha del cliente
+                    <i class="bi bi-eye me-1" aria-hidden="true"></i> Ficha del cliente
                 </a>
             }
         </div>
@@ -73,19 +73,19 @@
 
     <div class="col-lg-8">
         <div class="tarjeta">
-            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-list-check me-1"></i> Servicios facturados (@Model.Detalles.Count)</h2>
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-list-check me-1" aria-hidden="true"></i> Servicios facturados (@Model.Detalles.Count)</h2>
 
-            <div class="tabla-envuelta">
+            <div class="tabla-envuelta" role="region" aria-label="Servicios incluidos en la factura" tabindex="0">
                 <table class="tabla-lista">
                     <thead>
                         <tr>
-                            <th>Servicio</th>
-                            <th>Vehículo</th>
-                            <th>Tipo</th>
-                            <th>Descripción</th>
-                            <th>Inicio</th>
-                            <th class="text-end">Subtotal (C$)</th>
-                            <th class="acciones"></th>
+                            <th scope="col">Servicio</th>
+                            <th scope="col">Vehículo</th>
+                            <th scope="col">Tipo</th>
+                            <th scope="col">Descripción</th>
+                            <th scope="col">Inicio</th>
+                            <th scope="col" class="text-end">Subtotal (C$)</th>
+                            <th scope="col" class="acciones"><span class="visually-hidden">Acciones</span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -99,8 +99,8 @@
                                 <td>@d.FechaInicio.ToString("dd/MM/yyyy")</td>
                                 <td class="text-end">@d.Subtotal.ToString("N2")</td>
                                 <td class="acciones">
-                                    <a asp-controller="Servicios" asp-action="Detalles" asp-route-id="@d.IdServicio" class="btn btn-sm btn-outline-primary btn-icono" title="Ver servicio">
-                                        <i class="bi bi-eye"></i>
+                                    <a asp-controller="Servicios" asp-action="Detalles" asp-route-id="@d.IdServicio" class="btn btn-sm btn-outline-primary btn-icono" title="Ver servicio" aria-label="Ver servicio">
+                                        <i class="bi bi-eye" aria-hidden="true"></i><span class="etiqueta-accion">Ver servicio</span>
                                     </a>
                                 </td>
                             </tr>
@@ -109,7 +109,7 @@
                 </table>
             </div>
 
-            <div class="border rounded p-3 mt-3 bg-light" style="max-width:340px; margin-left:auto">
+            <div class="resumen-totales">
                 <div class="d-flex justify-content-between"><span>Subtotal:</span><strong>C$ @f.Subtotal.ToString("N2")</strong></div>
                 <div class="d-flex justify-content-between"><span>IVA:</span><strong>C$ @f.IVA.ToString("N2")</strong></div>
                 <div class="d-flex justify-content-between fs-5"><span class="fw-bold text-primary">Total:</span><strong class="text-primary">C$ @f.Total.ToString("N2")</strong></div>

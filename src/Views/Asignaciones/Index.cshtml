@@ -8,21 +8,21 @@
 
 <div class="encabezado-pagina">
     <div>
-        <h1><i class="bi bi-person-check me-2"></i>Asignación de personal</h1>
+        <h1><i class="bi bi-person-check me-2" aria-hidden="true"></i>Asignación de personal</h1>
         <div class="ruta">Asignar trabajadores compatibles a los servicios abiertos</div>
     </div>
 </div>
 
 <div class="tarjeta mb-3">
-    <form asp-action="Index" method="get" class="row g-2 align-items-end">
+    <form asp-action="Index" method="get" class="filtros row g-2 align-items-end">
         <div class="col-sm-9">
-            <label class="form-label fw-semibold text-primary" style="font-size:.85rem">Seleccione el servicio abierto</label>
-            <select name="idServicio" class="form-select" asp-items="serviciosAbiertos">
+            <label for="filtro-idservicio" class="form-label fw-semibold text-primary">Seleccione el servicio abierto</label>
+            <select id="filtro-idservicio" name="idServicio" class="form-select" asp-items="serviciosAbiertos">
                 <option value="">— Seleccione un servicio —</option>
             </select>
         </div>
         <div class="col-sm-3">
-            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-search me-1"></i> Consultar</button>
+            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-search me-1" aria-hidden="true"></i> Consultar</button>
         </div>
     </form>
 </div>
@@ -30,7 +30,7 @@
 @if (servicio != null && compatibles != null && asignados != null)
 {
     <div class="alerta-info">
-        <i class="bi bi-info-circle me-1"></i>
+        <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
         <strong>Servicio #@servicio.IdServicio</strong> — @servicio.TipoServicio — @servicio.Vehiculo?.Placa
         (@servicio.Vehiculo?.Cliente?.NombreCompleto). Solo se muestran trabajadores del área compatible
         y no asignados previamente a este servicio.
@@ -39,11 +39,11 @@
     <div class="row g-3">
         <div class="col-lg-5">
             <div class="tarjeta">
-                <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-people me-1"></i> Trabajadores compatibles</h2>
+                <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-people me-1" aria-hidden="true"></i> Trabajadores compatibles</h2>
                 @if (compatibles.Count == 0)
                 {
                     <div class="estado-vacio">
-                        <i class="bi bi-person-x"></i>
+                        <i class="bi bi-person-x" aria-hidden="true"></i>
                         <div>No hay trabajadores compatibles libres para este servicio.</div>
                         <div style="font-size:.83rem">Los del área ya están asignados o alcanzaron el límite de 2 servicios activos.</div>
                     </div>
@@ -53,7 +53,7 @@
                     <div class="d-grid gap-2">
                         @foreach (var t in compatibles)
                         {
-                            <div class="border rounded p-3 d-flex justify-content-between align-items-center @(t.Disponible ? "" : "opacity-75")">
+                            <div class="fila-personal @(t.Disponible ? "" : "fila-personal--limite")">
                                 <div>
                                     <div class="fw-semibold">@t.NombreCompleto</div>
                                     <div class="texto-secundario" style="font-size:.82rem">
@@ -67,13 +67,13 @@
                                         <input type="hidden" name="IdServicio" value="@servicio.IdServicio" />
                                         <input type="hidden" name="IdTrabajador" value="@t.IdTrabajador" />
                                         <button type="submit" class="btn btn-sm btn-naranja">
-                                            <i class="bi bi-person-check me-1"></i> Asignar
+                                            <i class="bi bi-person-check me-1" aria-hidden="true"></i> Asignar
                                         </button>
                                     </form>
                                 }
                                 else
                                 {
-                                    <span class="estado estado-cancelado" title="Sin disponibilidad">Límite 2/2</span>
+                                    <span class="estado estado-limite" title="Sin disponibilidad">Límite 2/2</span>
                                 }
                             </div>
                         }
@@ -84,20 +84,20 @@
 
         <div class="col-lg-7">
             <div class="tarjeta">
-                <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-list-check me-1"></i> Trabajadores asignados a este servicio</h2>
+                <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-list-check me-1" aria-hidden="true"></i> Trabajadores asignados a este servicio</h2>
                 @if (asignados.Count == 0)
                 {
                     <div class="estado-vacio">
-                        <i class="bi bi-inbox"></i>
+                        <i class="bi bi-inbox" aria-hidden="true"></i>
                         <div>Aún no hay trabajadores asignados.</div>
                     </div>
                 }
                 else
                 {
-                    <div class="tabla-envuelta">
+                    <div class="tabla-envuelta" role="region" aria-label="Trabajadores asignados" tabindex="0">
                         <table class="tabla-lista">
                             <thead>
-                                <tr><th>Trabajador</th><th>Área</th><th>Asignado el</th><th>Estado</th><th>Observaciones</th><th class="acciones"></th></tr>
+                                <tr><th scope="col">Trabajador</th><th scope="col">Área</th><th scope="col">Asignado el</th><th scope="col">Estado</th><th scope="col">Observaciones</th><th scope="col" class="acciones"><span class="visually-hidden">Acciones</span></th></tr>
                             </thead>
                             <tbody>
                                 @foreach (var a in asignados)
@@ -116,13 +116,13 @@
                                                     <input type="hidden" name="idTrabajador" value="@a.IdTrabajador" />
                                                     <input type="hidden" name="idServicio" value="@servicio.IdServicio" />
                                                     <button type="submit" class="btn btn-sm btn-outline-danger btn-icono" title="Retirar"
-                                                            data-confirmar="¿Retirar a @a.NombreTrabajador de este servicio?">
-                                                        <i class="bi bi-person-dash"></i>
+                                                            data-confirmar="¿Retirar a @a.NombreTrabajador de este servicio?" aria-label="Retirar">
+                                                        <i class="bi bi-person-dash" aria-hidden="true"></i><span class="etiqueta-accion">Retirar</span>
                                                     </button>
                                                 </form>
                                             }
-                                            <a asp-controller="Servicios" asp-action="Detalles" asp-route-id="@a.IdServicio" class="btn btn-sm btn-outline-primary btn-icono" title="Ver servicio">
-                                                <i class="bi bi-eye"></i>
+                                            <a asp-controller="Servicios" asp-action="Detalles" asp-route-id="@a.IdServicio" class="btn btn-sm btn-outline-primary btn-icono" title="Ver servicio" aria-label="Ver servicio">
+                                                <i class="bi bi-eye" aria-hidden="true"></i><span class="etiqueta-accion">Ver servicio</span>
                                             </a>
                                         </td>
                                     </tr>

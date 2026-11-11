@@ -5,73 +5,73 @@
 
 <div class="encabezado-pagina">
     <div>
-        <h1><i class="bi bi-people me-2"></i>Clientes</h1>
+        <h1><i class="bi bi-people me-2" aria-hidden="true"></i>Clientes</h1>
         <div class="ruta">Administración de clientes del taller</div>
     </div>
-    <a asp-action="Crear" class="btn btn-naranja"><i class="bi bi-plus-lg me-1"></i> Registrar cliente</a>
+    <a asp-action="Crear" class="btn btn-naranja"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Registrar cliente</a>
 </div>
 
 <div class="tarjeta">
-    <form asp-action="Index" method="get" data-busqueda class="row g-2 align-items-end mb-3">
+    <form asp-action="Index" method="get" data-busqueda class="filtros row g-2 align-items-end mb-3">
         <input type="hidden" name="pagina" value="1" />
         <div class="col-sm-7 col-md-8">
-            <label class="form-label fw-semibold text-primary" style="font-size:.85rem">Buscar por nombre, apellido, cédula, RUC o teléfono</label>
-            <input type="text" name="buscar" value="@ViewBag.Buscar" class="form-control" placeholder="Escriba para buscar..." />
+            <label for="filtro-buscar" class="form-label fw-semibold text-primary">Buscar por nombre, apellido, cédula, RUC o teléfono</label>
+            <input id="filtro-buscar" type="text" name="buscar" value="@ViewBag.Buscar" class="form-control" placeholder="Escriba para buscar..." />
         </div>
         <div class="col-sm-5 col-md-4">
-            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-search me-1"></i> Buscar</button>
+            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-search me-1" aria-hidden="true"></i> Buscar</button>
         </div>
     </form>
 
     @if (Model.Elementos.Count == 0)
     {
         <div class="estado-vacio">
-            <i class="bi bi-people"></i>
+            <i class="bi bi-people" aria-hidden="true"></i>
             <div class="fw-semibold">No se encontraron clientes</div>
             <div style="font-size:.85rem">Registre el primer cliente o ajuste los criterios de búsqueda.</div>
         </div>
     }
     else
     {
-        <div class="tabla-envuelta">
-            <table class="tabla-lista">
-                <thead>
-                    <tr>
-                        <th>RUC</th>
-                        <th>Nombre completo</th>
-                        <th>Teléfono</th>
-                        <th>Dirección</th>
-                        <th>Estado</th>
-                        <th class="acciones">Acciones</th>
+        <div class="tabla-envuelta tabla-acciones-fijas" role="region" aria-label="Listado de clientes" tabindex="0">
+            <table class="tabla-lista tabla-adaptable" role="table">
+                <thead role="rowgroup">
+                    <tr role="row">
+                        <th scope="col">RUC</th>
+                        <th scope="col">Nombre completo</th>
+                        <th scope="col">Teléfono</th>
+                        <th scope="col">Dirección</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col" class="acciones">Acciones</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody role="rowgroup">
                     @foreach (var c in Model.Elementos)
                     {
-                        <tr>
-                            <td class="fw-semibold">@c.RFC</td>
-                            <td>@c.NombreCompleto</td>
-                            <td>@c.Telefono</td>
-                            <td>@c.Direccion</td>
-                            <td>
+                        <tr role="row">
+                            <td role="cell" data-etiqueta="RUC" class="fw-semibold">@c.RFC</td>
+                            <td role="cell" data-etiqueta="Nombre completo">@c.NombreCompleto</td>
+                            <td role="cell" data-etiqueta="Teléfono">@c.Telefono</td>
+                            <td role="cell" data-etiqueta="Dirección">@c.Direccion</td>
+                            <td role="cell" data-etiqueta="Estado">
                                 <span class="estado @(c.Activo ? "estado-activo" : "estado-inactivo")">
                                     @(c.Activo ? "Activo" : "Desactivado")
                                 </span>
                             </td>
-                            <td class="acciones">
-                                <a asp-action="Detalles" asp-route-id="@c.IdCliente" class="btn btn-sm btn-outline-primary btn-icono" title="Ver ficha e historial">
-                                    <i class="bi bi-eye"></i>
+                            <td role="cell" data-etiqueta="Acciones" class="acciones">
+                                <a asp-action="Detalles" asp-route-id="@c.IdCliente" class="btn btn-sm btn-outline-primary btn-icono" title="Ver ficha e historial" aria-label="Ver ficha e historial">
+                                    <i class="bi bi-eye" aria-hidden="true"></i><span class="etiqueta-accion">Ver ficha</span>
                                 </a>
-                                <a asp-action="Editar" asp-route-id="@c.IdCliente" class="btn btn-sm btn-outline-secondary btn-icono" title="Editar">
-                                    <i class="bi bi-pencil"></i>
+                                <a asp-action="Editar" asp-route-id="@c.IdCliente" class="btn btn-sm btn-outline-secondary btn-icono" title="Editar" aria-label="Editar">
+                                    <i class="bi bi-pencil" aria-hidden="true"></i><span class="etiqueta-accion">Editar</span>
                                 </a>
                                 <form asp-action="CambiarEstado" asp-route-id="@c.IdCliente" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="activo" value="@(!c.Activo)" />
                                     <button type="submit" class="btn btn-sm @(c.Activo ? "btn-outline-danger" : "btn-outline-success") btn-icono"
                                             title="@(c.Activo ? "Desactivar" : "Reactivar")"
-                                            data-confirmar="¿Desea @(c.Activo ? "desactivar" : "reactivar") al cliente @(c.NombreCompleto)?">
-                                        <i class="bi @(c.Activo ? "bi-person-dash" : "bi-person-check")"></i>
+                                            data-confirmar="¿Desea @(c.Activo ? "desactivar" : "reactivar") al cliente @(c.NombreCompleto)?" aria-label="@(c.Activo ? "Desactivar" : "Reactivar")">
+                                        <i class="bi @(c.Activo ? "bi-person-dash" : "bi-person-check")" aria-hidden="true"></i><span class="etiqueta-accion">@(c.Activo ? "Desactivar" : "Reactivar")</span>
                                     </button>
                                 </form>
                             </td>
@@ -83,7 +83,7 @@
 
         @if (Model.TotalPaginas > 1)
         {
-            <nav class="mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <nav class="pie-listado" aria-label="Paginación">
                 <span class="texto-secundario" style="font-size:.83rem">
                     Página @Model.Pagina de @Model.TotalPaginas — @Model.TotalElementos registro(s)
                 </span>
@@ -91,7 +91,7 @@
                     @for (int p = 1; p <= Model.TotalPaginas; p++)
                     {
                         <a class="btn btn-sm @(p == Model.Pagina ? "actual" : "btn-outline-secondary")"
-                           asp-action="Index" asp-route-pagina="@p" asp-route-buscar="@ViewBag.Buscar">@p</a>
+                           aria-current="@(p == Model.Pagina ? "page" : null)" asp-action="Index" asp-route-pagina="@p" asp-route-buscar="@ViewBag.Buscar">@p</a>
                     }
                 </div>
             </nav>

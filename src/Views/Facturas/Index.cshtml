@@ -7,75 +7,75 @@
 
 <div class="encabezado-pagina">
     <div>
-        <h1><i class="bi bi-receipt me-2"></i>Facturas</h1>
+        <h1><i class="bi bi-receipt me-2" aria-hidden="true"></i>Facturas</h1>
         <div class="ruta">Emisión y consulta de facturas del taller</div>
     </div>
-    <a asp-action="Crear" class="btn btn-naranja"><i class="bi bi-plus-lg me-1"></i> Emitir factura</a>
+    <a asp-action="Crear" class="btn btn-naranja"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Emitir factura</a>
 </div>
 
 <div class="tarjeta">
-    <form asp-action="Index" method="get" data-busqueda class="row g-2 align-items-end mb-3">
+    <form asp-action="Index" method="get" data-busqueda class="filtros row g-2 align-items-end mb-3">
         <input type="hidden" name="pagina" value="1" />
         <div class="col-md-4">
-            <label class="form-label fw-semibold text-primary" style="font-size:.85rem">Número de factura</label>
-            <input type="text" name="buscar" value="@ViewBag.Buscar" class="form-control" placeholder="FAC-2026-0001" />
+            <label for="filtro-buscar" class="form-label fw-semibold text-primary">Número de factura</label>
+            <input id="filtro-buscar" type="text" name="buscar" value="@ViewBag.Buscar" class="form-control" placeholder="FAC-2026-0001" />
         </div>
         <div class="col-md-3">
-            <label class="form-label fw-semibold text-primary" style="font-size:.85rem">Fecha desde</label>
-            <input type="date" name="desde" value="@(desde?.ToString("yyyy-MM-dd"))" class="form-control" />
+            <label for="filtro-desde" class="form-label fw-semibold text-primary">Fecha desde</label>
+            <input id="filtro-desde" type="date" name="desde" value="@(desde?.ToString("yyyy-MM-dd"))" class="form-control" />
         </div>
         <div class="col-md-3">
-            <label class="form-label fw-semibold text-primary" style="font-size:.85rem">Fecha hasta</label>
-            <input type="date" name="hasta" value="@(hasta?.ToString("yyyy-MM-dd"))" class="form-control" />
+            <label for="filtro-hasta" class="form-label fw-semibold text-primary">Fecha hasta</label>
+            <input id="filtro-hasta" type="date" name="hasta" value="@(hasta?.ToString("yyyy-MM-dd"))" class="form-control" />
         </div>
         <div class="col-md-2">
-            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-search me-1"></i> Filtrar</button>
+            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-search me-1" aria-hidden="true"></i> Filtrar</button>
         </div>
     </form>
 
     @if (Model.Elementos.Count == 0)
     {
         <div class="estado-vacio">
-            <i class="bi bi-receipt"></i>
+            <i class="bi bi-receipt" aria-hidden="true"></i>
             <div class="fw-semibold">No se encontraron facturas</div>
             <div style="font-size:.85rem">Emita una factura seleccionando los servicios terminados de un cliente.</div>
         </div>
     }
     else
     {
-        <div class="tabla-envuelta">
-            <table class="tabla-lista">
-                <thead>
-                    <tr>
-                        <th>Número</th>
-                        <th>Fecha</th>
-                        <th>Cliente</th>
-                        <th>Método de pago</th>
-                        <th class="text-end">Subtotal (C$)</th>
-                        <th class="text-end">IVA (C$)</th>
-                        <th class="text-end">Total (C$)</th>
-                        <th>Estado</th>
-                        <th class="acciones">Acciones</th>
+        <div class="tabla-envuelta tabla-acciones-fijas" role="region" aria-label="Listado de facturas" tabindex="0">
+            <table class="tabla-lista tabla-adaptable" role="table">
+                <thead role="rowgroup">
+                    <tr role="row">
+                        <th scope="col">Número</th>
+                        <th scope="col">Fecha</th>
+                        <th scope="col">Cliente</th>
+                        <th scope="col">Método de pago</th>
+                        <th scope="col" class="text-end">Subtotal (C$)</th>
+                        <th scope="col" class="text-end">IVA (C$)</th>
+                        <th scope="col" class="text-end">Total (C$)</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col" class="acciones">Acciones</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody role="rowgroup">
                     @foreach (var f in Model.Elementos)
                     {
-                        <tr>
-                            <td class="fw-semibold">@f.NumeroFactura</td>
-                            <td>@f.FechaFactura.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-                            <td>@(f.Cliente != null ? $"{f.Cliente.Nombre} {f.Cliente.Apellido}" : "—")</td>
-                            <td>@f.MetodoPago</td>
-                            <td class="text-end">@f.Subtotal.ToString("N2")</td>
-                            <td class="text-end">@f.IVA.ToString("N2")</td>
-                            <td class="text-end fw-semibold">@f.Total.ToString("N2")</td>
-                            <td><span class="estado estado-@f.Estado.ToLowerInvariant()">@f.Estado</span></td>
-                            <td class="acciones">
-                                <a asp-action="Detalles" asp-route-id="@f.IdFactura" class="btn btn-sm btn-outline-primary btn-icono" title="Ver detalle">
-                                    <i class="bi bi-eye"></i>
+                        <tr role="row">
+                            <td role="cell" data-etiqueta="Número" class="fw-semibold">@f.NumeroFactura</td>
+                            <td role="cell" data-etiqueta="Fecha">@f.FechaFactura.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td role="cell" data-etiqueta="Cliente">@(f.Cliente != null ? $"{f.Cliente.Nombre} {f.Cliente.Apellido}" : "—")</td>
+                            <td role="cell" data-etiqueta="Método de pago">@f.MetodoPago</td>
+                            <td role="cell" data-etiqueta="Subtotal (C$)" class="text-end">@f.Subtotal.ToString("N2")</td>
+                            <td role="cell" data-etiqueta="IVA (C$)" class="text-end">@f.IVA.ToString("N2")</td>
+                            <td role="cell" data-etiqueta="Total (C$)" class="text-end fw-semibold">@f.Total.ToString("N2")</td>
+                            <td role="cell" data-etiqueta="Estado"><span class="estado estado-@f.Estado.ToLowerInvariant()">@f.Estado</span></td>
+                            <td role="cell" data-etiqueta="Acciones" class="acciones">
+                                <a asp-action="Detalles" asp-route-id="@f.IdFactura" class="btn btn-sm btn-outline-primary btn-icono" title="Ver detalle" aria-label="Ver detalle">
+                                    <i class="bi bi-eye" aria-hidden="true"></i><span class="etiqueta-accion">Ver</span>
                                 </a>
-                                <a asp-action="Imprimir" asp-route-id="@f.IdFactura" class="btn btn-sm btn-outline-secondary btn-icono" title="Imprimir factura">
-                                    <i class="bi bi-printer"></i>
+                                <a asp-action="Imprimir" asp-route-id="@f.IdFactura" class="btn btn-sm btn-outline-secondary btn-icono" title="Imprimir factura" aria-label="Imprimir factura">
+                                    <i class="bi bi-printer" aria-hidden="true"></i><span class="etiqueta-accion">Imprimir</span>
                                 </a>
                             </td>
                         </tr>
@@ -86,7 +86,7 @@
 
         @if (Model.TotalPaginas > 1)
         {
-            <nav class="mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <nav class="pie-listado" aria-label="Paginación">
                 <span class="texto-secundario" style="font-size:.83rem">
                     Página @Model.Pagina de @Model.TotalPaginas — @Model.TotalElementos registro(s)
                 </span>
@@ -94,7 +94,7 @@
                     @for (int p = 1; p <= Model.TotalPaginas; p++)
                     {
                         <a class="btn btn-sm @(p == Model.Pagina ? "actual" : "btn-outline-secondary")"
-                           asp-action="Index" asp-route-pagina="@p" asp-route-buscar="@ViewBag.Buscar"
+                           aria-current="@(p == Model.Pagina ? "page" : null)" asp-action="Index" asp-route-pagina="@p" asp-route-buscar="@ViewBag.Buscar"
                            asp-route-desde="@(desde?.ToString("yyyy-MM-dd"))" asp-route-hasta="@(hasta?.ToString("yyyy-MM-dd"))">@p</a>
                     }
                 </div>

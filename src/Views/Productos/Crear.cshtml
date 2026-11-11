@@ -5,14 +5,14 @@
 
 <div class="encabezado-pagina">
     <div>
-        <h1><i class="bi bi-box-seam me-2"></i>Registrar producto</h1>
+        <h1><i class="bi bi-box-seam me-2" aria-hidden="true"></i>Registrar producto</h1>
         <div class="ruta"><a asp-action="Index">Productos</a> / Nuevo producto</div>
     </div>
 </div>
 
-<div class="tarjeta" style="max-width:720px">
+<div class="tarjeta formulario-tarjeta">
     <form asp-action="Crear" method="post" class="formulario">
-        <div asp-validation-summary="ModelOnly" class="alerta-error"></div>
+        <div asp-validation-summary="ModelOnly" class="alerta-error" role="alert"></div>
 
         <div class="row g-3">
             <div class="col-12">
@@ -25,6 +25,7 @@
                 <textarea asp-for="Descripcion" class="form-control" rows="2" placeholder="Marca, referencia o características"></textarea>
                 <span asp-validation-for="Descripcion" class="text-danger"></span>
             </div>
+            <div class="col-12"><h2 class="formulario-seccion">Precios y existencias</h2></div>
             <div class="col-md-6">
                 <label asp-for="PrecioUnitario" class="form-label"></label>
                 <input asp-for="PrecioUnitario" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" />
@@ -44,8 +45,8 @@
             </div>
         </div>
 
-        <div class="d-flex gap-2 mt-4">
-            <button type="submit" class="btn btn-naranja"><i class="bi bi-save me-1"></i> Guardar producto</button>
+        <div class="acciones-formulario">
+            <button type="submit" class="btn btn-naranja"><i class="bi bi-save me-1" aria-hidden="true"></i> Guardar producto</button>
             <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
         </div>
     </form>

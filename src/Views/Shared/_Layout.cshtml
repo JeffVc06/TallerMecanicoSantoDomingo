@@ -1,12 +1,11 @@
 @using Microsoft.AspNetCore.Antiforgery
-@using Microsoft.AspNetCore.Identity
 @using TallerMecanicoSantoDomingo.Services
 @inject IAntiforgery Antiforgery
 @inject Microsoft.Extensions.Options.IOptions<ConfiguracionTaller> ConfigTaller
 @{
     var token = Antiforgery.GetAndStoreTokens(Context).RequestToken;
-    var rutaActual = $"{Context.Request.Path.Value}".ToLowerInvariant();
-    bool Activa(string controlador) => rutaActual.StartsWith($"/{controlador.ToLowerInvariant()}");
+    var controladorActual = ViewContext.RouteData.Values["controller"] as string;
+    bool Activa(string controlador) => string.Equals(controladorActual, controlador, StringComparison.OrdinalIgnoreCase);
     string Clase(string controlador) => Activa(controlador) ? "activo" : "";
     var usuario = User.Identity?.Name ?? "Usuario";
 }
@@ -25,49 +24,54 @@
     <a class="visually-hidden-focusable salto-contenido" href="#contenido-principal">Saltar al contenido</a>
     <aside class="barra-lateral" id="barra-lateral" aria-label="Menú principal">
         <div class="barra-marca">
-            <div class="escudo"><i class="bi bi-tools"></i></div>
+            <div class="escudo" aria-hidden="true"><i class="bi bi-tools" aria-hidden="true"></i></div>
             <div class="nombre-taller">
-                Taller Mecánico Santo Domingo
-                <small>Recepción · Taller · Repuestos</small>
+                <strong>Taller Mecánico</strong>
+                <small>Santo Domingo</small>
             </div>
         </div>
         <nav class="barra-nav" aria-label="Secciones del taller">
-            <div class="titulo-seccion">Operaciones</div>
-            <a href="@Url.Action("Index", "Dashboard")" class="@Clase("Dashboard")" aria-current="@(Activa("Dashboard") ? "page" : null)"><i class="bi bi-speedometer2"></i> Resumen del taller</a>
-            <a href="@Url.Action("Index", "Clientes")" class="@Clase("Clientes")" aria-current="@(Activa("Clientes") ? "page" : null)"><i class="bi bi-people"></i> Clientes</a>
-            <a href="@Url.Action("Index", "Vehiculos")" class="@Clase("Vehiculos")" aria-current="@(Activa("Vehiculos") ? "page" : null)"><i class="bi bi-car-front"></i> Vehículos</a>
-            <a href="@Url.Action("Index", "Servicios")" class="@Clase("Servicios")" aria-current="@(Activa("Servicios") ? "page" : null)"><i class="bi bi-gear-wide-connected"></i> Servicios</a>
-            <a href="@Url.Action("Index", "Historial")" class="@Clase("Historial")" aria-current="@(Activa("Historial") ? "page" : null)"><i class="bi bi-clock-history"></i> Historial del vehículo</a>
-            <div class="titulo-seccion">Personal e inventario</div>
-            <a href="@Url.Action("Index", "Trabajadores")" class="@Clase("Trabajadores")" aria-current="@(Activa("Trabajadores") ? "page" : null)"><i class="bi bi-person-badge"></i> Trabajadores</a>
-            <a href="@Url.Action("Index", "Asignaciones")" class="@Clase("Asignaciones")" aria-current="@(Activa("Asignaciones") ? "page" : null)"><i class="bi bi-person-check"></i> Asignaciones</a>
-            <a href="@Url.Action("Index", "Productos")" class="@Clase("Productos")" aria-current="@(Activa("Productos") ? "page" : null)"><i class="bi bi-box-seam"></i> Inventario</a>
-            <div class="titulo-seccion">Administración</div>
-            <a href="@Url.Action("Index", "Facturas")" class="@Clase("Facturas")" aria-current="@(Activa("Facturas") ? "page" : null)"><i class="bi bi-receipt"></i> Facturación</a>
-            <a href="@Url.Action("Index", "Reportes")" class="@Clase("Reportes")" aria-current="@(Activa("Reportes") ? "page" : null)"><i class="bi bi-graph-up"></i> Reportes</a>
+            <div class="grupo-nav">
+                <p class="titulo-seccion">Recepción</p>
+                <a href="@Url.Action("Index", "Dashboard")" class="@Clase("Dashboard")" aria-current="@(Activa("Dashboard") ? "page" : null)"><i class="bi bi-speedometer2" aria-hidden="true"></i> Resumen del taller</a>
+                <a href="@Url.Action("Index", "Clientes")" class="@Clase("Clientes")" aria-current="@(Activa("Clientes") ? "page" : null)"><i class="bi bi-people" aria-hidden="true"></i> Clientes</a>
+                <a href="@Url.Action("Index", "Vehiculos")" class="@Clase("Vehiculos")" aria-current="@(Activa("Vehiculos") ? "page" : null)"><i class="bi bi-car-front" aria-hidden="true"></i> Vehículos</a>
+                <a href="@Url.Action("Index", "Historial")" class="@Clase("Historial")" aria-current="@(Activa("Historial") ? "page" : null)"><i class="bi bi-clock-history" aria-hidden="true"></i> Historial del vehículo</a>
+            </div>
+            <div class="grupo-nav">
+                <p class="titulo-seccion">Taller</p>
+                <a href="@Url.Action("Index", "Servicios")" class="@Clase("Servicios")" aria-current="@(Activa("Servicios") ? "page" : null)"><i class="bi bi-wrench-adjustable" aria-hidden="true"></i> Servicios</a>
+                <a href="@Url.Action("Index", "Trabajadores")" class="@Clase("Trabajadores")" aria-current="@(Activa("Trabajadores") ? "page" : null)"><i class="bi bi-person-badge" aria-hidden="true"></i> Trabajadores</a>
+                <a href="@Url.Action("Index", "Asignaciones")" class="@Clase("Asignaciones")" aria-current="@(Activa("Asignaciones") ? "page" : null)"><i class="bi bi-person-check" aria-hidden="true"></i> Asignaciones</a>
+                <a href="@Url.Action("Index", "Productos")" class="@Clase("Productos")" aria-current="@(Activa("Productos") ? "page" : null)"><i class="bi bi-box-seam" aria-hidden="true"></i> Inventario</a>
+            </div>
+            <div class="grupo-nav">
+                <p class="titulo-seccion">Administración</p>
+                <a href="@Url.Action("Index", "Facturas")" class="@Clase("Facturas")" aria-current="@(Activa("Facturas") ? "page" : null)"><i class="bi bi-receipt" aria-hidden="true"></i> Facturación</a>
+                <a href="@Url.Action("Index", "Reportes")" class="@Clase("Reportes")" aria-current="@(Activa("Reportes") ? "page" : null)"><i class="bi bi-graph-up" aria-hidden="true"></i> Reportes</a>
+            </div>
         </nav>
-        <div class="barra-pie">
-            Control diario del taller
-        </div>
     </aside>
-    <button class="fondo-menu" id="fondo-menu" type="button" aria-label="Cerrar menú" tabindex="-1"></button>
+    <button class="fondo-menu" id="fondo-menu" type="button" aria-label="Cerrar menú" tabindex="-1"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
 
     <div class="contenido">
         <header class="barra-superior">
             <button class="btn btn-light d-lg-none" id="boton-menu" type="button" aria-label="Abrir menú" aria-controls="barra-lateral" aria-expanded="false">
-                <i class="bi bi-list"></i>
+                <i class="bi bi-list" aria-hidden="true"></i>
             </button>
-            <div class="contexto-pagina d-none d-lg-flex">
-                <span class="contexto-pagina__marca"><i class="bi bi-tools"></i></span>
-                <span><small>@ConfigTaller.Value.NombreTaller</small><strong>@ViewData["Title"]</strong></span>
+            <div class="contexto-pagina">
+                <span class="contexto-pagina__raiz d-none d-md-inline">Taller</span>
+                <i class="bi bi-chevron-right d-none d-md-inline" aria-hidden="true"></i>
+                <strong>@ViewData["Title"]</strong>
             </div>
             <div class="usuario-conectado">
-                <span class="avatar">@(usuario.Length > 0 ? char.ToUpperInvariant(usuario[0]).ToString() : "U")</span>
-                <span class="usuario-conectado__nombre d-none d-sm-inline">@usuario</span>
+                <span class="avatar d-none d-sm-grid" aria-hidden="true">@(usuario.Length > 0 ? char.ToUpperInvariant(usuario[0]).ToString() : "U")</span>
+                <span class="usuario-conectado__nombre d-none d-sm-inline" title="@usuario">@usuario</span>
                 <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
                     @Html.AntiForgeryToken()
                     <button type="submit" class="btn btn-sm btn-cerrar-sesion" title="Cerrar sesión" aria-label="Cerrar sesión">
-                        <i class="bi bi-box-arrow-right"></i>
+                        <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                        <span class="d-none d-xl-inline">Salir</span>
                     </button>
                 </form>
             </div>
@@ -76,16 +80,16 @@
         <main class="pagina" id="contenido-principal" tabindex="-1">
             @if (TempData["Exito"] != null)
             {
-                <div class="alerta-exito d-flex align-items-center gap-2">
-                    <i class="bi bi-check-circle-fill"></i>
+                <div class="alerta-exito d-flex align-items-center gap-2" role="status">
+                    <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
                     <span>@TempData["Exito"]</span>
                     <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Cerrar"></button>
                 </div>
             }
             @if (TempData["Error"] != null)
             {
-                <div class="alerta-error d-flex align-items-center gap-2">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
+                <div class="alerta-error d-flex align-items-center gap-2" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
                     <span>@TempData["Error"]</span>
                     <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Cerrar"></button>
                 </div>

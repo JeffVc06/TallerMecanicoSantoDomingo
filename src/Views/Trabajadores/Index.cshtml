@@ -6,63 +6,63 @@
 
 <div class="encabezado-pagina">
     <div>
-        <h1><i class="bi bi-person-badge me-2"></i>Trabajadores</h1>
+        <h1><i class="bi bi-person-badge me-2" aria-hidden="true"></i>Trabajadores</h1>
         <div class="ruta">Personal del taller, áreas y carga de trabajo actual</div>
     </div>
-    <a asp-action="Crear" class="btn btn-naranja"><i class="bi bi-plus-lg me-1"></i> Registrar trabajador</a>
+    <a asp-action="Crear" class="btn btn-naranja"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Registrar trabajador</a>
 </div>
 
 <div class="tarjeta">
-    <form asp-action="Index" method="get" data-busqueda class="row g-2 align-items-end mb-3">
+    <form asp-action="Index" method="get" data-busqueda class="filtros row g-2 align-items-end mb-3">
         <div class="col-sm-8">
-            <label class="form-label fw-semibold text-primary" style="font-size:.85rem">Buscar por nombre, apellido o teléfono</label>
-            <input type="text" name="buscar" value="@ViewBag.Buscar" class="form-control" placeholder="Escriba para buscar..." />
+            <label for="filtro-buscar" class="form-label fw-semibold text-primary">Buscar por nombre, apellido o teléfono</label>
+            <input id="filtro-buscar" type="text" name="buscar" value="@ViewBag.Buscar" class="form-control" placeholder="Escriba para buscar..." />
         </div>
         <div class="col-sm-4">
-            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-search me-1"></i> Buscar</button>
+            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-search me-1" aria-hidden="true"></i> Buscar</button>
         </div>
     </form>
 
     @if (Model.Count == 0)
     {
         <div class="estado-vacio">
-            <i class="bi bi-person-badge"></i>
+            <i class="bi bi-person-badge" aria-hidden="true"></i>
             <div class="fw-semibold">No se encontraron trabajadores</div>
             <div style="font-size:.85rem">Registre al primer trabajador indicando su área (Mantenimiento mecánico o Pintura).</div>
         </div>
     }
     else
     {
-        <div class="tabla-envuelta">
-            <table class="tabla-lista">
-                <thead>
-                    <tr>
-                        <th>Trabajador</th>
-                        <th>Teléfono</th>
-                        <th>Área</th>
-                        <th style="min-width:180px">Carga actual</th>
-                        <th>Disponibilidad</th>
-                        <th>Estado</th>
-                        <th class="acciones">Acciones</th>
+        <div class="tabla-envuelta tabla-acciones-fijas" role="region" aria-label="Listado de trabajadores" tabindex="0">
+            <table class="tabla-lista tabla-adaptable" role="table">
+                <thead role="rowgroup">
+                    <tr role="row">
+                        <th scope="col">Trabajador</th>
+                        <th scope="col">Teléfono</th>
+                        <th scope="col">Área</th>
+                        <th scope="col" style="min-width:180px">Carga actual</th>
+                        <th scope="col">Disponibilidad</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col" class="acciones">Acciones</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody role="rowgroup">
                     @foreach (var t in Model)
                     {
                         cargas.TryGetValue(t.IdTrabajador, out var carga);
                         int activos = carga?.ServiciosActivos ?? 0;
                         string color = activos == 0 ? "bg-success" : activos == 1 ? "bg-warning" : "bg-danger";
-                        <tr>
-                            <td class="fw-semibold">@t.NombreCompleto</td>
-                            <td>@t.Telefono</td>
-                            <td>@t.Area</td>
-                            <td>
+                        <tr role="row">
+                            <td role="cell" data-etiqueta="Trabajador" class="fw-semibold">@t.NombreCompleto</td>
+                            <td role="cell" data-etiqueta="Teléfono">@t.Telefono</td>
+                            <td role="cell" data-etiqueta="Área">@t.Area</td>
+                            <td role="cell" data-etiqueta="Carga actual">
                                 <div class="d-flex align-items-center gap-2">
                                     <div class="medidor flex-grow-1"><span class="@color" style="width:@(activos * 50)%"></span></div>
                                     <span style="font-size:.82rem" class="fw-semibold">@activos de 2</span>
                                 </div>
                             </td>
-                            <td>
+                            <td role="cell" data-etiqueta="Disponibilidad">
                                 @if (activos == 0)
                                 {
                                     <span class="estado estado-activo">Disponible</span>
@@ -76,21 +76,21 @@
                                     <span class="estado estado-cancelado">Límite alcanzado</span>
                                 }
                             </td>
-                            <td><span class="estado @(t.Activo ? "estado-activo" : "estado-inactivo")">@(t.Activo ? "Activo" : "Desactivado")</span></td>
-                            <td class="acciones">
-                                <a asp-action="Detalles" asp-route-id="@t.IdTrabajador" class="btn btn-sm btn-outline-primary btn-icono" title="Ver historial de asignaciones">
-                                    <i class="bi bi-eye"></i>
+                            <td role="cell" data-etiqueta="Estado"><span class="estado @(t.Activo ? "estado-activo" : "estado-inactivo")">@(t.Activo ? "Activo" : "Desactivado")</span></td>
+                            <td role="cell" data-etiqueta="Acciones" class="acciones">
+                                <a asp-action="Detalles" asp-route-id="@t.IdTrabajador" class="btn btn-sm btn-outline-primary btn-icono" title="Ver historial de asignaciones" aria-label="Ver historial de asignaciones">
+                                    <i class="bi bi-eye" aria-hidden="true"></i><span class="etiqueta-accion">Ver historial</span>
                                 </a>
-                                <a asp-action="Editar" asp-route-id="@t.IdTrabajador" class="btn btn-sm btn-outline-secondary btn-icono" title="Editar">
-                                    <i class="bi bi-pencil"></i>
+                                <a asp-action="Editar" asp-route-id="@t.IdTrabajador" class="btn btn-sm btn-outline-secondary btn-icono" title="Editar" aria-label="Editar">
+                                    <i class="bi bi-pencil" aria-hidden="true"></i><span class="etiqueta-accion">Editar</span>
                                 </a>
                                 <form asp-action="CambiarEstado" asp-route-id="@t.IdTrabajador" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="activo" value="@(!t.Activo)" />
                                     <button type="submit" class="btn btn-sm @(t.Activo ? "btn-outline-danger" : "btn-outline-success") btn-icono"
                                             title="@(t.Activo ? "Desactivar" : "Reactivar")"
-                                            data-confirmar="¿Desea @(t.Activo ? "desactivar" : "reactivar") a @(t.NombreCompleto)?">
-                                        <i class="bi @(t.Activo ? "bi-person-dash" : "bi-person-check")"></i>
+                                            data-confirmar="¿Desea @(t.Activo ? "desactivar" : "reactivar") a @(t.NombreCompleto)?" aria-label="@(t.Activo ? "Desactivar" : "Reactivar")">
+                                        <i class="bi @(t.Activo ? "bi-person-dash" : "bi-person-check")" aria-hidden="true"></i><span class="etiqueta-accion">@(t.Activo ? "Desactivar" : "Reactivar")</span>
                                     </button>
                                 </form>
                             </td>

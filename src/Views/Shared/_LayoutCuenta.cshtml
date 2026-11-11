@@ -12,11 +12,17 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
-    <div class="pagina-cuenta">
-        <div class="container">
-            @RenderBody()
+    <main class="pagina-cuenta">
+        <div class="cuenta-marco">
+            <div class="cuenta-identidad">
+                <div class="escudo" aria-hidden="true"><i class="bi bi-tools" aria-hidden="true"></i></div>
+                <strong>@ConfigTaller.Value.NombreTaller</strong>
+            </div>
+            <div class="cuenta-contenido">
+                @RenderBody()
+            </div>
         </div>
-    </div>
+    </main>
     <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)

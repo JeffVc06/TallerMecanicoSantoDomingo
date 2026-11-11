@@ -5,14 +5,14 @@
 
 <div class="encabezado-pagina">
     <div>
-        <h1><i class="bi bi-person-plus me-2"></i>Registrar cliente</h1>
+        <h1><i class="bi bi-person-plus me-2" aria-hidden="true"></i>Registrar cliente</h1>
         <div class="ruta"><a asp-action="Index">Clientes</a> / Nuevo registro</div>
     </div>
 </div>
 
-<div class="tarjeta" style="max-width:720px">
+<div class="tarjeta formulario-tarjeta">
     <form asp-action="Crear" method="post" class="formulario">
-        <div asp-validation-summary="ModelOnly" class="alerta-error"></div>
+        <div asp-validation-summary="ModelOnly" class="alerta-error" role="alert"></div>
 
         <div class="row g-3">
             <div class="col-md-6">
@@ -35,6 +35,7 @@
                 <input asp-for="Cedula" class="form-control" />
                 <span asp-validation-for="Cedula" class="text-danger"></span>
             </div>
+            <div class="col-12"><h2 class="formulario-seccion">Contacto</h2></div>
             <div class="col-md-6">
                 <label asp-for="Telefono" class="form-label"></label>
                 <input asp-for="Telefono" class="form-control" placeholder="8888-8888" />
@@ -47,8 +48,8 @@
             </div>
         </div>
 
-        <div class="d-flex gap-2 mt-4">
-            <button type="submit" class="btn btn-naranja"><i class="bi bi-save me-1"></i> Guardar cliente</button>
+        <div class="acciones-formulario">
+            <button type="submit" class="btn btn-naranja"><i class="bi bi-save me-1" aria-hidden="true"></i> Guardar cliente</button>
             <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
         </div>
     </form>

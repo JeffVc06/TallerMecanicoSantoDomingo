@@ -7,21 +7,21 @@
 
 <div class="encabezado-pagina">
     <div>
-        <h1><i class="bi bi-clock-history me-2"></i>Historial del vehículo</h1>
+        <h1><i class="bi bi-clock-history me-2" aria-hidden="true"></i>Historial del vehículo</h1>
         <div class="ruta">Servicios realizados al vehículo</div>
     </div>
 </div>
 
 <div class="tarjeta mb-3">
-    <form asp-action="Index" method="get" class="row g-2 align-items-end">
+    <form asp-action="Index" method="get" class="filtros row g-2 align-items-end">
         <div class="col-sm-9">
-            <label class="form-label fw-semibold text-primary" style="font-size:.85rem">Seleccione el vehículo</label>
-            <select name="idVehiculo" class="form-select" asp-items="vehiculos">
+            <label for="filtro-idvehiculo" class="form-label fw-semibold text-primary">Seleccione el vehículo</label>
+            <select id="filtro-idvehiculo" name="idVehiculo" class="form-select" asp-items="vehiculos">
                 <option value="">— Seleccione un vehículo —</option>
             </select>
         </div>
         <div class="col-sm-3">
-            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-search me-1"></i> Consultar</button>
+            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-search me-1" aria-hidden="true"></i> Consultar</button>
         </div>
     </form>
 </div>
@@ -31,37 +31,37 @@
     <div class="tarjeta">
         <div class="d-flex justify-content-between flex-wrap gap-2 mb-3">
             <h2 class="h6 fw-bold text-primary mb-0">
-                <i class="bi bi-car-front me-1"></i> @vehiculo.Placa — @vehiculo.Marca @vehiculo.Modelo (@vehiculo.Anio)
+                <i class="bi bi-car-front me-1" aria-hidden="true"></i> @vehiculo.Placa — @vehiculo.Marca @vehiculo.Modelo (@vehiculo.Anio)
                 <span class="texto-secundario fw-normal">Propietario: @vehiculo.Cliente?.NombreCompleto</span>
             </h2>
             <a asp-controller="Vehiculos" asp-action="Detalles" asp-route-id="@vehiculo.IdVehiculo" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-eye me-1"></i> Ficha completa
+                <i class="bi bi-eye me-1" aria-hidden="true"></i> Ficha completa
             </a>
         </div>
 
         @if (historial.Count == 0)
         {
             <div class="estado-vacio">
-                <i class="bi bi-inbox"></i>
+                <i class="bi bi-inbox" aria-hidden="true"></i>
                 <div>Este vehículo aún no tiene servicios en su historial.</div>
             </div>
         }
         else
         {
-            <div class="tabla-envuelta">
+            <div class="tabla-envuelta" role="region" aria-label="Servicios del vehículo" tabindex="0">
                 <table class="tabla-lista">
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th>Inicio</th>
-                            <th>Fin</th>
-                            <th>Tipo</th>
-                            <th>Descripción</th>
-                            <th>Estado</th>
-                            <th>Trabajadores</th>
-                            <th>Productos</th>
-                            <th>Facturas</th>
-                            <th class="text-end">Monto</th>
+                            <th scope="col">#</th>
+                            <th scope="col">Inicio</th>
+                            <th scope="col">Fin</th>
+                            <th scope="col">Tipo</th>
+                            <th scope="col">Descripción</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col">Trabajadores</th>
+                            <th scope="col">Productos</th>
+                            <th scope="col">Facturas</th>
+                            <th scope="col" class="text-end">Monto</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -89,6 +89,6 @@
 else if (Context.Request.Query["idVehiculo"].Count > 0)
 {
     <div class="alerta-error">
-        <i class="bi bi-exclamation-triangle me-1"></i> El vehículo indicado no fue encontrado.
+        <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i> El vehículo indicado no fue encontrado.
     </div>
 }

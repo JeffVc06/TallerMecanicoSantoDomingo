@@ -7,52 +7,52 @@
 
 <div class="encabezado-pagina">
     <div>
-        <h1><i class="bi bi-car-front me-2"></i>Reporte de servicios por vehículo</h1>
+        <h1><i class="bi bi-car-front me-2" aria-hidden="true"></i>Reporte de servicios por vehículo</h1>
         <div class="ruta"><a asp-action="Index">Reportes</a> / Vehículos — @desde.ToString("dd/MM/yyyy") al @hasta.ToString("dd/MM/yyyy")</div>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a class="btn btn-outline-success" asp-action="ExportarCsv" asp-route-tipo="servicios"
            asp-route-desde="@desde.ToString("yyyy-MM-dd")" asp-route-hasta="@hasta.ToString("yyyy-MM-dd")">
-            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Exportar CSV (servicios)
+            <i class="bi bi-file-earmark-spreadsheet me-1" aria-hidden="true"></i> Exportar CSV (servicios)
         </a>
-        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i> Imprimir</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1" aria-hidden="true"></i> Imprimir</button>
     </div>
 </div>
 
 <div class="tarjeta">
-    <form asp-action="Vehiculos" method="get" class="row g-2 align-items-end mb-3">
+    <form asp-action="Vehiculos" method="get" class="filtros row g-2 align-items-end mb-3">
         <div class="col-md-3">
-            <label class="form-label fw-semibold text-primary" style="font-size:.83rem">Desde</label>
-            <input type="date" name="desde" value="@desde.ToString("yyyy-MM-dd")" class="form-control" required />
+            <label for="filtro-desde" class="form-label fw-semibold text-primary">Desde</label>
+            <input id="filtro-desde" type="date" name="desde" value="@desde.ToString("yyyy-MM-dd")" class="form-control" required />
         </div>
         <div class="col-md-3">
-            <label class="form-label fw-semibold text-primary" style="font-size:.83rem">Hasta</label>
-            <input type="date" name="hasta" value="@hasta.ToString("yyyy-MM-dd")" class="form-control" required />
+            <label for="filtro-hasta" class="form-label fw-semibold text-primary">Hasta</label>
+            <input id="filtro-hasta" type="date" name="hasta" value="@hasta.ToString("yyyy-MM-dd")" class="form-control" required />
         </div>
         <div class="col-md-3">
-            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-funnel me-1"></i> Aplicar período</button>
+            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-funnel me-1" aria-hidden="true"></i> Aplicar período</button>
         </div>
     </form>
 
     @if (Model.Count == 0)
     {
         <div class="estado-vacio">
-            <i class="bi bi-car"></i>
+            <i class="bi bi-car" aria-hidden="true"></i>
             <div class="fw-semibold">No hay servicios registrados en el período</div>
             <div style="font-size:.85rem">Ajuste las fechas para ampliar la consulta.</div>
         </div>
     }
     else
     {
-        <div class="tabla-envuelta">
+        <div class="tabla-envuelta" role="region" aria-label="Servicios por vehículo" tabindex="0">
             <table class="tabla-lista">
                 <thead>
                     <tr>
-                        <th>Placa</th>
-                        <th>Marca / Modelo</th>
-                        <th>Cliente</th>
-                        <th class="text-end">Servicios</th>
-                        <th class="text-end">Total servicios (C$)</th>
+                        <th scope="col">Placa</th>
+                        <th scope="col">Marca / Modelo</th>
+                        <th scope="col">Cliente</th>
+                        <th scope="col" class="text-end">Servicios</th>
+                        <th scope="col" class="text-end">Total servicios (C$)</th>
                     </tr>
                 </thead>
                 <tbody>

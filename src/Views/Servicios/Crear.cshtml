@@ -6,14 +6,14 @@
 
 <div class="encabezado-pagina">
     <div>
-        <h1><i class="bi bi-gear-wide-connected me-2"></i>Registrar servicio</h1>
+        <h1><i class="bi bi-gear-wide-connected me-2" aria-hidden="true"></i>Registrar servicio</h1>
         <div class="ruta"><a asp-action="Index">Servicios</a> / Nuevo servicio</div>
     </div>
 </div>
 
-<div class="tarjeta" style="max-width:820px">
+<div class="tarjeta formulario-tarjeta">
     <form asp-action="Crear" method="post" class="formulario">
-        <div asp-validation-summary="ModelOnly" class="alerta-error"></div>
+        <div asp-validation-summary="ModelOnly" class="alerta-error" role="alert"></div>
 
         <div class="row g-3">
             <div class="col-12">
@@ -25,7 +25,7 @@
                 <div class="form-text">Seleccione el vehículo que recibirá el servicio.</div>
             </div>
             <div class="col-md-6">
-                <label asp-for="TipoServicio" class="form-label"></label>
+                <label asp-for="TipoServicio" for="campo-tipo" class="form-label"></label>
                 <select asp-for="TipoServicio" class="form-select" id="campo-tipo">
                     <option value="Mantenimiento">Mantenimiento mecánico</option>
                     <option value="Pintura">Trabajo de pintura</option>
@@ -37,6 +37,7 @@
                 <input asp-for="FechaInicio" class="form-control" type="date" />
                 <span asp-validation-for="FechaInicio" class="text-danger"></span>
             </div>
+            <div class="col-12"><h2 class="formulario-seccion">Detalle del trabajo</h2></div>
             <div class="col-12">
                 <label asp-for="Descripcion" class="form-label"></label>
                 <textarea asp-for="Descripcion" class="form-control" rows="2" placeholder="Detalle del trabajo a realizar"></textarea>
@@ -63,12 +64,12 @@
         </div>
 
         <div class="alerta-info mt-3" style="font-size:.85rem">
-            <i class="bi bi-info-circle me-1"></i>
+            <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
             Después de guardar podrá asignar trabajadores compatibles con el área del servicio y registrar los productos utilizados.
         </div>
 
-        <div class="d-flex gap-2 mt-3">
-            <button type="submit" class="btn btn-naranja"><i class="bi bi-save me-1"></i> Guardar servicio</button>
+        <div class="acciones-formulario">
+            <button type="submit" class="btn btn-naranja"><i class="bi bi-save me-1" aria-hidden="true"></i> Guardar servicio</button>
             <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
         </div>
     </form>

@@ -7,13 +7,13 @@
 
 <div class="encabezado-pagina">
     <div>
-        <h1><i class="bi bi-person-vcard me-2"></i>@Model.NombreCompleto</h1>
+        <h1><i class="bi bi-person-vcard me-2" aria-hidden="true"></i>@Model.NombreCompleto</h1>
         <div class="ruta"><a asp-action="Index">Clientes</a> / Ficha del cliente</div>
     </div>
     <div class="d-flex gap-2">
-        <a asp-action="Editar" asp-route-id="@Model.IdCliente" class="btn btn-azul"><i class="bi bi-pencil me-1"></i> Editar</a>
+        <a asp-action="Editar" asp-route-id="@Model.IdCliente" class="btn btn-azul"><i class="bi bi-pencil me-1" aria-hidden="true"></i> Editar</a>
         <a asp-controller="Vehiculos" asp-action="Crear" asp-route-idCliente="@Model.IdCliente" class="btn btn-naranja">
-            <i class="bi bi-plus-lg me-1"></i> Agregar vehículo
+            <i class="bi bi-plus-lg me-1" aria-hidden="true"></i> Agregar vehículo
         </a>
     </div>
 </div>
@@ -21,7 +21,7 @@
 <div class="row g-3">
     <div class="col-lg-4">
         <div class="tarjeta">
-            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-card-text me-1"></i> Datos del cliente</h2>
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-card-text me-1" aria-hidden="true"></i> Datos del cliente</h2>
             <dl class="row mb-0" style="font-size:.9rem">
                 <dt class="col-5 texto-secundario">Cédula</dt>
                 <dd class="col-7">@(Model.Cedula ?? "—")</dd>
@@ -42,7 +42,7 @@
             </dl>
         </div>
         <div class="tarjeta tarjeta-indicador">
-            <div class="icono fondo-naranja"><i class="bi bi-cash-stack"></i></div>
+            <div class="icono fondo-naranja"><i class="bi bi-cash-stack" aria-hidden="true"></i></div>
             <div>
                 <div class="dato" style="font-size:1.25rem">C$ @totalFacturado.ToString("N2")</div>
                 <div class="etiqueta">Total facturado (facturas emitidas)</div>
@@ -52,20 +52,20 @@
 
     <div class="col-lg-8">
         <div class="tarjeta">
-            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-car-front me-1"></i> Vehículos del cliente (@vehiculos.Count)</h2>
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-car-front me-1" aria-hidden="true"></i> Vehículos del cliente (@vehiculos.Count)</h2>
             @if (vehiculos.Count == 0)
             {
                 <div class="estado-vacio">
-                    <i class="bi bi-car-front"></i>
+                    <i class="bi bi-car-front" aria-hidden="true"></i>
                     <div>Este cliente aún no tiene vehículos registrados.</div>
                 </div>
             }
             else
             {
-                <div class="tabla-envuelta">
+                <div class="tabla-envuelta" role="region" aria-label="Vehículos del cliente" tabindex="0">
                     <table class="tabla-lista">
                         <thead>
-                            <tr><th>Placa</th><th>Marca</th><th>Modelo</th><th>Año</th><th>Estado</th><th></th></tr>
+                            <tr><th scope="col">Placa</th><th scope="col">Marca</th><th scope="col">Modelo</th><th scope="col">Año</th><th scope="col">Estado</th><th scope="col" class="acciones"><span class="visually-hidden">Acciones</span></th></tr>
                         </thead>
                         <tbody>
                             @foreach (var v in vehiculos)
@@ -77,8 +77,8 @@
                                     <td>@v.Anio</td>
                                     <td><span class="estado @(v.Activo ? "estado-activo" : "estado-inactivo")">@(v.Activo ? "Activo" : "Desactivado")</span></td>
                                     <td class="acciones">
-                                        <a asp-controller="Historial" asp-action="Index" asp-route-idVehiculo="@v.IdVehiculo" class="btn btn-sm btn-outline-primary btn-icono" title="Ver historial">
-                                            <i class="bi bi-clock-history"></i>
+                                        <a asp-controller="Historial" asp-action="Index" asp-route-idVehiculo="@v.IdVehiculo" class="btn btn-sm btn-outline-primary btn-icono" title="Ver historial" aria-label="Ver historial">
+                                            <i class="bi bi-clock-history" aria-hidden="true"></i><span class="etiqueta-accion">Ver historial</span>
                                         </a>
                                     </td>
                                 </tr>
@@ -90,7 +90,7 @@
         </div>
 
         <div class="tarjeta">
-            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-receipt me-1"></i> Facturas del cliente</h2>
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-receipt me-1" aria-hidden="true"></i> Facturas del cliente</h2>
             @{
                 var facturas = Model.Facturas?.OrderByDescending(f => f.FechaFactura).ToList()
                                ?? new List<TallerMecanicoSantoDomingo.Models.Factura>();
@@ -98,16 +98,16 @@
             @if (facturas.Count == 0)
             {
                 <div class="estado-vacio">
-                    <i class="bi bi-receipt"></i>
+                    <i class="bi bi-receipt" aria-hidden="true"></i>
                     <div>Este cliente aún no tiene facturas emitidas.</div>
                 </div>
             }
             else
             {
-                <div class="tabla-envuelta">
+                <div class="tabla-envuelta" role="region" aria-label="Facturas del cliente" tabindex="0">
                     <table class="tabla-lista">
                         <thead>
-                            <tr><th>Número</th><th>Fecha</th><th class="text-end">Subtotal</th><th class="text-end">IVA</th><th class="text-end">Total</th><th>Estado</th><th></th></tr>
+                            <tr><th scope="col">Número</th><th scope="col">Fecha</th><th scope="col" class="text-end">Subtotal</th><th scope="col" class="text-end">IVA</th><th scope="col" class="text-end">Total</th><th scope="col">Estado</th><th scope="col" class="acciones"><span class="visually-hidden">Acciones</span></th></tr>
                         </thead>
                         <tbody>
                             @foreach (var f in facturas)
@@ -120,8 +120,8 @@
                                     <td class="text-end fw-semibold">@f.Total.ToString("N2")</td>
                                     <td><span class="estado estado-@f.Estado.ToLowerInvariant()">@f.Estado</span></td>
                                     <td class="acciones">
-                                        <a asp-controller="Facturas" asp-action="Imprimir" asp-route-id="@f.IdFactura" class="btn btn-sm btn-outline-primary btn-icono" title="Ver factura">
-                                            <i class="bi bi-printer"></i>
+                                        <a asp-controller="Facturas" asp-action="Imprimir" asp-route-id="@f.IdFactura" class="btn btn-sm btn-outline-primary btn-icono" title="Ver factura" aria-label="Ver factura">
+                                            <i class="bi bi-printer" aria-hidden="true"></i><span class="etiqueta-accion">Factura</span>
                                         </a>
                                     </td>
                                 </tr>

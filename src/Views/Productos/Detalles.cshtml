@@ -6,16 +6,16 @@
 
 <div class="encabezado-pagina">
     <div>
-        <h1><i class="bi bi-box-seam me-2"></i>@Model.Nombre</h1>
+        <h1><i class="bi bi-box-seam me-2" aria-hidden="true"></i>@Model.Nombre</h1>
         <div class="ruta"><a asp-action="Index">Productos</a> / Ficha del producto</div>
     </div>
-    <a asp-action="Editar" asp-route-id="@Model.IdProducto" class="btn btn-azul"><i class="bi bi-pencil me-1"></i> Editar</a>
+    <a asp-action="Editar" asp-route-id="@Model.IdProducto" class="btn btn-azul"><i class="bi bi-pencil me-1" aria-hidden="true"></i> Editar</a>
 </div>
 
 <div class="row g-3">
     <div class="col-lg-4">
         <div class="tarjeta">
-            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-card-text me-1"></i> Datos del producto</h2>
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-card-text me-1" aria-hidden="true"></i> Datos del producto</h2>
             <dl class="row mb-0" style="font-size:.9rem">
                 <dt class="col-5 texto-secundario">Nombre</dt>
                 <dd class="col-7 fw-semibold">@Model.Nombre</dd>
@@ -36,28 +36,28 @@
 
     <div class="col-lg-8">
         <div class="tarjeta">
-            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-clock-history me-1"></i> Servicios donde se utilizó (@historial.Count)</h2>
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-clock-history me-1" aria-hidden="true"></i> Servicios donde se utilizó (@historial.Count)</h2>
 
             @if (historial.Count == 0)
             {
                 <div class="estado-vacio">
-                    <i class="bi bi-inbox"></i>
+                    <i class="bi bi-inbox" aria-hidden="true"></i>
                     <div>Este producto aún no ha sido utilizado en ningún servicio.</div>
                 </div>
             }
             else
             {
-                <div class="tabla-envuelta">
+                <div class="tabla-envuelta" role="region" aria-label="Historial de uso del producto" tabindex="0">
                     <table class="tabla-lista">
                         <thead>
                             <tr>
-                                <th>Servicio</th>
-                                <th>Fecha</th>
-                                <th>Vehículo</th>
-                                <th>Descripción del servicio</th>
-                                <th class="text-end">Cantidad</th>
-                                <th class="text-end">Importe (C$)</th>
-                                <th class="acciones"></th>
+                                <th scope="col">Servicio</th>
+                                <th scope="col">Fecha</th>
+                                <th scope="col">Vehículo</th>
+                                <th scope="col">Descripción del servicio</th>
+                                <th scope="col" class="text-end">Cantidad</th>
+                                <th scope="col" class="text-end">Importe (C$)</th>
+                                <th scope="col" class="acciones"><span class="visually-hidden">Acciones</span></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -71,8 +71,8 @@
                                     <td class="text-end">@u.Cantidad.ToString("0.###")</td>
                                     <td class="text-end">@((u.Cantidad * Model.PrecioUnitario).ToString("N2"))</td>
                                     <td class="acciones">
-                                        <a asp-controller="Servicios" asp-action="Detalles" asp-route-id="@u.IdServicio" class="btn btn-sm btn-outline-primary btn-icono" title="Ver servicio">
-                                            <i class="bi bi-eye"></i>
+                                        <a asp-controller="Servicios" asp-action="Detalles" asp-route-id="@u.IdServicio" class="btn btn-sm btn-outline-primary btn-icono" title="Ver servicio" aria-label="Ver servicio">
+                                            <i class="bi bi-eye" aria-hidden="true"></i><span class="etiqueta-accion">Ver servicio</span>
                                         </a>
                                     </td>
                                 </tr>

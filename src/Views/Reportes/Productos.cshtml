@@ -8,38 +8,38 @@
 
 <div class="encabezado-pagina">
     <div>
-        <h1><i class="bi bi-box-seam me-2"></i>Productos más utilizados</h1>
+        <h1><i class="bi bi-box-seam me-2" aria-hidden="true"></i>Productos más utilizados</h1>
         <div class="ruta"><a asp-action="Index">Reportes</a> / Consumo de repuestos y materiales en servicios</div>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a class="btn btn-outline-success" asp-action="ExportarCsv" asp-route-tipo="productos"
            asp-route-desde="@((desde ?? DateOnly.FromDateTime(DateTime.Today)).ToString("yyyy-MM-dd"))"
            asp-route-hasta="@((hasta ?? DateOnly.FromDateTime(DateTime.Today)).ToString("yyyy-MM-dd"))">
-            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Exportar CSV
+            <i class="bi bi-file-earmark-spreadsheet me-1" aria-hidden="true"></i> Exportar CSV
         </a>
-        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i> Imprimir</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1" aria-hidden="true"></i> Imprimir</button>
     </div>
 </div>
 
 <div class="tarjeta">
-    <form asp-action="Productos" method="get" class="row g-2 align-items-end mb-3">
+    <form asp-action="Productos" method="get" class="filtros row g-2 align-items-end mb-3">
         <div class="col-md-3">
-            <label class="form-label fw-semibold text-primary" style="font-size:.83rem">Desde (opcional)</label>
-            <input type="date" name="desde" value="@(desde?.ToString("yyyy-MM-dd"))" class="form-control" />
+            <label for="filtro-desde" class="form-label fw-semibold text-primary">Desde (opcional)</label>
+            <input id="filtro-desde" type="date" name="desde" value="@(desde?.ToString("yyyy-MM-dd"))" class="form-control" />
         </div>
         <div class="col-md-3">
-            <label class="form-label fw-semibold text-primary" style="font-size:.83rem">Hasta (opcional)</label>
-            <input type="date" name="hasta" value="@(hasta?.ToString("yyyy-MM-dd"))" class="form-control" />
+            <label for="filtro-hasta" class="form-label fw-semibold text-primary">Hasta (opcional)</label>
+            <input id="filtro-hasta" type="date" name="hasta" value="@(hasta?.ToString("yyyy-MM-dd"))" class="form-control" />
         </div>
         <div class="col-md-3">
-            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-funnel me-1"></i> Filtrar</button>
+            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-funnel me-1" aria-hidden="true"></i> Filtrar</button>
         </div>
     </form>
 
     @if (desde.HasValue || hasta.HasValue)
     {
         <div class="alerta-info" style="font-size:.85rem">
-            <i class="bi bi-calendar-range me-1"></i>
+            <i class="bi bi-calendar-range me-1" aria-hidden="true"></i>
             Período aplicado: @(desde?.ToString("dd/MM/yyyy") ?? "inicio") al @(hasta?.ToString("dd/MM/yyyy") ?? "hoy").
         </div>
     }
@@ -47,23 +47,23 @@
     @if (productos.Count == 0)
     {
         <div class="estado-vacio">
-            <i class="bi bi-box"></i>
+            <i class="bi bi-box" aria-hidden="true"></i>
             <div class="fw-semibold">No hay productos utilizados en el período</div>
             <div style="font-size:.85rem">Los productos se registran al gestionar cada servicio.</div>
         </div>
     }
     else
     {
-        <div class="tabla-envuelta">
+        <div class="tabla-envuelta" role="region" aria-label="Productos utilizados" tabindex="0">
             <table class="tabla-lista">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Producto</th>
-                        <th class="text-end">Cantidad total</th>
-                        <th class="text-end">Veces utilizado</th>
-                        <th class="text-end">Monto estimado (C$)</th>
-                        <th style="min-width:160px">Frecuencia</th>
+                        <th scope="col">#</th>
+                        <th scope="col">Producto</th>
+                        <th scope="col" class="text-end">Cantidad total</th>
+                        <th scope="col" class="text-end">Veces utilizado</th>
+                        <th scope="col" class="text-end">Monto estimado (C$)</th>
+                        <th scope="col" style="min-width:160px">Frecuencia</th>
                     </tr>
                 </thead>
                 <tbody>

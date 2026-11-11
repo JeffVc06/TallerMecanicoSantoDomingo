@@ -6,27 +6,27 @@
 
 <div class="encabezado-pagina">
     <div>
-        <h1><i class="bi bi-people me-2"></i>Reporte de trabajadores</h1>
+        <h1><i class="bi bi-people me-2" aria-hidden="true"></i>Reporte de trabajadores</h1>
         <div class="ruta"><a asp-action="Index">Reportes</a> / Carga y trabajos por personal</div>
     </div>
-    <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i> Imprimir</button>
+    <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1" aria-hidden="true"></i> Imprimir</button>
 </div>
 
 <div class="row g-3">
     <div class="col-lg-6">
         <div class="tarjeta">
-            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-lightning-charge me-1"></i> Carga actual de personal</h2>
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-lightning-charge me-1" aria-hidden="true"></i> Carga actual de personal</h2>
 
             @if (carga.Count == 0)
             {
-                <div class="estado-vacio py-3"><i class="bi bi-person-badge"></i><div>No hay trabajadores registrados.</div></div>
+                <div class="estado-vacio py-3"><i class="bi bi-person-badge" aria-hidden="true"></i><div>No hay trabajadores registrados.</div></div>
             }
             else
             {
-                <div class="tabla-envuelta">
+                <div class="tabla-envuelta" role="region" aria-label="Carga por trabajador" tabindex="0">
                     <table class="tabla-lista">
                         <thead>
-                            <tr><th>Trabajador</th><th>Área</th><th class="text-end">Activos</th><th>Disponibilidad</th></tr>
+                            <tr><th scope="col">Trabajador</th><th scope="col">Área</th><th scope="col" class="text-end">Activos</th><th scope="col">Disponibilidad</th></tr>
                         </thead>
                         <tbody>
                             @foreach (var c in carga.OrderByDescending(c => c.AsignacionesActivas))
@@ -60,18 +60,18 @@
 
     <div class="col-lg-6">
         <div class="tarjeta">
-            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-list-check me-1"></i> Trabajos acumulados por trabajador</h2>
+            <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-list-check me-1" aria-hidden="true"></i> Trabajos acumulados por trabajador</h2>
 
             @if (porTrabajador.Count == 0)
             {
-                <div class="estado-vacio py-3"><i class="bi bi-inbox"></i><div>No hay asignaciones registradas.</div></div>
+                <div class="estado-vacio py-3"><i class="bi bi-inbox" aria-hidden="true"></i><div>No hay asignaciones registradas.</div></div>
             }
             else
             {
-                <div class="tabla-envuelta">
+                <div class="tabla-envuelta" role="region" aria-label="Asignaciones por trabajador" tabindex="0">
                     <table class="tabla-lista">
                         <thead>
-                            <tr><th>Trabajador</th><th>Área</th><th class="text-end">Asignaciones activas</th><th class="text-end">Retiradas/cerradas</th><th class="text-end">Total histórico</th></tr>
+                            <tr><th scope="col">Trabajador</th><th scope="col">Área</th><th scope="col" class="text-end">Asignaciones activas</th><th scope="col" class="text-end">Retiradas/cerradas</th><th scope="col" class="text-end">Total histórico</th></tr>
                         </thead>
                         <tbody>
                             @foreach (var t in porTrabajador.OrderByDescending(t => t.TotalAsignaciones))

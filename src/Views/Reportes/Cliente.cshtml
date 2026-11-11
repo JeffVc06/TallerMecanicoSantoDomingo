@@ -9,20 +9,20 @@
 
 <div class="encabezado-pagina">
     <div>
-        <h1><i class="bi bi-person-vcard me-2"></i>Historial por cliente</h1>
+        <h1><i class="bi bi-person-vcard me-2" aria-hidden="true"></i>Historial por cliente</h1>
         <div class="ruta"><a asp-action="Index">Reportes</a> / Historial completo de un cliente</div>
     </div>
     @if (cliente != null && servicios != null)
     {
-        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i> Imprimir</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1" aria-hidden="true"></i> Imprimir</button>
     }
 </div>
 
 <div class="tarjeta">
-    <form asp-action="Cliente" method="get" class="row g-2 align-items-end mb-3">
+    <form asp-action="Cliente" method="get" class="filtros row g-2 align-items-end mb-3">
         <div class="col-sm-9">
-            <label class="form-label fw-semibold text-primary" style="font-size:.85rem">Seleccione el cliente</label>
-            <select name="idCliente" class="form-select">
+            <label for="filtro-idcliente" class="form-label fw-semibold text-primary">Seleccione el cliente</label>
+            <select id="filtro-idcliente" name="idCliente" class="form-select">
                 <option value="">— Seleccione un cliente —</option>
                 @foreach (var c in clientes)
                 {
@@ -31,14 +31,14 @@
             </select>
         </div>
         <div class="col-sm-3">
-            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-search me-1"></i> Consultar</button>
+            <button type="submit" class="btn btn-azul w-100"><i class="bi bi-search me-1" aria-hidden="true"></i> Consultar</button>
         </div>
     </form>
 
     @if (cliente == null)
     {
         <div class="estado-vacio">
-            <i class="bi bi-person"></i>
+            <i class="bi bi-person" aria-hidden="true"></i>
             <div class="fw-semibold">Seleccione un cliente para ver su historial</div>
             <div style="font-size:.85rem">Se mostrarán sus vehículos y todos los servicios registrados.</div>
         </div>
@@ -69,8 +69,8 @@
                         {
                             <div class="d-flex justify-content-between" style="font-size:.88rem">
                                 <span><strong>@v.Placa</strong> — @v.Marca @v.Modelo (@v.Anio)</span>
-                                <a asp-controller="Vehiculos" asp-action="Detalles" asp-route-id="@v.IdVehiculo" class="btn btn-sm btn-outline-primary btn-icono" title="Ficha">
-                                    <i class="bi bi-eye"></i>
+                                <a asp-controller="Vehiculos" asp-action="Detalles" asp-route-id="@v.IdVehiculo" class="btn btn-sm btn-outline-primary btn-icono" title="Ficha" aria-label="Ficha">
+                                    <i class="bi bi-eye" aria-hidden="true"></i><span class="etiqueta-accion">Ver ficha</span>
                                 </a>
                             </div>
                         }
@@ -79,21 +79,21 @@
             </div>
         </div>
 
-        <h2 class="h6 fw-bold text-primary"><i class="bi bi-gear me-1"></i> Servicios del cliente (@(servicios?.Count ?? 0))</h2>
+        <h2 class="h6 fw-bold text-primary"><i class="bi bi-gear me-1" aria-hidden="true"></i> Servicios del cliente (@(servicios?.Count ?? 0))</h2>
         @if (servicios == null || servicios.Count == 0)
         {
             <div class="estado-vacio py-3">
-                <i class="bi bi-inbox"></i>
+                <i class="bi bi-inbox" aria-hidden="true"></i>
                 <div>Este cliente aún no tiene servicios registrados.</div>
             </div>
         }
         else
         {
-            <div class="tabla-envuelta">
+            <div class="tabla-envuelta" role="region" aria-label="Servicios del cliente" tabindex="0">
                 <table class="tabla-lista">
                     <thead>
                         <tr>
-                            <th>#</th><th>Placa</th><th>Tipo</th><th>Estado</th><th>Inicio</th><th>Fin</th><th class="text-end">Total (C$)</th><th class="acciones"></th>
+                            <th scope="col">#</th><th scope="col">Placa</th><th scope="col">Tipo</th><th scope="col">Estado</th><th scope="col">Inicio</th><th scope="col">Fin</th><th scope="col" class="text-end">Total (C$)</th><th scope="col" class="acciones"><span class="visually-hidden">Acciones</span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -108,8 +108,8 @@
                                 <td>@(s.FechaFin?.ToString("dd/MM/yyyy") ?? "—")</td>
                                 <td class="text-end fw-semibold">@s.Total.ToString("N2")</td>
                                 <td class="acciones">
-                                    <a asp-controller="Servicios" asp-action="Detalles" asp-route-id="@s.IdServicio" class="btn btn-sm btn-outline-primary btn-icono" title="Ver servicio">
-                                        <i class="bi bi-eye"></i>
+                                    <a asp-controller="Servicios" asp-action="Detalles" asp-route-id="@s.IdServicio" class="btn btn-sm btn-outline-primary btn-icono" title="Ver servicio" aria-label="Ver servicio">
+                                        <i class="bi bi-eye" aria-hidden="true"></i><span class="etiqueta-accion">Ver servicio</span>
                                     </a>
                                 </td>
                             </tr>
