@@ -30,21 +30,9 @@ public class VehiculoService
 
     public async Task<Resultado> Crear(Vehiculo vehiculo)
     {
-        vehiculo.Placa = vehiculo.Placa.Trim().ToUpperInvariant();
-        if (string.IsNullOrWhiteSpace(vehiculo.Placa))
-            return Resultado.Fallo("La placa del vehículo es obligatoria.");
-
-        // Regla 2: el vehículo debe asociarse a un cliente existente.
-        var clienteExiste = await _db.Clientes.AnyAsync(c => c.IdCliente == vehiculo.IdCliente);
-        if (!clienteExiste)
-            return Resultado.Fallo("El cliente seleccionado no existe. Registre el cliente primero.");
-
-        var placaDuplicada = await _db.Vehiculos.AnyAsync(v => v.Placa == vehiculo.Placa);
-        if (placaDuplicada)
-            return Resultado.Fallo($"Ya existe un vehículo registrado con la placa {vehiculo.Placa}.");
-
-        if (vehiculo.Anio < 1950 || vehiculo.Anio > DateTime.Now.Year + 1)
-            return Resultado.Fallo("El año del vehículo no es válido.");
+        var error = await Validar(vehiculo);
+        if (error is not null)
+            return error;
 
         vehiculo.FechaRegistro = DateTime.UtcNow;
         vehiculo.Activo = true;
@@ -59,26 +47,48 @@ public class VehiculoService
         if (existente is null)
             return Resultado.Fallo("El vehículo indicado no existe.");
 
-        vehiculo.Placa = vehiculo.Placa.Trim().ToUpperInvariant();
-        var clienteExiste = await _db.Clientes.AnyAsync(c => c.IdCliente == vehiculo.IdCliente);
-        if (!clienteExiste)
-            return Resultado.Fallo("El cliente seleccionado no existe.");
-
-        var placaDuplicada = await _db.Vehiculos
-            .AnyAsync(v => v.Placa == vehiculo.Placa && v.IdVehiculo != vehiculo.IdVehiculo);
-        if (placaDuplicada)
-            return Resultado.Fallo($"Ya existe otro vehículo registrado con la placa {vehiculo.Placa}.");
-
-        if (vehiculo.Anio < 1950 || vehiculo.Anio > DateTime.Now.Year + 1)
-            return Resultado.Fallo("El año del vehículo no es válido.");
+        var error = await Validar(vehiculo);
+        if (error is not null)
+            return error;
 
         existente.IdCliente = vehiculo.IdCliente;
         existente.Placa = vehiculo.Placa;
-        existente.Marca = vehiculo.Marca.Trim();
-        existente.Modelo = vehiculo.Modelo.Trim();
+        existente.Marca = vehiculo.Marca;
+        existente.Modelo = vehiculo.Modelo;
         existente.Anio = vehiculo.Anio;
+        existente.Kilometraje = vehiculo.Kilometraje;
+        existente.Color = vehiculo.Color;
+        existente.NumChasis = vehiculo.NumChasis;
+        existente.Tipo = vehiculo.Tipo;
         await _db.SaveChangesAsync();
         return Resultado.Ok("Vehículo actualizado correctamente.");
+    }
+
+    private async Task<Resultado?> Validar(Vehiculo vehiculo)
+    {
+        vehiculo.Placa = vehiculo.Placa.Trim().ToUpperInvariant();
+        vehiculo.Marca = vehiculo.Marca.Trim();
+        vehiculo.Modelo = vehiculo.Modelo.Trim();
+        vehiculo.Color = string.IsNullOrWhiteSpace(vehiculo.Color) ? null : vehiculo.Color.Trim();
+        vehiculo.NumChasis = string.IsNullOrWhiteSpace(vehiculo.NumChasis) ? null : vehiculo.NumChasis.Trim().ToUpperInvariant();
+        vehiculo.Tipo = string.IsNullOrWhiteSpace(vehiculo.Tipo) ? null : vehiculo.Tipo.Trim();
+
+        if (vehiculo.Placa.Length == 0)
+            return Resultado.Fallo("La placa del vehículo es obligatoria.");
+        if (vehiculo.Anio < 1950 || vehiculo.Anio > DateTime.Now.Year + 1)
+            return Resultado.Fallo("El año del vehículo no es válido.");
+        if (vehiculo.Kilometraje < 0)
+            return Resultado.Fallo("El kilometraje debe ser mayor o igual a cero.");
+        if (!await _db.Clientes.AnyAsync(c => c.IdCliente == vehiculo.IdCliente))
+            return Resultado.Fallo("El cliente seleccionado no existe.");
+
+        var otros = _db.Vehiculos.Where(v => v.IdVehiculo != vehiculo.IdVehiculo);
+        if (await otros.AnyAsync(v => v.Placa == vehiculo.Placa))
+            return Resultado.Fallo($"Ya existe un vehículo registrado con la placa {vehiculo.Placa}.");
+        if (vehiculo.NumChasis is not null && await otros.AnyAsync(v => v.NumChasis == vehiculo.NumChasis))
+            return Resultado.Fallo($"Ya existe un vehículo registrado con el número de chasis {vehiculo.NumChasis}.");
+
+        return null;
     }
 
     /// <summary>Regla 14: los vehículos con servicios no se eliminan; se desactivan.</summary>

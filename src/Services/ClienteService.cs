@@ -23,20 +23,9 @@ public class ClienteService
 
     public async Task<Resultado> Crear(Cliente cliente)
     {
-        cliente.Nombre = cliente.Nombre.Trim();
-        cliente.Apellido = cliente.Apellido.Trim();
-        cliente.RFC = cliente.RFC.Trim().ToUpperInvariant();
-        cliente.Telefono = cliente.Telefono.Trim();
-        cliente.Direccion = cliente.Direccion.Trim();
-
-        if (string.IsNullOrWhiteSpace(cliente.Nombre) || string.IsNullOrWhiteSpace(cliente.Apellido))
-            return Resultado.Fallo("El nombre y el apellido del cliente son obligatorios.");
-        if (string.IsNullOrWhiteSpace(cliente.RFC))
-            return Resultado.Fallo("El RFC del cliente es obligatorio.");
-
-        var rfcDuplicado = await _db.Clientes.AnyAsync(c => c.RFC == cliente.RFC);
-        if (rfcDuplicado)
-            return Resultado.Fallo($"Ya existe un cliente registrado con el RFC {cliente.RFC}.");
+        var error = await Validar(cliente);
+        if (error is not null)
+            return error;
 
         cliente.FechaRegistro = DateTime.UtcNow;
         cliente.Activo = true;
@@ -51,27 +40,41 @@ public class ClienteService
         if (existente is null)
             return Resultado.Fallo("El cliente indicado no existe.");
 
-        cliente.Nombre = cliente.Nombre.Trim();
-        cliente.Apellido = cliente.Apellido.Trim();
-        cliente.RFC = cliente.RFC.Trim().ToUpperInvariant();
-
-        if (string.IsNullOrWhiteSpace(cliente.Nombre) || string.IsNullOrWhiteSpace(cliente.Apellido))
-            return Resultado.Fallo("El nombre y el apellido del cliente son obligatorios.");
-        if (string.IsNullOrWhiteSpace(cliente.RFC))
-            return Resultado.Fallo("El RFC del cliente es obligatorio.");
-
-        var rfcDuplicado = await _db.Clientes
-            .AnyAsync(c => c.RFC == cliente.RFC && c.IdCliente != cliente.IdCliente);
-        if (rfcDuplicado)
-            return Resultado.Fallo($"Ya existe otro cliente registrado con el RFC {cliente.RFC}.");
+        var error = await Validar(cliente);
+        if (error is not null)
+            return error;
 
         existente.Nombre = cliente.Nombre;
         existente.Apellido = cliente.Apellido;
-        existente.Telefono = cliente.Telefono.Trim();
-        existente.Direccion = cliente.Direccion.Trim();
+        existente.Telefono = cliente.Telefono;
+        existente.Direccion = cliente.Direccion;
         existente.RFC = cliente.RFC;
+        existente.Cedula = cliente.Cedula;
         await _db.SaveChangesAsync();
         return Resultado.Ok("Cliente actualizado correctamente.");
+    }
+
+    private async Task<Resultado?> Validar(Cliente cliente)
+    {
+        cliente.Nombre = cliente.Nombre.Trim();
+        cliente.Apellido = cliente.Apellido.Trim();
+        cliente.RFC = cliente.RFC.Trim().ToUpperInvariant();
+        cliente.Telefono = cliente.Telefono.Trim();
+        cliente.Direccion = cliente.Direccion.Trim();
+        cliente.Cedula = string.IsNullOrWhiteSpace(cliente.Cedula) ? null : cliente.Cedula.Trim().ToUpperInvariant();
+
+        if (cliente.Nombre.Length == 0 || cliente.Apellido.Length == 0)
+            return Resultado.Fallo("El nombre y el apellido del cliente son obligatorios.");
+        if (cliente.RFC.Length == 0)
+            return Resultado.Fallo("El RUC del cliente es obligatorio.");
+
+        var otros = _db.Clientes.Where(c => c.IdCliente != cliente.IdCliente);
+        if (await otros.AnyAsync(c => c.RFC == cliente.RFC))
+            return Resultado.Fallo($"Ya existe un cliente registrado con el RUC {cliente.RFC}.");
+        if (cliente.Cedula is not null && await otros.AnyAsync(c => c.Cedula == cliente.Cedula))
+            return Resultado.Fallo($"Ya existe un cliente registrado con la cédula {cliente.Cedula}.");
+
+        return null;
     }
 
     /// <summary>Regla 14: desactivación lógica; nunca borrado físico.</summary>
@@ -99,7 +102,8 @@ public class ClienteService
             var t = termino.Trim();
             query = query.Where(c =>
                 c.Nombre.Contains(t) || c.Apellido.Contains(t) ||
-                c.RFC.Contains(t) || c.Telefono.Contains(t));
+                c.RFC.Contains(t) || c.Telefono.Contains(t) ||
+                (c.Cedula != null && c.Cedula.Contains(t)));
         }
 
         var total = await query.CountAsync();

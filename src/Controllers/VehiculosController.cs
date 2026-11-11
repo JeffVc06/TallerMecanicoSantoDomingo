@@ -59,7 +59,11 @@ public class VehiculosController : Controller
             Placa = formulario.Placa,
             Marca = formulario.Marca,
             Modelo = formulario.Modelo,
-            Anio = formulario.Anio
+            Anio = formulario.Anio,
+            Kilometraje = formulario.Kilometraje,
+            Color = formulario.Color,
+            NumChasis = formulario.NumChasis,
+            Tipo = formulario.Tipo
         });
 
         if (!resultado.EsCorrecto)
@@ -88,7 +92,11 @@ public class VehiculosController : Controller
             Placa = vehiculo.Placa,
             Marca = vehiculo.Marca,
             Modelo = vehiculo.Modelo,
-            Anio = vehiculo.Anio
+            Anio = vehiculo.Anio,
+            Kilometraje = vehiculo.Kilometraje,
+            Color = vehiculo.Color,
+            NumChasis = vehiculo.NumChasis,
+            Tipo = vehiculo.Tipo
         });
     }
 
@@ -109,7 +117,11 @@ public class VehiculosController : Controller
             Placa = formulario.Placa,
             Marca = formulario.Marca,
             Modelo = formulario.Modelo,
-            Anio = formulario.Anio
+            Anio = formulario.Anio,
+            Kilometraje = formulario.Kilometraje,
+            Color = formulario.Color,
+            NumChasis = formulario.NumChasis,
+            Tipo = formulario.Tipo
         });
 
         if (!resultado.EsCorrecto)

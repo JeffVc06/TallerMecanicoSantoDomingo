@@ -33,6 +33,21 @@
                 <span asp-validation-for="Telefono" class="text-danger"></span>
             </div>
             <div class="col-md-6">
+                <label asp-for="Correo" class="form-label"></label>
+                <input asp-for="Correo" class="form-control" type="email" />
+                <span asp-validation-for="Correo" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="FechaIngreso" class="form-label"></label>
+                <input asp-for="FechaIngreso" class="form-control" type="date" asp-format="{0:yyyy-MM-dd}" />
+                <span asp-validation-for="FechaIngreso" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="FechaSalida" class="form-label"></label>
+                <input asp-for="FechaSalida" class="form-control" type="date" asp-format="{0:yyyy-MM-dd}" />
+                <span asp-validation-for="FechaSalida" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
                 <label asp-for="Area" class="form-label"></label>
                 <select asp-for="Area" class="form-select" asp-items="areas">
                     <option value="">— Seleccione el área —</option>

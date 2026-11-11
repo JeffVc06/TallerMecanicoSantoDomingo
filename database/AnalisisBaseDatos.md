@@ -2,7 +2,7 @@
 
 El análisis corresponde a los scripts `TallerMecanicoSantoDomingo.sql` y
 `DatosDemostracion.sql`, sobre una base recién creada. Hay **10 tablas: 9 de
-negocio y 1 de acceso**, con **54 registros de demostración**. Las cantidades
+negocio y 1 de acceso**, con **59 registros de demostración**. Las cantidades
 pueden cambiar si se utiliza la aplicación.
 
 | Tabla | Registros insertados | Clave primaria | Función y relaciones |
@@ -12,8 +12,8 @@ pueden cambiar si se utiliza la aplicación.
 | Trabajador | 4 | IdTrabajador | Personal de mantenimiento mecánico o pintura |
 | Servicio | 10 | IdServicio | Cada servicio corresponde a un Vehiculo mediante IdVehiculo |
 | Detalle_Servicio | 11 | IdServicio, IdTrabajador | Relaciona servicios con sus trabajadores y conserva las asignaciones retiradas |
-| Producto | 5 | IdProducto | Catálogo con precio de venta, costo de compra y stock |
-| Productos_Utilizados | 10 | IdProducto, IdServicio | Relaciona productos con servicios y registra la cantidad utilizada |
+| Producto | 6 | IdProducto | Catálogo con precio de venta, costo de compra y stock |
+| Productos_Utilizados | 14 | IdProducto, IdServicio | Relaciona productos con servicios y registra la cantidad utilizada |
 | Factura | 3 | IdFactura | Cada factura pertenece a un Cliente mediante IdCliente |
 | Detalle_Factura | 4 | IdServicio, IdFactura | Relaciona servicios con facturas y conserva el subtotal de cada línea |
 | Usuarios | 0 | Id | Cuentas de acceso, independientes de los trabajadores |
@@ -25,9 +25,44 @@ servicios–facturas. La pareja de identificadores no puede repetirse en una mis
 tabla intermedia. Un servicio sí puede aparecer en facturas distintas; la
 aplicación comprueba que no tenga ya otra factura emitida.
 
-Los identificadores de las siete tablas principales de negocio son `IDENTITY`.
+Los identificadores de las seis tablas principales de negocio son `IDENTITY`.
 Los datos de ejemplo usan `IDENTITY_INSERT` para fijarlos y establecer sus
 relaciones. `Usuarios.Id` es texto y no se genera con `IDENTITY`.
+
+## Correspondencia entre los diagramas
+
+~~~mermaid
+erDiagram
+    Cliente ||..o{ Vehiculo : posee
+    Vehiculo ||..o{ Servicio : recibe
+    Trabajador ||--o{ Detalle_Servicio : realiza
+    Servicio ||--o{ Detalle_Servicio : tiene
+    Servicio ||--o{ Productos_Utilizados : tiene
+    Productos_Utilizados }o--|| Producto : pertenece
+    Cliente ||..o{ Factura : recibe
+    Factura ||--o{ Detalle_Factura : genera
+    Detalle_Factura }o--|| Servicio : corresponde
+    Usuarios {
+        string Id PK
+    }
+~~~
+
+El diagrama relacional define las tablas, columnas y claves de SQL Server. En
+el entidad–relación, **Posee** corresponde a `Vehiculo.IdCliente` y **Recibe**
+a `Servicio.IdVehiculo`. **Realiza** se materializa en `Detalle_Servicio`.
+**Tiene** y **Pertenece** enlazan `Productos_Utilizados` con `Servicio` y
+`Producto`, respectivamente. **Genera** y **Corresponde** enlazan
+`Detalle_Factura` con `Factura` y `Servicio`, respectivamente.
+
+Para sincronizar el dibujo conceptual con el esquema, el atributo `IdRepuesto`
+de `Productos_Utilizados` debe llamarse `IdProducto`. También faltan
+`Factura.IdFactura` como identificador y la relación de cliente a factura
+que existe mediante `Factura.IdCliente`. `Usuarios` aparece en el modelo físico
+como tabla de acceso independiente.
+
+Los óvalos dobles de teléfono, correo y color sugieren valores múltiples. El
+modelo relacional y los formularios guardan un valor por campo. Si el dibujo
+debe describir la implementación actual, esos atributos llevan óvalo simple.
 
 ## Qué permiten practicar los datos
 
@@ -39,8 +74,8 @@ relaciones. `Usuarios.Id` es texto y no se genera con `IDENTITY`.
   Luis y Ana tienen dos asignaciones activas a servicios abiertos cada uno;
   Karla tiene cero. `Trabajador.Estado` es un `bit`, mientras que
   `Detalle_Servicio.Estado` y `Servicio.Estado` son textos con valores diferentes.
-- Los cinco productos se han utilizado. Hay diez líneas de consumo distribuidas
-  entre seis servicios; otros cuatro servicios no tienen productos registrados.
+- Los seis productos se han utilizado. Hay 14 líneas de consumo distribuidas
+  entre ocho servicios. Los servicios 6 y 10 carecen de productos registrados.
   Las cantidades admiten decimales, aunque los ejemplos actuales sean enteros.
 - Hay dos facturas emitidas y una anulada. Las emitidas suman **22655.00 con
   IVA**: 15525.00 de Juan y 7130.00 de Carlos. María solo tiene una factura
@@ -68,33 +103,13 @@ la suma de sus detalles. Los ejemplos aplican un IVA del 15 %, pero el `CHECK`
 solo valida los importes no negativos y la igualdad del total: **no fija una
 tasa de IVA**. Los servicios facturados pertenecen al cliente correspondiente.
 
-Hay dos observaciones sobre los datos de ejemplo:
+## Validaciones del script de creación
 
-- Las asignaciones de los servicios 4, 5 y 6 tienen una hora anterior a la
-  `FechaRegistro` de su servicio en el mismo día. Si la fecha de registro
-  representa la creación del servicio, esas horas requieren revisión.
-- Los servicios 5, 7 y 9 indican pintura de base agua, pero utilizan el producto
-  4, descrito como pintura de base solvente. Es una discrepancia descriptiva
-  que las claves foráneas no comprueban.
-
-Estas observaciones se documentan; los datos insertados se conservan.
-
-## Simplificación del script de creación
-
-Las claves primarias simples, referencias, valores predeterminados, restricciones
-`UNIQUE`, nulabilidad y `CHECK` de un solo campo se declaran junto al campo.
-`IDENTITY` equivale a `IDENTITY(1,1)`. Se conservan los nombres de los `CHECK`
-para mantener su correspondencia con el modelo de la aplicación y las pruebas.
-Se eliminan los separadores `GO` innecesarios entre tablas.
-
-Permanecen fuera de la línea del campo solamente los elementos que lo necesitan:
-
-- Las tres claves primarias compuestas, porque incluyen dos columnas.
-- Los `CHECK` de fechas del trabajador y del servicio y de importes de la factura,
-  porque comparan varias columnas. En SQL Server se declaran a nivel de tabla.
-- Los cuatro índices únicos filtrados de cédula, chasis, nombre de usuario y
-  correo normalizados. Permiten varios `NULL` y exigen unicidad cuando hay valor;
-  un `UNIQUE` simple sobre una columna nullable permitiría un solo `NULL`.
+Los `CHECK` se aplican en un lote reutilizable tanto al crear la base como al
+actualizar una base que ya tiene las tablas del diagrama. `WITH CHECK` valida
+las filas existentes al agregar cada restricción. Los cuatro índices únicos
+filtrados de cédula, chasis, nombre de usuario y correo normalizados permiten
+varios `NULL` y exigen unicidad cuando hay valor.
 
 Las claves foráneas impiden referencias inexistentes y borrados con registros
 dependientes. Otras reglas, como la compatibilidad del área del trabajador, el

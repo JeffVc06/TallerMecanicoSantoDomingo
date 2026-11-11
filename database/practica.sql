@@ -67,7 +67,7 @@ GO
    no el total de la factura ni el costo de compra del producto.
    Tablas: Servicio, Productos_Utilizados y Producto.
    Practica: JOIN de tres tablas, operaciones y conversión de decimales.
-   Control: 10 filas.
+   Control: 14 filas.
 */
 
 

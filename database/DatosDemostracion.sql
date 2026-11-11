@@ -2,9 +2,9 @@
 USE TallerMecanicoSantoDomingo;
 GO
 
-SET IDENTITY_INSERT Cliente ON;
+SET IDENTITY_INSERT dbo.Cliente ON;
 
-INSERT INTO Cliente
+INSERT INTO dbo.Cliente
 (IdCliente, Nombre, Apellido, Telefono, Direccion, RUC, Activo, FechaRegistro, Cedula)
 VALUES
 (1, N'Juan Carlos', N'Pérez López', N'8888-1111',
@@ -19,12 +19,12 @@ VALUES
  N'Residencial Las Colinas, Managua', N'0012308880003C',
  1, '2026-03-18T15:45:00', N'001-230888-0003C');
 
-SET IDENTITY_INSERT Cliente OFF;
+SET IDENTITY_INSERT dbo.Cliente OFF;
 
 
-SET IDENTITY_INSERT Vehiculo ON;
+SET IDENTITY_INSERT dbo.Vehiculo ON;
 
-INSERT INTO Vehiculo
+INSERT INTO dbo.Vehiculo
 (IdVehiculo, IdCliente, Placa, Marca, Modelo, Anio,
  Activo, FechaRegistro, Kilometraje, Color, NumChasis, Tipo)
 VALUES
@@ -44,12 +44,12 @@ VALUES
  1, '2026-03-19T16:00:00', 48000, N'Azul',
  N'JM3KFBCM1M0100004', N'Camioneta');
 
-SET IDENTITY_INSERT Vehiculo OFF;
+SET IDENTITY_INSERT dbo.Vehiculo OFF;
 
 
-SET IDENTITY_INSERT Trabajador ON;
+SET IDENTITY_INSERT dbo.Trabajador ON;
 
-INSERT INTO Trabajador
+INSERT INTO dbo.Trabajador
 (IdTrabajador, Nombre, Apellido, Telefono, Area,
  Estado, FechaIngreso, Correo, FechaSalida)
 VALUES
@@ -69,12 +69,12 @@ VALUES
  N'Pintura', 1, '2026-01-11T08:15:00',
  N'karla@taller.local', NULL);
 
-SET IDENTITY_INSERT Trabajador OFF;
+SET IDENTITY_INSERT dbo.Trabajador OFF;
 
 
-SET IDENTITY_INSERT Servicio ON;
+SET IDENTITY_INSERT dbo.Servicio ON;
 
-INSERT INTO Servicio
+INSERT INTO dbo.Servicio
 (IdServicio, IdVehiculo, Tipo, Descripcion, DescripcionFalla,
  TipoPintura, Color, Estado, FechaInicio, FechaFin,
  Costo, FechaRegistro)
@@ -135,10 +135,10 @@ VALUES
  NULL, NULL, N'Abierto',
  '2026-10-14', NULL, 2500.00, '2026-10-14T16:10:00');
 
-SET IDENTITY_INSERT Servicio OFF;
+SET IDENTITY_INSERT dbo.Servicio OFF;
 
 
-INSERT INTO Detalle_Servicio
+INSERT INTO dbo.Detalle_Servicio
 (IdServicio, IdTrabajador, FechaAsignacion, Estado, Observaciones)
 VALUES
 (1, 1, '2026-09-20T08:35:00', N'Activo',
@@ -159,9 +159,9 @@ VALUES
 (10, 2, '2026-10-14T16:15:00', N'Activo', NULL);
 
 
-SET IDENTITY_INSERT Producto ON;
+SET IDENTITY_INSERT dbo.Producto ON;
 
-INSERT INTO Producto
+INSERT INTO dbo.Producto
 (IdProducto, Nombre, Descripcion, Precio, Stock,
  Activo, FechaRegistro, Costo)
 VALUES
@@ -189,10 +189,10 @@ VALUES
  N'Kit de embrague para vehículo liviano',
  3900.00, 6.000, 1, '2026-01-15T08:25:00', 2800.00);
 
-SET IDENTITY_INSERT Producto OFF;
+SET IDENTITY_INSERT dbo.Producto OFF;
 
 
-INSERT INTO Productos_Utilizados
+INSERT INTO dbo.Productos_Utilizados
 (IdServicio, IdProducto, Cantidad)
 VALUES
 (1, 1, 1.000),
@@ -211,9 +211,9 @@ VALUES
 (9, 5, 1.000);
 
 
-SET IDENTITY_INSERT Factura ON;
+SET IDENTITY_INSERT dbo.Factura ON;
 
-INSERT INTO Factura
+INSERT INTO dbo.Factura
 (IdFactura, NumeroFactura, IdCliente, RUC, Fecha,
  Subtotal, IVA, Total, MetodoPago, Estado, Notas)
 VALUES
@@ -233,10 +233,10 @@ VALUES
  N'Transferencia', N'Anulada',
  N'Anulada por corrección de datos');
 
-SET IDENTITY_INSERT Factura OFF;
+SET IDENTITY_INSERT dbo.Factura OFF;
 
 
-INSERT INTO Detalle_Factura
+INSERT INTO dbo.Detalle_Factura
 (IdFactura, IdServicio, Subtotal)
 VALUES
 (1, 2, 8500.00),

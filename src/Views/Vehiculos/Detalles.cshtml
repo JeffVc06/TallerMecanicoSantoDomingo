@@ -30,6 +30,14 @@
                 <dd class="col-7">@Model.Modelo</dd>
                 <dt class="col-5 texto-secundario">Año</dt>
                 <dd class="col-7">@Model.Anio</dd>
+                <dt class="col-5 texto-secundario">Kilometraje</dt>
+                <dd class="col-7">@Model.Kilometraje</dd>
+                <dt class="col-5 texto-secundario">Color</dt>
+                <dd class="col-7">@(Model.Color ?? "—")</dd>
+                <dt class="col-5 texto-secundario">Número de chasis</dt>
+                <dd class="col-7">@(Model.NumChasis ?? "—")</dd>
+                <dt class="col-5 texto-secundario">Tipo de vehículo</dt>
+                <dd class="col-7">@(Model.Tipo ?? "—")</dd>
                 <dt class="col-5 texto-secundario">Estado</dt>
                 <dd class="col-7"><span class="estado @(Model.Activo ? "estado-activo" : "estado-inactivo")">@(Model.Activo ? "Activo" : "Desactivado")</span></dd>
             </dl>
@@ -39,7 +47,7 @@
             @if (Model.Cliente != null)
             {
                 <div class="fw-semibold">@Model.Cliente.NombreCompleto</div>
-                <div class="texto-secundario" style="font-size:.85rem">RFC: @Model.Cliente.RFC</div>
+                <div class="texto-secundario" style="font-size:.85rem">RUC: @Model.Cliente.RFC</div>
                 <div class="texto-secundario" style="font-size:.85rem">Tel: @Model.Cliente.Telefono</div>
                 <a asp-controller="Clientes" asp-action="Detalles" asp-route-id="@Model.Cliente.IdCliente" class="btn btn-sm btn-outline-primary mt-2">
                     <i class="bi bi-eye me-1"></i> Ver ficha del cliente

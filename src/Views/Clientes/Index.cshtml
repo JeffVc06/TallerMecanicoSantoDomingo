@@ -15,7 +15,7 @@
     <form asp-action="Index" method="get" data-busqueda class="row g-2 align-items-end mb-3">
         <input type="hidden" name="pagina" value="1" />
         <div class="col-sm-7 col-md-8">
-            <label class="form-label fw-semibold text-primary" style="font-size:.85rem">Buscar por nombre, apellido, RFC o teléfono</label>
+            <label class="form-label fw-semibold text-primary" style="font-size:.85rem">Buscar por nombre, apellido, cédula, RUC o teléfono</label>
             <input type="text" name="buscar" value="@ViewBag.Buscar" class="form-control" placeholder="Escriba para buscar..." />
         </div>
         <div class="col-sm-5 col-md-4">
@@ -37,7 +37,7 @@
             <table class="tabla-lista">
                 <thead>
                     <tr>
-                        <th>RFC</th>
+                        <th>RUC</th>
                         <th>Nombre completo</th>
                         <th>Teléfono</th>
                         <th>Dirección</th>

@@ -23,10 +23,14 @@
                 <dd class="col-7 fw-semibold">@Model.Area</dd>
                 <dt class="col-5 texto-secundario">Teléfono</dt>
                 <dd class="col-7">@Model.Telefono</dd>
+                <dt class="col-5 texto-secundario">Correo</dt>
+                <dd class="col-7">@(Model.Correo ?? "—")</dd>
                 <dt class="col-5 texto-secundario">Estado</dt>
                 <dd class="col-7"><span class="estado @(Model.Activo ? "estado-activo" : "estado-inactivo")">@(Model.Activo ? "Activo" : "Desactivado")</span></dd>
-                <dt class="col-5 texto-secundario">Registro</dt>
-                <dd class="col-7">@Model.FechaRegistro.ToLocalTime().ToString("dd/MM/yyyy")</dd>
+                <dt class="col-5 texto-secundario">Ingreso</dt>
+                <dd class="col-7">@Model.FechaRegistro.ToString("dd/MM/yyyy")</dd>
+                <dt class="col-5 texto-secundario">Salida</dt>
+                <dd class="col-7">@(Model.FechaSalida?.ToString("dd/MM/yyyy") ?? "—")</dd>
             </dl>
         </div>
         <div class="tarjeta tarjeta-indicador">

@@ -30,7 +30,7 @@ public class PruebasUnitariasReglas
         });
 
         Assert.False(duplicado.EsCorrecto);
-        Assert.Contains("RFC", duplicado.Mensaje);
+        Assert.Contains("RUC", duplicado.Mensaje);
         Assert.Equal(1, await db.Clientes.CountAsync());
     }
 

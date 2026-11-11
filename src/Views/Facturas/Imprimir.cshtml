@@ -64,7 +64,7 @@
                 <div class="caja-factura h-100">
                     <div class="fw-bold text-primary mb-1" style="font-size:.8rem">DATOS DEL CLIENTE</div>
                     <div class="fw-semibold">@(f.Cliente != null ? f.Cliente.NombreCompleto : "—")</div>
-                    <div style="font-size:.87rem">RFC: @(f.Cliente?.RFC ?? "—")</div>
+                    <div style="font-size:.87rem">RUC: @(f.RUC ?? "—")</div>
                     <div style="font-size:.87rem">Tel.: @(f.Cliente?.Telefono ?? "—")</div>
                     <div style="font-size:.87rem">Dirección: @(f.Cliente?.Direccion ?? "—")</div>
                 </div>

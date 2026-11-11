@@ -44,6 +44,26 @@
                 <input asp-for="Anio" class="form-control" type="number" min="1950" max="2100" />
                 <span asp-validation-for="Anio" class="text-danger"></span>
             </div>
+            <div class="col-md-6">
+                <label asp-for="Kilometraje" class="form-label"></label>
+                <input asp-for="Kilometraje" class="form-control" type="number" min="0" />
+                <span asp-validation-for="Kilometraje" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Color" class="form-label"></label>
+                <input asp-for="Color" class="form-control" />
+                <span asp-validation-for="Color" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="NumChasis" class="form-label"></label>
+                <input asp-for="NumChasis" class="form-control text-uppercase" />
+                <span asp-validation-for="NumChasis" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Tipo" class="form-label"></label>
+                <input asp-for="Tipo" class="form-control" />
+                <span asp-validation-for="Tipo" class="text-danger"></span>
+            </div>
         </div>
 
         <div class="d-flex gap-2 mt-4">

@@ -150,6 +150,7 @@ public class FacturacionService
                 idFactura, motivo ?? "Anulación solicitada por el usuario");
             if (filas == 0)
                 return Resultado.Fallo("No se pudo anular la factura.");
+            await _db.Entry(factura).ReloadAsync();
         }
         else
         {
@@ -173,7 +174,7 @@ public class FacturacionService
         if (!string.IsNullOrWhiteSpace(terminoNumero))
         {
             var t = terminoNumero.Trim();
-            query = query.Where(f => f.NumeroFactura.Contains(t) ||
+            query = query.Where(f => f.NumeroFactura.Contains(t) || (f.RUC != null && f.RUC.Contains(t)) ||
                 (f.Cliente != null && (f.Cliente.Nombre.Contains(t) || f.Cliente.Apellido.Contains(t) || f.Cliente.RFC.Contains(t))));
         }
         if (desde.HasValue)

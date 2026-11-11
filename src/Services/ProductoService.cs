@@ -29,6 +29,8 @@ public class ProductoService
             return Resultado.Fallo("El nombre del producto es obligatorio.");
         if (producto.PrecioUnitario < 0)
             return Resultado.Fallo("El precio unitario no puede ser negativo.");
+        if (producto.Costo is < 0 or > 9999999999.99m)
+            return Resultado.Fallo("El costo de compra está fuera del rango permitido.");
         if (producto.Stock < 0)
             return Resultado.Fallo("El stock no puede ser negativo.");
 
@@ -50,12 +52,15 @@ public class ProductoService
             return Resultado.Fallo("El nombre del producto es obligatorio.");
         if (producto.PrecioUnitario < 0)
             return Resultado.Fallo("El precio unitario no puede ser negativo.");
+        if (producto.Costo is < 0 or > 9999999999.99m)
+            return Resultado.Fallo("El costo de compra está fuera del rango permitido.");
         if (producto.Stock < 0)
             return Resultado.Fallo("El stock no puede ser negativo.");
 
         existente.Nombre = producto.Nombre;
         existente.Descripcion = producto.Descripcion.Trim();
         existente.PrecioUnitario = producto.PrecioUnitario;
+        existente.Costo = producto.Costo;
         existente.Stock = producto.Stock;
         await _db.SaveChangesAsync();
         return Resultado.Ok("Producto actualizado correctamente.");

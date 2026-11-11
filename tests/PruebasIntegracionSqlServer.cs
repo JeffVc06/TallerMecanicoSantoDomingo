@@ -78,21 +78,54 @@ public class PruebasIntegracionSqlServerTests
         return resultado;
     }
     [SkippableFact]
-    public async Task Esquema_contiene_las_nueve_tablas_del_diagrama_y_Usuarios()
+    public async Task Esquema_sql_coincide_con_las_tablas_columnas_y_claves_del_modelo()
     {
         Skip.IfNot(ServidorDisponible(), "SQL Server no está disponible; prueba de integración omitida.");
 
-        var tablas = await ListaAsync("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'");
+        await using var contexto = NuevoContexto();
+        var modelo = contexto.Model.GetRelationalModel();
+        var columnas = await ListaAsync("""
+            SELECT CONCAT(t.name, '.', c.name, ':',
+                CASE TYPE_NAME(c.user_type_id)
+                    WHEN 'nvarchar' THEN CONCAT('nvarchar(', IIF(c.max_length = -1, 'max', CONVERT(varchar(5), c.max_length / 2)), ')')
+                    WHEN 'decimal' THEN CONCAT('decimal(', c.precision, ',', c.scale, ')')
+                    ELSE TYPE_NAME(c.user_type_id)
+                END, ':', c.is_nullable)
+            FROM sys.tables t
+            JOIN sys.columns c ON c.object_id = t.object_id
+            WHERE t.schema_id = SCHEMA_ID(N'dbo');
+            """);
+        var columnasEsperadas = modelo.Tables.SelectMany(t =>
+            t.Columns.Select(c => $"{t.Name}.{c.Name}:{c.StoreType}:{(c.IsNullable ? 1 : 0)}"));
+        Assert.Equal(columnasEsperadas.Order(StringComparer.Ordinal), columnas.Order(StringComparer.Ordinal));
 
-        string[] esperadas =
-        {
-            "Cliente", "Vehiculo", "Trabajador", "Servicio",
-            "Detalle_Servicio", "Producto", "Productos_Utilizados", "Factura",
-            "Detalle_Factura", "Usuarios"
-        };
+        var primarias = await ListaAsync("""
+            SELECT CONCAT(t.name, '.', c.name, ':', ic.key_ordinal)
+            FROM sys.tables t
+            JOIN sys.indexes i ON i.object_id = t.object_id AND i.is_primary_key = 1
+            JOIN sys.index_columns ic ON ic.object_id = i.object_id AND ic.index_id = i.index_id
+            JOIN sys.columns c ON c.object_id = ic.object_id AND c.column_id = ic.column_id
+            WHERE t.schema_id = SCHEMA_ID(N'dbo');
+            """);
+        var primariasEsperadas = modelo.Tables.SelectMany(t =>
+            t.PrimaryKey!.Columns.Select((c, i) => $"{t.Name}.{c.Name}:{i + 1}"));
+        Assert.Equal(primariasEsperadas.Order(StringComparer.Ordinal), primarias.Order(StringComparer.Ordinal));
 
-        foreach (var tabla in esperadas)
-            Assert.Contains(tabla, tablas);
+        var foraneas = await ListaAsync("""
+            SELECT CONCAT(t.name, '.', c.name, '->', p.name, '.', pc.name)
+            FROM sys.foreign_keys fk
+            JOIN sys.foreign_key_columns fc ON fc.constraint_object_id = fk.object_id
+            JOIN sys.tables t ON t.object_id = fc.parent_object_id
+            JOIN sys.columns c ON c.object_id = t.object_id AND c.column_id = fc.parent_column_id
+            JOIN sys.tables p ON p.object_id = fc.referenced_object_id
+            JOIN sys.columns pc ON pc.object_id = p.object_id AND pc.column_id = fc.referenced_column_id
+            WHERE t.schema_id = SCHEMA_ID(N'dbo') AND fk.is_disabled = 0 AND fk.is_not_trusted = 0
+              AND fk.delete_referential_action = 0;
+            """);
+        var foraneasEsperadas = modelo.Tables.SelectMany(t => t.ForeignKeyConstraints)
+            .SelectMany(f => f.Columns.Zip(f.PrincipalColumns,
+                (c, pc) => $"{f.Table.Name}.{c.Name}->{f.PrincipalTable.Name}.{pc.Name}"));
+        Assert.Equal(foraneasEsperadas.Order(StringComparer.Ordinal), foraneas.Order(StringComparer.Ordinal));
     }
 
     [SkippableFact]

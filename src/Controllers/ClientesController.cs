@@ -38,7 +38,8 @@ public class ClientesController : Controller
             Apellido = modelo.Apellido,
             RFC = modelo.RFC,
             Telefono = modelo.Telefono,
-            Direccion = modelo.Direccion
+            Direccion = modelo.Direccion,
+            Cedula = modelo.Cedula
         });
 
         if (!resultado.EsCorrecto)
@@ -65,7 +66,8 @@ public class ClientesController : Controller
             Apellido = cliente.Apellido,
             RFC = cliente.RFC,
             Telefono = cliente.Telefono,
-            Direccion = cliente.Direccion
+            Direccion = cliente.Direccion,
+            Cedula = cliente.Cedula
         });
     }
 
@@ -83,7 +85,8 @@ public class ClientesController : Controller
             Apellido = modelo.Apellido,
             RFC = modelo.RFC,
             Telefono = modelo.Telefono,
-            Direccion = modelo.Direccion
+            Direccion = modelo.Direccion,
+            Cedula = modelo.Cedula
         });
 
         if (!resultado.EsCorrecto)

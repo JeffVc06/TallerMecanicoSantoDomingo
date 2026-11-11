@@ -21,6 +21,8 @@
                 <dd class="col-7 fw-semibold">@Model.Nombre</dd>
                 <dt class="col-5 texto-secundario">Precio unitario</dt>
                 <dd class="col-7 fw-semibold">C$ @Model.PrecioUnitario.ToString("N2")</dd>
+                <dt class="col-5 texto-secundario">Costo de compra</dt>
+                <dd class="col-7">C$ @Model.Costo.ToString("N2")</dd>
                 <dt class="col-5 texto-secundario">Stock</dt>
                 <dd class="col-7">@Model.Stock.ToString("0.###")</dd>
                 <dt class="col-5 texto-secundario">Estado</dt>
@@ -67,7 +69,7 @@
                                     <td class="fw-semibold">@u.PlacaVehiculo</td>
                                     <td style="max-width:220px">@u.DescripcionServicio</td>
                                     <td class="text-end">@u.Cantidad.ToString("0.###")</td>
-                                    <td class="text-end">@(u.Cantidad * Model.PrecioUnitario).ToString("N2")</td>
+                                    <td class="text-end">@((u.Cantidad * Model.PrecioUnitario).ToString("N2"))</td>
                                     <td class="acciones">
                                         <a asp-controller="Servicios" asp-action="Detalles" asp-route-id="@u.IdServicio" class="btn btn-sm btn-outline-primary btn-icono" title="Ver servicio">
                                             <i class="bi bi-eye"></i>

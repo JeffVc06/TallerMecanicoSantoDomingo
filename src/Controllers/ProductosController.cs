@@ -37,7 +37,8 @@ public class ProductosController : Controller
             Nombre = modelo.Nombre,
             Descripcion = modelo.Descripcion,
             PrecioUnitario = modelo.PrecioUnitario,
-            Stock = modelo.Stock
+            Stock = modelo.Stock,
+            Costo = modelo.Costo
         });
 
         if (!resultado.EsCorrecto)
@@ -63,7 +64,8 @@ public class ProductosController : Controller
             Nombre = producto.Nombre,
             Descripcion = producto.Descripcion,
             PrecioUnitario = producto.PrecioUnitario,
-            Stock = producto.Stock
+            Stock = producto.Stock,
+            Costo = producto.Costo
         });
     }
 
@@ -80,7 +82,8 @@ public class ProductosController : Controller
             Nombre = modelo.Nombre,
             Descripcion = modelo.Descripcion,
             PrecioUnitario = modelo.PrecioUnitario,
-            Stock = modelo.Stock
+            Stock = modelo.Stock,
+            Costo = modelo.Costo
         });
 
         if (!resultado.EsCorrecto)

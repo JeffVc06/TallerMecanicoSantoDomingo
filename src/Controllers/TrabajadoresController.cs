@@ -72,7 +72,10 @@ public class TrabajadoresController : Controller
             Nombre = modelo.Nombre.Trim(),
             Apellido = modelo.Apellido.Trim(),
             Telefono = modelo.Telefono.Trim(),
-            Area = modelo.Area
+            Area = modelo.Area,
+            Correo = string.IsNullOrWhiteSpace(modelo.Correo) ? null : modelo.Correo.Trim(),
+            FechaRegistro = modelo.FechaIngreso!.Value.ToDateTime(TimeOnly.MinValue),
+            FechaSalida = modelo.FechaSalida
         });
         await _db.SaveChangesAsync();
 
@@ -94,7 +97,10 @@ public class TrabajadoresController : Controller
             Nombre = trabajador.Nombre,
             Apellido = trabajador.Apellido,
             Telefono = trabajador.Telefono,
-            Area = trabajador.Area
+            Area = trabajador.Area,
+            Correo = trabajador.Correo,
+            FechaIngreso = DateOnly.FromDateTime(trabajador.FechaRegistro),
+            FechaSalida = trabajador.FechaSalida
         });
     }
 
@@ -124,6 +130,10 @@ public class TrabajadoresController : Controller
         trabajador.Apellido = modelo.Apellido.Trim();
         trabajador.Telefono = modelo.Telefono.Trim();
         trabajador.Area = modelo.Area;
+        trabajador.Correo = string.IsNullOrWhiteSpace(modelo.Correo) ? null : modelo.Correo.Trim();
+        if (modelo.FechaIngreso != DateOnly.FromDateTime(trabajador.FechaRegistro))
+            trabajador.FechaRegistro = modelo.FechaIngreso!.Value.ToDateTime(TimeOnly.MinValue);
+        trabajador.FechaSalida = modelo.FechaSalida;
         await _db.SaveChangesAsync();
 
         TempData["Exito"] = "Trabajador actualizado correctamente.";

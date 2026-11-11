@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TallerMecanicoSantoDomingo.Data;
+using TallerMecanicoSantoDomingo.Models;
 using TallerMecanicoSantoDomingo.Services;
 using Xunit;
 
@@ -12,6 +13,65 @@ namespace TallerMecanicoSantoDomingo.Tests;
 
 public class PruebasSimplificacion
 {
+    [Fact]
+    public async Task Cedula_y_chasis_se_guardan_y_son_unicos_cuando_tienen_valor()
+    {
+        using var db = FabricaDeContextos.EnMemoria();
+        FabricaDeContextos.SembrarBase(db);
+        var clientes = new ClienteService(db);
+        var vehiculos = new VehiculoService(db);
+        var cliente = (await clientes.ObtenerPorId(1))!;
+        var vehiculo = (await vehiculos.ObtenerPorId(1))!;
+        cliente.Cedula = " 001-120690-0001a ";
+        vehiculo.NumChasis = " abcd123 ";
+        vehiculo.Kilometraje = 75000;
+        vehiculo.Color = " Azul ";
+        vehiculo.Tipo = " Sedán ";
+
+        Assert.True((await clientes.Editar(cliente)).EsCorrecto);
+        Assert.True((await vehiculos.Editar(vehiculo)).EsCorrecto);
+        Assert.Equal("001-120690-0001A", (await clientes.ObtenerPorId(1))!.Cedula);
+        var guardado = (await vehiculos.ObtenerPorId(1))!;
+        Assert.Equal("ABCD123", guardado.NumChasis);
+        Assert.Equal(75000, guardado.Kilometraje);
+        Assert.Equal("Azul", guardado.Color);
+        Assert.Equal("Sedán", guardado.Tipo);
+
+        var otroCliente = (await clientes.ObtenerPorId(2))!;
+        var otroVehiculo = (await vehiculos.ObtenerPorId(2))!;
+        otroCliente.Cedula = "001-120690-0001a";
+        otroVehiculo.NumChasis = "abcd123";
+        Assert.False((await clientes.Editar(otroCliente)).EsCorrecto);
+        Assert.False((await vehiculos.Editar(otroVehiculo)).EsCorrecto);
+
+        cliente.Cedula = " ";
+        vehiculo.NumChasis = " ";
+        Assert.True((await clientes.Editar(cliente)).EsCorrecto);
+        Assert.True((await vehiculos.Editar(vehiculo)).EsCorrecto);
+        Assert.Null((await clientes.ObtenerPorId(1))!.Cedula);
+        Assert.Null((await vehiculos.ObtenerPorId(1))!.NumChasis);
+    }
+
+    [Fact]
+    public async Task Costo_de_compra_se_registra_y_se_edita_independiente_del_precio()
+    {
+        using var db = FabricaDeContextos.EnMemoria();
+        var productos = new ProductoService(db);
+        var producto = new Producto { Nombre = "Aceite", Descripcion = "Motor", Costo = 150m, PrecioUnitario = 210m };
+
+        Assert.True((await productos.Crear(producto)).EsCorrecto);
+        producto = (await productos.ObtenerPorId(producto.IdProducto))!;
+        Assert.Equal(150m, producto.Costo);
+        producto.Costo = 175m;
+        Assert.True((await productos.Editar(producto)).EsCorrecto);
+        producto = (await productos.ObtenerPorId(producto.IdProducto))!;
+        Assert.Equal(175m, producto.Costo);
+        Assert.Equal(210m, producto.PrecioUnitario);
+
+        producto.Costo = -1;
+        Assert.False((await productos.Editar(producto)).EsCorrecto);
+    }
+
     [Fact]
     public async Task Modificar_y_quitar_productos_usa_la_pareja_correcta()
     {

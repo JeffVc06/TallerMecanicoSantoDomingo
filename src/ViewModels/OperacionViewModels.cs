@@ -16,10 +16,14 @@ public class ClienteFormViewModel
     [Display(Name = "Apellido")]
     public string Apellido { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "El RFC es obligatorio.")]
-    [StringLength(20, ErrorMessage = "El RFC no puede exceder 20 caracteres.")]
-    [Display(Name = "RFC")]
+    [Required(ErrorMessage = "El RUC es obligatorio.")]
+    [StringLength(20, ErrorMessage = "El RUC no puede exceder 20 caracteres.")]
+    [Display(Name = "RUC")]
     public string RFC { get; set; } = string.Empty;
+
+    [StringLength(20)]
+    [Display(Name = "Cédula")]
+    public string? Cedula { get; set; }
 
     [Required(ErrorMessage = "El teléfono es obligatorio.")]
     [StringLength(20, ErrorMessage = "El teléfono no puede exceder 20 caracteres.")]
@@ -60,9 +64,23 @@ public class VehiculoFormViewModel
     [Range(1950, 2100, ErrorMessage = "El año debe estar entre 1950 y 2100.")]
     [Display(Name = "Año")]
     public int Anio { get; set; } = DateTime.Now.Year;
+
+    [Range(0, int.MaxValue, ErrorMessage = "El kilometraje debe ser mayor o igual a cero.")]
+    public int Kilometraje { get; set; }
+
+    [StringLength(50)]
+    public string? Color { get; set; }
+
+    [StringLength(50)]
+    [Display(Name = "Número de chasis")]
+    public string? NumChasis { get; set; }
+
+    [StringLength(50)]
+    [Display(Name = "Tipo de vehículo")]
+    public string? Tipo { get; set; }
 }
 
-public class TrabajadorFormViewModel
+public class TrabajadorFormViewModel : IValidatableObject
 {
     public int IdTrabajador { get; set; }
 
@@ -85,6 +103,22 @@ public class TrabajadorFormViewModel
     [Required(ErrorMessage = "Debe seleccionar el área de trabajo.")]
     [Display(Name = "Área de trabajo")]
     public string Area { get; set; } = string.Empty;
+
+    [StringLength(256), EmailAddress(ErrorMessage = "Debe ingresar un correo válido.")]
+    public string? Correo { get; set; }
+
+    [Required(ErrorMessage = "La fecha de ingreso es obligatoria.")]
+    [Display(Name = "Fecha de ingreso")]
+    public DateOnly? FechaIngreso { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
+
+    [Display(Name = "Fecha de salida")]
+    public DateOnly? FechaSalida { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (FechaSalida < FechaIngreso)
+            yield return new ValidationResult("La fecha de salida debe ser igual o posterior a la de ingreso.", [nameof(FechaSalida)]);
+    }
 }
 
 public class ServicioFormViewModel
@@ -161,6 +195,10 @@ public class ProductoFormViewModel
     [Range(typeof(decimal), "0", "99999999", ErrorMessage = "El precio unitario debe ser mayor o igual a cero.")]
     [Display(Name = "Precio unitario (C$)")]
     public decimal PrecioUnitario { get; set; }
+
+    [Range(typeof(decimal), "0", "9999999999.99", ErrorMessage = "El costo de compra debe estar entre 0 y 9 999 999 999,99.")]
+    [Display(Name = "Costo de compra (C$)")]
+    public decimal Costo { get; set; }
 
     [Required(ErrorMessage = "El stock es obligatorio.")]
     [Range(typeof(decimal), "0", "9999999", ErrorMessage = "El stock no puede ser negativo.")]
