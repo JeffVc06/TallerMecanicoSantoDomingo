@@ -34,13 +34,13 @@
             </dl>
         </div>
         <div class="tarjeta tarjeta-indicador">
-            <div class="icono @(activos == 0 ? "fondo-verde" : activos == 1 ? "fondo-naranja" : "fondo-rojo")">
+            <div class="icono @(!Model.Activo || Model.FechaSalida.HasValue ? "fondo-azul" : activos == 0 ? "fondo-verde" : activos == 1 ? "fondo-naranja" : "fondo-rojo")">
                 <i class="bi bi-lightning-charge" aria-hidden="true"></i>
             </div>
             <div>
                 <div class="dato">@activos de 2</div>
                 <div class="etiqueta">
-                    @(activos == 0 ? "Disponible para nuevos trabajos" : activos == 1 ? "Capacidad parcial" : "Límite de servicios activos alcanzado")
+                    @(!Model.Activo ? "No disponible: trabajador desactivado" : Model.FechaSalida.HasValue ? "No disponible: fecha de salida registrada" : activos == 0 ? "Disponible para nuevos trabajos" : activos == 1 ? "Capacidad parcial" : "Límite de servicios activos alcanzado")
                 </div>
             </div>
         </div>

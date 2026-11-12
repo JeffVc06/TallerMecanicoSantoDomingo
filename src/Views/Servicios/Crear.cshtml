@@ -24,6 +24,14 @@
                 <span asp-validation-for="IdVehiculo" class="text-danger"></span>
                 <div class="form-text">Seleccione el vehículo que recibirá el servicio.</div>
             </div>
+            <div class="col-12">
+                <label asp-for="IdTrabajadorInicial" class="form-label"></label>
+                <select asp-for="IdTrabajadorInicial" class="form-select" asp-items="@((List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.TrabajadoresIniciales)" required>
+                    <option value="">— Seleccione un trabajador del área del servicio —</option>
+                </select>
+                <span asp-validation-for="IdTrabajadorInicial" class="text-danger"></span>
+                <div class="form-text">El servicio se abre con este trabajador. Solo se muestran trabajadores habilitados con capacidad disponible; su área debe corresponder al tipo de servicio.</div>
+            </div>
             <div class="col-md-6">
                 <label asp-for="TipoServicio" for="campo-tipo" class="form-label"></label>
                 <select asp-for="TipoServicio" class="form-select" id="campo-tipo">
@@ -46,20 +54,23 @@
             <div class="col-12 div-mantenimiento">
                 <label asp-for="DescripcionFalla" class="form-label"></label>
                 <textarea asp-for="DescripcionFalla" class="form-control" rows="2" placeholder="Síntomas reportados por el cliente"></textarea>
+                <span asp-validation-for="DescripcionFalla" class="text-danger"></span>
             </div>
             <div class="col-md-6 div-pintura d-none">
                 <label asp-for="TipoPintura" class="form-label"></label>
                 <input asp-for="TipoPintura" class="form-control" placeholder="Base de agua, base solvente, barniz..." />
+                <span asp-validation-for="TipoPintura" class="text-danger"></span>
             </div>
             <div class="col-md-6 div-pintura d-none">
                 <label asp-for="Color" class="form-label"></label>
                 <input asp-for="Color" class="form-control" placeholder="Blanco perla, rojo, azul..." />
+                <span asp-validation-for="Color" class="text-danger"></span>
             </div>
             <div class="col-md-6">
                 <label asp-for="Total" class="form-label"></label>
                 <input asp-for="Total" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" />
                 <span asp-validation-for="Total" class="text-danger"></span>
-                <div class="form-text">Importe a cobrar por el servicio.</div>
+                <div class="form-text">Importe total a cobrar por el trabajo, incluyendo los productos que correspondan. Los consumos no se suman automáticamente a este importe.</div>
             </div>
         </div>
 

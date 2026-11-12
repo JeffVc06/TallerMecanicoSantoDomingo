@@ -116,8 +116,14 @@ public class ClientesController : Controller
     /// <summary>Regla 14: desactivación lógica, sin pérdida del historial.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CambiarEstado(int id, bool activo)
+    public async Task<IActionResult> CambiarEstado(int id, [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] bool activo)
     {
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "El estado o el identificador recibido no es válido.";
+            return RedirectToAction(nameof(Index));
+        }
+
         var resultado = await _clientes.CambiarEstado(id, activo);
         TempData[resultado.EsCorrecto ? "Exito" : "Error"] = resultado.Mensaje;
         return RedirectToAction(nameof(Index));

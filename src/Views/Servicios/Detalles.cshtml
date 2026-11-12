@@ -140,7 +140,7 @@
                                 <option value="">— Seleccione —</option>
                                 @foreach (var t in compatibles)
                                 {
-                                    <option value="@t.IdTrabajador" data-activos="@t.ServiciosActivos" data-disponible="@t.Disponible">
+                                    <option value="@t.IdTrabajador" selected="@(ViewData.ModelState["IdTrabajador"]?.AttemptedValue == t.IdTrabajador.ToString())" data-activos="@t.ServiciosActivos" data-disponible="@t.Disponible">
                                         @t.NombreCompleto — @t.Area (@t.ServiciosActivos de 2 activos)
                                     </option>
                                 }
@@ -149,7 +149,7 @@
                         </div>
                         <div class="col-md-3">
                             <label for="observaciones-asignacion" class="form-label">Observaciones</label>
-                            <input id="observaciones-asignacion" name="Observaciones" class="form-control" placeholder="Opcional" maxlength="200" />
+                            <input id="observaciones-asignacion" name="Observaciones" class="form-control" placeholder="Opcional" maxlength="200" value="@(ViewData.ModelState["Observaciones"]?.AttemptedValue)" />
                         </div>
                         <div class="col-md-3">
                             <button type="submit" class="btn btn-naranja w-100"><i class="bi bi-person-check me-1" aria-hidden="true"></i> Asignar</button>
@@ -182,7 +182,7 @@
                 <div class="tabla-envuelta" role="region" aria-label="Productos utilizados" tabindex="0">
                     <table class="tabla-lista">
                         <thead>
-                            <tr><th scope="col">Producto</th><th scope="col" class="text-end">Cantidad</th><th scope="col" class="text-end">Precio unit.</th><th scope="col" class="text-end">Importe</th><th scope="col" class="acciones"><span class="visually-hidden">Acciones</span></th></tr>
+                            <tr><th scope="col">Producto</th><th scope="col" class="text-end">Cantidad</th><th scope="col" class="text-end">Precio actual</th><th scope="col" class="text-end">Estimación actual</th><th scope="col" class="acciones"><span class="visually-hidden">Acciones</span></th></tr>
                         </thead>
                         <tbody>
                             @foreach (var pu in Model.ProductosUtilizados.Where(pu => pu.Producto != null))
@@ -199,7 +199,7 @@
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="idProducto" value="@pu.IdProducto" />
                                                 <input type="hidden" name="idServicio" value="@Model.IdServicio" />
-                                                <input type="number" name="cantidad" value="@pu.Cantidad" step="0.001" min="0.001" class="form-control form-control-sm d-inline-block" style="width:100px" aria-label="Cantidad de @pu.Producto.Nombre" />
+                                                <input type="number" name="cantidad" value="@(ViewData.ModelState["idProducto"]?.AttemptedValue == pu.IdProducto.ToString() ? ViewData.ModelState["cantidad"]?.AttemptedValue ?? pu.Cantidad.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) : pu.Cantidad.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture))" step="0.001" min="0.001" class="form-control form-control-sm d-inline-block" style="width:100px" aria-label="Cantidad de @pu.Producto.Nombre" />
                                                 <button type="submit" class="btn btn-sm btn-outline-secondary btn-icono" title="Actualizar cantidad" aria-label="Actualizar cantidad"><i class="bi bi-check-lg" aria-hidden="true"></i><span class="etiqueta-accion">Actualizar</span></button>
                                             </form>
                                             <form asp-action="QuitarProducto" method="post" class="d-inline">
@@ -233,13 +233,13 @@
                                 <option value="">— Seleccione un producto activo —</option>
                                 @foreach (var p in (List<TallerMecanicoSantoDomingo.Models.Producto>)ViewBag.ProductosActivos)
                                 {
-                                    <option value="@p.IdProducto">@p.Nombre — C$ @p.PrecioUnitario.ToString("N2") (stock: @p.Stock.ToString("0.###"))</option>
+                                    <option value="@p.IdProducto" selected="@(ViewData.ModelState["IdProducto"]?.AttemptedValue == p.IdProducto.ToString())">@p.Nombre — C$ @p.PrecioUnitario.ToString("N2") (stock: @p.Stock.ToString("0.###"))</option>
                                 }
                             </select>
                         </div>
                         <div class="col-md-3">
                             <label for="cantidad-utilizada" class="form-label">Cantidad</label>
-                            <input id="cantidad-utilizada" type="number" name="Cantidad" class="form-control" step="0.001" min="0.001" value="1" placeholder="Cantidad" required />
+                            <input id="cantidad-utilizada" type="number" name="Cantidad" class="form-control" step="0.001" min="0.001" value="@(ViewData.ModelState["Cantidad"]?.AttemptedValue ?? "1")" placeholder="Cantidad" required />
                             <div class="form-text">La cantidad debe ser mayor que cero.</div>
                         </div>
                         <div class="col-md-3">
@@ -249,6 +249,8 @@
                 </div>
             }
         </div>
+
+        <p class="form-text">Los precios de productos mostrados son actuales y orientativos; no representan el precio histórico aplicado ni modifican los importes guardados de las facturas.</p>
 
         <!-- Estado del servicio -->
         @if (abierto)
@@ -262,7 +264,7 @@
                             <input type="hidden" name="IdServicio" value="@Model.IdServicio" />
                             <label for="fecha-finalizacion" class="form-label">Fecha de finalización</label>
                             <div class="input-group">
-                                <input id="fecha-finalizacion" type="date" name="FechaFin" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                                <input id="fecha-finalizacion" type="date" name="FechaFin" class="form-control" value="@(ViewData.ModelState["FechaFin"]?.AttemptedValue ?? DateTime.Today.ToString("yyyy-MM-dd"))" required />
                                 <button type="submit" class="btn btn-azul" data-confirmar="¿Finalizar este servicio? Se cerrarán sus asignaciones de personal.">
                                     <i class="bi bi-check2-circle me-1" aria-hidden="true"></i> Finalizar
                                 </button>
@@ -274,7 +276,7 @@
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="IdServicio" value="@Model.IdServicio" />
                             <label for="filtro-motivo" class="form-label">Cancelar servicio</label>
-                            <input id="filtro-motivo" type="text" name="Motivo" class="form-control mb-2" placeholder="Motivo (opcional)" maxlength="200" />
+                            <input id="filtro-motivo" type="text" name="Motivo" value="@(ViewData.ModelState["Motivo"]?.AttemptedValue)" class="form-control mb-2" placeholder="Motivo (opcional)" maxlength="200" />
                             <button type="submit" class="btn btn-outline-danger w-100"
                                     data-confirmar="¿Cancelar este servicio? Los trabajadores quedarán disponibles.">
                                 <i class="bi bi-x-circle me-1" aria-hidden="true"></i> Cancelar servicio

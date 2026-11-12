@@ -65,6 +65,7 @@ public class ProductosController : Controller
             Descripcion = producto.Descripcion,
             PrecioUnitario = producto.PrecioUnitario,
             Stock = producto.Stock,
+            StockOriginal = producto.Stock,
             Costo = producto.Costo
         });
     }
@@ -84,7 +85,7 @@ public class ProductosController : Controller
             PrecioUnitario = modelo.PrecioUnitario,
             Stock = modelo.Stock,
             Costo = modelo.Costo
-        });
+        }, modelo.StockOriginal);
 
         if (!resultado.EsCorrecto)
         {
@@ -110,8 +111,14 @@ public class ProductosController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CambiarEstado(int id, bool activo)
+    public async Task<IActionResult> CambiarEstado(int id, [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] bool activo)
     {
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "El estado o el identificador recibido no es válido.";
+            return RedirectToAction(nameof(Index));
+        }
+
         var resultado = await _productos.CambiarEstado(id, activo);
         TempData[resultado.EsCorrecto ? "Exito" : "Error"] = resultado.Mensaje;
         return RedirectToAction(nameof(Index));

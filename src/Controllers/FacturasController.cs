@@ -97,7 +97,7 @@ public class FacturasController : Controller
         var completa = await _facturas.ObtenerParaImpresion(id);
         if (completa is null)
             return RedirectToAction(nameof(Index));
-        return View(completa);
+        return View("Detalles", completa);
     }
 
     /// <summary>Vista imprimible de la factura (imprimir o guardar en PDF desde el navegador).</summary>
@@ -120,8 +120,15 @@ public class FacturasController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Anular(int id, string? motivo)
     {
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Los datos de la anulación no son válidos.";
+            return await Detalles(id);
+        }
+
         var resultado = await _facturas.AnularFactura(id, motivo);
         TempData[resultado.EsCorrecto ? "Exito" : "Error"] = resultado.Mensaje;
+        if (!resultado.EsCorrecto) return await Detalles(id);
         return RedirectToAction(nameof(Detalles), new { id });
     }
 
@@ -130,7 +137,7 @@ public class FacturasController : Controller
         var clientes = await _db.Clientes.AsNoTracking()
             .Where(c => c.Activo)
             .OrderBy(c => c.Apellido).ThenBy(c => c.Nombre)
-            .Select(c => new SelectListItem($"{c.Nombre} {c.Apellido} — {c.RFC}", c.IdCliente.ToString()))
+            .Select(c => new SelectListItem($"{c.Nombre} {c.Apellido} — {c.RFC ?? c.Cedula}", c.IdCliente.ToString()))
             .ToListAsync();
         ViewBag.Clientes = clientes;
     }

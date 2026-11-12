@@ -63,13 +63,13 @@ public class PruebasSimplificacion
         producto = (await productos.ObtenerPorId(producto.IdProducto))!;
         Assert.Equal(150m, producto.Costo);
         producto.Costo = 175m;
-        Assert.True((await productos.Editar(producto)).EsCorrecto);
+        Assert.True((await productos.Editar(producto, producto.Stock)).EsCorrecto);
         producto = (await productos.ObtenerPorId(producto.IdProducto))!;
         Assert.Equal(175m, producto.Costo);
         Assert.Equal(210m, producto.PrecioUnitario);
 
         producto.Costo = -1;
-        Assert.False((await productos.Editar(producto)).EsCorrecto);
+        Assert.False((await productos.Editar(producto, producto.Stock)).EsCorrecto);
     }
 
     [Fact]
@@ -107,7 +107,8 @@ public class PruebasSimplificacion
         Assert.Equal("Mantenimiento mecánico", compatible.Area);
         Assert.Equal(1, compatible.ServiciosActivos);
         Assert.True(compatible.Disponible);
-        Assert.True((await asignaciones.Desasignar(primero.IdServicio, 1)).EsCorrecto);
+        Assert.False((await asignaciones.Desasignar(primero.IdServicio, 1)).EsCorrecto);
+        Assert.True((await new ServicioService(db).Finalizar(primero.IdServicio, new DateOnly(2026, 9, 2))).EsCorrecto);
         var carga = Assert.Single(await new ServicioService(db).CargasDeTrabajadores([1]));
         Assert.Equal(0, carga.ServiciosActivos);
     }
@@ -141,7 +142,7 @@ public class PruebasSimplificacion
     {
         using var db = FabricaDeContextos.EnMemoria();
         FabricaDeContextos.SembrarBase(db);
-        var servicio = FabricaDeContextos.NuevoServicio(db, 1, "Mantenimiento", 1000);
+        var servicio = FabricaDeContextos.NuevoServicio(db, 1, "Mantenimiento", 1000, estado: "Finalizado");
         var facturacion = new FacturacionService(db, FabricaDeContextos.Configuracion());
         var resultado = await facturacion.CrearFactura(1, "Efectivo", [servicio.IdServicio], null);
         Assert.True(resultado.EsCorrecto);

@@ -32,6 +32,7 @@ public class PruebasTraduccionSql
         await reportes.FacturasPorPeriodo(desde, hasta);
         await reportes.TotalFacturadoPorPeriodo(desde, hasta);
         await new ServicioService(db).CargasDeTrabajadores([1]);
+        await ReglasTaller.Carga(db, 1);
         await new ServicioService(db).Buscar("Toyota", "Mantenimiento", "Abierto", 1, 1, 10);
         await new ClienteService(db).Buscar("Juan", true, 1, 10);
         await new VehiculoService(db).Buscar("MGA", 1, true, 1, 10);
@@ -59,7 +60,7 @@ public class PruebasTraduccionSql
         {
             Sql.Add(command.CommandText);
             var tabla = new DataTable();
-            if (command.CommandText.StartsWith("SELECT COUNT(*)"))
+            if (command.CommandText.StartsWith("SELECT COUNT("))
             {
                 tabla.Columns.Add("Value", typeof(int));
                 tabla.Rows.Add(0);

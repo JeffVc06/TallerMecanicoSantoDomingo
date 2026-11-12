@@ -63,7 +63,11 @@
                                 </div>
                             </td>
                             <td role="cell" data-etiqueta="Disponibilidad">
-                                @if (activos == 0)
+                                @if (!t.Activo || t.FechaSalida.HasValue)
+                                {
+                                    <span class="estado estado-inactivo" title="@(t.Activo ? "Fecha de salida registrada" : "Trabajador desactivado")">No disponible</span>
+                                }
+                                else if (activos == 0)
                                 {
                                     <span class="estado estado-activo">Disponible</span>
                                 }
@@ -86,7 +90,7 @@
                                 </a>
                                 <form asp-action="CambiarEstado" asp-route-id="@t.IdTrabajador" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
-                                    <input type="hidden" name="activo" value="@(!t.Activo)" />
+                                    <input type="hidden" name="activo" value="@(t.Activo ? "false" : "true")" />
                                     <button type="submit" class="btn btn-sm @(t.Activo ? "btn-outline-danger" : "btn-outline-success") btn-icono"
                                             title="@(t.Activo ? "Desactivar" : "Reactivar")"
                                             data-confirmar="¿Desea @(t.Activo ? "desactivar" : "reactivar") a @(t.NombreCompleto)?" aria-label="@(t.Activo ? "Desactivar" : "Reactivar")">

@@ -18,7 +18,7 @@
         {
             <form asp-action="Anular" asp-route-id="@f.IdFactura" method="post" class="d-flex gap-2 formulario-anulacion">
                 @Html.AntiForgeryToken()
-                <input type="text" name="motivo" class="form-control" placeholder="Motivo de anulación (opcional)" maxlength="200" aria-label="Motivo de anulación (opcional)" />
+                <input type="text" name="motivo" value="@(ViewData.ModelState["motivo"]?.AttemptedValue)" class="form-control" placeholder="Motivo de anulación (opcional)" maxlength="191" aria-label="Motivo de anulación (opcional)" />
                 <button type="submit" class="btn btn-outline-danger"
                         data-confirmar="¿Anular la factura @f.NumeroFactura?">
                     <i class="bi bi-x-octagon me-1" aria-hidden="true"></i> Anular
@@ -61,7 +61,11 @@
             @if (f.Cliente != null)
             {
                 <div class="fw-semibold">@f.Cliente.NombreCompleto</div>
-                <div class="texto-secundario" style="font-size:.85rem">RUC: @(f.RUC ?? "—")</div>
+                <div class="texto-secundario" style="font-size:.85rem">Cédula: @(f.Cliente.Cedula ?? "—")</div>
+                @if (!string.IsNullOrWhiteSpace(f.RUC))
+                {
+                    <div class="texto-secundario" style="font-size:.85rem">RUC: @f.RUC</div>
+                }
                 <div class="texto-secundario" style="font-size:.85rem">Tel: @f.Cliente.Telefono</div>
                 <div class="texto-secundario" style="font-size:.85rem">@f.Cliente.Direccion</div>
                 <a asp-controller="Clientes" asp-action="Detalles" asp-route-id="@f.IdCliente" class="btn btn-sm btn-outline-primary mt-2">

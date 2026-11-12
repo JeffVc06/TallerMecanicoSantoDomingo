@@ -25,12 +25,13 @@ public class TallerDbContext(DbContextOptions<TallerDbContext> options) : DbCont
         model.HasDefaultSchema("dbo");
         model.Entity<Cliente>(e =>
         {
-            e.HasIndex(c => c.RFC).IsUnique();
+            e.HasIndex(c => c.RFC).IsUnique().HasFilter("RUC IS NOT NULL");
             e.HasIndex(c => c.Cedula).IsUnique().HasFilter("Cedula IS NOT NULL");
             e.ToTable(t =>
             {
                 t.HasCheckConstraint("CK_Cliente_Nombre", "LTRIM(Nombre) <> ''");
                 t.HasCheckConstraint("CK_Cliente_Apellido", "LTRIM(Apellido) <> ''");
+                t.HasCheckConstraint("CK_Cliente_Identificacion", "NULLIF(LTRIM(RTRIM(Cedula)), N'') IS NOT NULL OR NULLIF(LTRIM(RTRIM(RUC)), N'') IS NOT NULL");
             });
         });
         model.Entity<Vehiculo>(e =>

@@ -108,7 +108,7 @@ public class PruebasUnitariasReglas
 
         var resultado = await servicio.Crear(new Servicio
         {
-            IdVehiculo = 999, TipoServicio = "Mantenimiento",
+            IdVehiculo = 999, TipoServicio = "Mantenimiento", DescripcionFalla = "Falla reportada",
             Descripcion = "Prueba", FechaInicio = new DateOnly(2026, 9, 1), Total = 100m
         });
 
@@ -142,9 +142,9 @@ public class PruebasUnitariasReglas
 
         var resultado = await servicio.Crear(new Servicio
         {
-            IdVehiculo = 1, TipoServicio = "Mantenimiento",
+            IdVehiculo = 1, TipoServicio = "Mantenimiento", DescripcionFalla = "Falla reportada",
             Descripcion = "Cambio de aceite", FechaInicio = new DateOnly(2026, 9, 1), Total = 1500m
-        });
+        }, 1);
 
         Assert.True(resultado.EsCorrecto);
         Assert.Equal("Abierto", resultado.Datos!.Estado);
@@ -164,7 +164,7 @@ public class PruebasUnitariasReglas
         var resultado = await asignaciones.Asignar(mecanica.IdServicio, 2, null);
 
         Assert.False(resultado.EsCorrecto);
-        Assert.Contains("no puede recibir servicios de tipo", resultado.Mensaje);
+        Assert.Contains("otra área", resultado.Mensaje);
         Assert.Empty(await db.DetalleServicio.ToListAsync());
     }
     // Regla 6: la pareja servicio–trabajador no se repite
@@ -222,6 +222,9 @@ public class PruebasUnitariasReglas
         await asignaciones.Asignar(s1.IdServicio, 1, null);
         await asignaciones.Asignar(s2.IdServicio, 1, null);
 
+        db.Trabajadores.Add(new Trabajador { IdTrabajador = 3, Nombre = "Relevo", Apellido = "Mecánica", Telefono = "8888-1111", Area = "Mantenimiento mecánico" });
+        await db.SaveChangesAsync();
+        Assert.True((await asignaciones.Asignar(s1.IdServicio, 3, null)).EsCorrecto);
         var primera = await db.DetalleServicio.FirstAsync(d => d.IdServicio == s1.IdServicio);
         var retiro = await asignaciones.Desasignar(primera.IdServicio, primera.IdTrabajador);
         Assert.True(retiro.EsCorrecto);
@@ -240,7 +243,7 @@ public class PruebasUnitariasReglas
 
         var resultado = await servicio.Crear(new Servicio
         {
-            IdVehiculo = 1, TipoServicio = "Mantenimiento",
+            IdVehiculo = 1, TipoServicio = "Mantenimiento", DescripcionFalla = "Falla reportada",
             Descripcion = "Prueba", FechaInicio = new DateOnly(2026, 9, 10),
             FechaFin = new DateOnly(2026, 9, 1), Total = 100m
         });
@@ -257,9 +260,9 @@ public class PruebasUnitariasReglas
         var servicioNegocio = new ServicioService(db);
         var creado = await servicioNegocio.Crear(new Servicio
         {
-            IdVehiculo = 1, TipoServicio = "Mantenimiento",
+            IdVehiculo = 1, TipoServicio = "Mantenimiento", DescripcionFalla = "Falla reportada",
             Descripcion = "Cambio de aceite", FechaInicio = new DateOnly(2026, 9, 10), Total = 1000m
-        });
+        }, 1);
 
         var resultado = await servicioNegocio.Finalizar(creado.Datos!.IdServicio, new DateOnly(2026, 9, 1));
 
@@ -275,9 +278,9 @@ public class PruebasUnitariasReglas
         var servicioNegocio = new ServicioService(db);
         var creado = await servicioNegocio.Crear(new Servicio
         {
-            IdVehiculo = 1, TipoServicio = "Mantenimiento",
+            IdVehiculo = 1, TipoServicio = "Mantenimiento", DescripcionFalla = "Falla reportada",
             Descripcion = "Cambio de aceite", FechaInicio = new DateOnly(2026, 9, 10), Total = 1000m
-        });
+        }, 1);
         var idServicio = creado.Datos!.IdServicio;
 
         await new AsignacionService(db).Asignar(idServicio, 1, null);
@@ -360,7 +363,7 @@ public class PruebasUnitariasReglas
     {
         using var db = FabricaDeContextos.EnMemoria();
         FabricaDeContextos.SembrarBase(db);
-        var servicio = FabricaDeContextos.NuevoServicio(db, 1, "Mantenimiento", 1000m);
+        var servicio = FabricaDeContextos.NuevoServicio(db, 1, "Mantenimiento", 1000m, estado: "Finalizado");
         var facturacion = new FacturacionService(db, FabricaDeContextos.Configuracion());
 
         var primera = await facturacion.CrearFactura(1, "Efectivo",
@@ -371,7 +374,7 @@ public class PruebasUnitariasReglas
             new List<int> { servicio.IdServicio }, null);
 
         Assert.False(segunda.EsCorrecto);
-        Assert.Contains("factura emitida", segunda.Mensaje);
+        Assert.Contains("factura vigente", segunda.Mensaje);
     }
 
     [Fact]
@@ -379,15 +382,15 @@ public class PruebasUnitariasReglas
     {
         using var db = FabricaDeContextos.EnMemoria();
         FabricaDeContextos.SembrarBase(db);
-        var delCliente1 = FabricaDeContextos.NuevoServicio(db, 1, "Mantenimiento", 1000m);
-        var delCliente2 = FabricaDeContextos.NuevoServicio(db, 3, "Mantenimiento", 2000m);
+        var delCliente1 = FabricaDeContextos.NuevoServicio(db, 1, "Mantenimiento", 1000m, estado: "Finalizado");
+        var delCliente2 = FabricaDeContextos.NuevoServicio(db, 3, "Mantenimiento", 2000m, estado: "Finalizado");
         var facturacion = new FacturacionService(db, FabricaDeContextos.Configuracion());
 
         var resultado = await facturacion.CrearFactura(1, "Efectivo",
             new List<int> { delCliente1.IdServicio, delCliente2.IdServicio }, null);
 
         Assert.False(resultado.EsCorrecto);
-        Assert.Contains("pertenece a otro cliente", resultado.Mensaje);
+        Assert.Contains("mezclar clientes", resultado.Mensaje);
         Assert.Empty(await db.Facturas.ToListAsync());
     }
 
@@ -396,8 +399,8 @@ public class PruebasUnitariasReglas
     {
         using var db = FabricaDeContextos.EnMemoria();
         FabricaDeContextos.SembrarBase(db);
-        var s1 = FabricaDeContextos.NuevoServicio(db, 1, "Mantenimiento", 1000m);
-        var s2 = FabricaDeContextos.NuevoServicio(db, 2, "Pintura", 500m);
+        var s1 = FabricaDeContextos.NuevoServicio(db, 1, "Mantenimiento", 1000m, estado: "Finalizado");
+        var s2 = FabricaDeContextos.NuevoServicio(db, 2, "Pintura", 500m, estado: "Finalizado");
         var facturacion = new FacturacionService(db, FabricaDeContextos.Configuracion(15m));
 
         var resultado = await facturacion.CrearFactura(1, "Tarjeta",
@@ -418,7 +421,7 @@ public class PruebasUnitariasReglas
     {
         using var db = FabricaDeContextos.EnMemoria();
         FabricaDeContextos.SembrarBase(db);
-        var servicio = FabricaDeContextos.NuevoServicio(db, 1, "Mantenimiento", 1000m);
+        var servicio = FabricaDeContextos.NuevoServicio(db, 1, "Mantenimiento", 1000m, estado: "Finalizado");
         var facturacion = new FacturacionService(db, FabricaDeContextos.Configuracion());
 
         var creada = await facturacion.CrearFactura(1, "Efectivo",
@@ -445,7 +448,7 @@ public class PruebasUnitariasReglas
     {
         using var db = FabricaDeContextos.EnMemoria();
         FabricaDeContextos.SembrarBase(db);
-        var servicio = FabricaDeContextos.NuevoServicio(db, 1, "Mantenimiento", 700m);
+        var servicio = FabricaDeContextos.NuevoServicio(db, 1, "Mantenimiento", 700m, estado: "Finalizado");
         var facturacion = new FacturacionService(db, FabricaDeContextos.Configuracion());
         var creada = await facturacion.CrearFactura(1, "Efectivo", new List<int> { servicio.IdServicio }, null);
         await facturacion.AnularFactura(creada.Datos!.IdFactura, null);

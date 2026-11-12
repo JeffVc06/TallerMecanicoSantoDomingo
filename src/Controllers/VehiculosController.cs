@@ -28,7 +28,7 @@ public class VehiculosController : Controller
         var resultado = await _vehiculos.Buscar(buscar, idCliente, null, pagina, 10);
         ViewBag.Buscar = buscar;
         ViewBag.IdCliente = idCliente;
-        ViewBag.Clientes = await ListaDeClientes();
+        ViewBag.Clientes = await ListaDeClientes(incluirInactivos: true);
         return View(resultado);
     }
 
@@ -84,7 +84,7 @@ public class VehiculosController : Controller
         if (vehiculo is null)
             return RedirectToAction(nameof(Index));
 
-        ViewBag.Clientes = await ListaDeClientes();
+        ViewBag.Clientes = await ListaDeClientes(idConservar: vehiculo.IdCliente);
         return View(new VehiculoFormViewModel
         {
             IdVehiculo = vehiculo.IdVehiculo,
@@ -106,7 +106,7 @@ public class VehiculosController : Controller
     {
         if (!ModelState.IsValid)
         {
-            ViewBag.Clientes = await ListaDeClientes();
+            ViewBag.Clientes = await ListaDeClientes(idConservar: formulario.IdCliente);
             return View(formulario);
         }
 
@@ -127,7 +127,7 @@ public class VehiculosController : Controller
         if (!resultado.EsCorrecto)
         {
             ModelState.AddModelError(string.Empty, resultado.Mensaje ?? "No se pudo actualizar el vehículo.");
-            ViewBag.Clientes = await ListaDeClientes();
+            ViewBag.Clientes = await ListaDeClientes(idConservar: formulario.IdCliente);
             return View(formulario);
         }
 
@@ -148,19 +148,25 @@ public class VehiculosController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CambiarEstado(int id, bool activo)
+    public async Task<IActionResult> CambiarEstado(int id, [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] bool activo)
     {
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "El estado o el identificador recibido no es válido.";
+            return RedirectToAction(nameof(Index));
+        }
+
         var resultado = await _vehiculos.CambiarEstado(id, activo);
         TempData[resultado.EsCorrecto ? "Exito" : "Error"] = resultado.Mensaje;
         return RedirectToAction(nameof(Index));
     }
 
-    private async Task<List<SelectListItem>> ListaDeClientes()
+    private async Task<List<SelectListItem>> ListaDeClientes(bool incluirInactivos = false, int? idConservar = null)
     {
         var clientes = await _db.Clientes.AsNoTracking()
-            .Where(c => c.Activo)
+            .Where(c => incluirInactivos || c.Activo || c.IdCliente == idConservar)
             .OrderBy(c => c.Apellido).ThenBy(c => c.Nombre)
-            .Select(c => new SelectListItem($"{c.Nombre} {c.Apellido} — {c.RFC}", c.IdCliente.ToString()))
+            .Select(c => new SelectListItem($"{c.Nombre} {c.Apellido} — {c.RFC ?? c.Cedula}{(c.Activo ? "" : " (desactivado)")}", c.IdCliente.ToString()))
             .ToListAsync();
         return clientes;
     }

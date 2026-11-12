@@ -13,13 +13,15 @@ namespace TallerMecanicoSantoDomingo.Controllers;
 [Authorize]
 public class TrabajadoresController : Controller
 {
+    private readonly TrabajadorService _trabajadores;
     private readonly TallerDbContext _db;
     private readonly ServicioService _servicios;
     private readonly AsignacionService _asignaciones;
 
-    public TrabajadoresController(TallerDbContext db, ServicioService servicios, AsignacionService asignaciones)
+    public TrabajadoresController(TallerDbContext db, ServicioService servicios, AsignacionService asignaciones, TrabajadorService trabajadores)
     {
         _db = db;
+        _trabajadores = trabajadores;
         _servicios = servicios;
         _asignaciones = asignaciones;
     }
@@ -59,27 +61,14 @@ public class TrabajadoresController : Controller
             return View(modelo);
         }
 
-        var areaExiste = modelo.Area is "Mantenimiento mecánico" or "Pintura";
-        if (!areaExiste)
+        var resultado = await _trabajadores.Guardar(Mapear(modelo), nuevo: true);
+        if (!resultado.EsCorrecto)
         {
-            ModelState.AddModelError(nameof(modelo.Area), "El área de trabajo seleccionada no existe.");
+            ModelState.AddModelError(string.Empty, resultado.Mensaje!);
             CargarAreas();
             return View(modelo);
         }
-
-        _db.Trabajadores.Add(new Trabajador
-        {
-            Nombre = modelo.Nombre.Trim(),
-            Apellido = modelo.Apellido.Trim(),
-            Telefono = modelo.Telefono.Trim(),
-            Area = modelo.Area,
-            Correo = string.IsNullOrWhiteSpace(modelo.Correo) ? null : modelo.Correo.Trim(),
-            FechaRegistro = modelo.FechaIngreso!.Value.ToDateTime(TimeOnly.MinValue),
-            FechaSalida = modelo.FechaSalida
-        });
-        await _db.SaveChangesAsync();
-
-        TempData["Exito"] = "Trabajador registrado correctamente.";
+        TempData["Exito"] = resultado.Mensaje;
         return RedirectToAction(nameof(Index));
     }
 
@@ -114,29 +103,14 @@ public class TrabajadoresController : Controller
             return View(modelo);
         }
 
-        var trabajador = await _db.Trabajadores.FindAsync(modelo.IdTrabajador);
-        if (trabajador is null)
-            return RedirectToAction(nameof(Index));
-
-        var areaExiste = modelo.Area is "Mantenimiento mecánico" or "Pintura";
-        if (!areaExiste)
+        var resultado = await _trabajadores.Guardar(Mapear(modelo), nuevo: false);
+        if (!resultado.EsCorrecto)
         {
-            ModelState.AddModelError(nameof(modelo.Area), "El área de trabajo seleccionada no existe.");
+            ModelState.AddModelError(string.Empty, resultado.Mensaje!);
             CargarAreas();
             return View(modelo);
         }
-
-        trabajador.Nombre = modelo.Nombre.Trim();
-        trabajador.Apellido = modelo.Apellido.Trim();
-        trabajador.Telefono = modelo.Telefono.Trim();
-        trabajador.Area = modelo.Area;
-        trabajador.Correo = string.IsNullOrWhiteSpace(modelo.Correo) ? null : modelo.Correo.Trim();
-        if (modelo.FechaIngreso != DateOnly.FromDateTime(trabajador.FechaRegistro))
-            trabajador.FechaRegistro = modelo.FechaIngreso!.Value.ToDateTime(TimeOnly.MinValue);
-        trabajador.FechaSalida = modelo.FechaSalida;
-        await _db.SaveChangesAsync();
-
-        TempData["Exito"] = "Trabajador actualizado correctamente.";
+        TempData["Exito"] = resultado.Mensaje;
         return RedirectToAction(nameof(Detalles), new { id = modelo.IdTrabajador });
     }
 
@@ -158,34 +132,24 @@ public class TrabajadoresController : Controller
     /// <summary>Regla 14: desactivación lógica; el historial de asignaciones se conserva.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CambiarEstado(int id, bool activo)
+    public async Task<IActionResult> CambiarEstado(int id, [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] bool activo)
     {
-        var trabajador = await _db.Trabajadores.FindAsync(id);
-        if (trabajador is null)
+        if (!ModelState.IsValid)
         {
-            TempData["Error"] = "El trabajador indicado no existe.";
+            TempData["Error"] = "El estado o el identificador recibido no es válido.";
             return RedirectToAction(nameof(Index));
         }
-
-        if (!activo)
-        {
-            var tieneActivos = await _db.DetalleServicio.AnyAsync(d =>
-                d.IdTrabajador == id && d.Estado == "Activo" &&
-                d.Servicio!.Estado == "Abierto");
-            if (tieneActivos)
-            {
-                TempData["Error"] = "No se puede desactivar el trabajador porque tiene servicios activos.";
-                return RedirectToAction(nameof(Index));
-            }
-        }
-
-        trabajador.Activo = activo;
-        await _db.SaveChangesAsync();
-        TempData["Exito"] = activo
-            ? "Trabajador reactivado correctamente."
-            : "Trabajador desactivado.";
+        var resultado = await _trabajadores.CambiarEstado(id, activo);
+        TempData[resultado.EsCorrecto ? "Exito" : "Error"] = resultado.Mensaje;
         return RedirectToAction(nameof(Index));
     }
+
+    private static Trabajador Mapear(TrabajadorFormViewModel modelo) => new()
+    {
+        IdTrabajador = modelo.IdTrabajador, Nombre = modelo.Nombre, Apellido = modelo.Apellido,
+        Telefono = modelo.Telefono, Area = modelo.Area, Correo = modelo.Correo,
+        FechaRegistro = modelo.FechaIngreso!.Value.ToDateTime(TimeOnly.MinValue), FechaSalida = modelo.FechaSalida
+    };
 
     private void CargarAreas() => ViewBag.Areas = new List<SelectListItem>
     {

@@ -27,15 +27,16 @@
                 <span asp-validation-for="Apellido" class="text-danger"></span>
             </div>
             <div class="col-md-6">
-                <label asp-for="RFC" class="form-label"></label>
-                <input asp-for="RFC" class="form-control" />
-                <span asp-validation-for="RFC" class="text-danger"></span>
-            </div>
-            <div class="col-md-6">
                 <label asp-for="Cedula" class="form-label"></label>
-                <input asp-for="Cedula" class="form-control" />
+                <input asp-for="Cedula" class="form-control" aria-describedby="ayuda-identificacion" />
                 <span asp-validation-for="Cedula" class="text-danger"></span>
             </div>
+            <div class="col-md-6">
+                <label asp-for="RFC" class="form-label"></label>
+                <input asp-for="RFC" class="form-control" placeholder="RUC de la empresa" aria-describedby="ayuda-identificacion" />
+                <span asp-validation-for="RFC" class="text-danger"></span>
+            </div>
+            <div class="col-12"><p id="ayuda-identificacion" class="form-text m-0">Para un cliente particular basta con la cédula. Si el vehículo viene de una empresa, puede registrar su RUC. Ingrese al menos una identificación; también puede guardar ambas.</p></div>
             <div class="col-12"><h2 class="formulario-seccion">Contacto</h2></div>
             <div class="col-md-6">
                 <label asp-for="Telefono" class="form-label"></label>

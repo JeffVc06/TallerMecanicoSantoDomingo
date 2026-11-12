@@ -36,7 +36,11 @@
                                     <td>@c.Area</td>
                                     <td class="text-end fw-semibold">@c.AsignacionesActivas de 2</td>
                                     <td>
-                                        @if (c.AsignacionesActivas == 0)
+                                        @if (!c.Habilitado)
+                                        {
+                                            <span class="estado estado-inactivo">No disponible</span>
+                                        }
+                                        else if (c.AsignacionesActivas == 0)
                                         {
                                             <span class="estado estado-activo">Disponible</span>
                                         }

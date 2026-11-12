@@ -51,14 +51,17 @@
             <div class="col-12 div-mantenimiento">
                 <label asp-for="DescripcionFalla" class="form-label"></label>
                 <textarea asp-for="DescripcionFalla" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="DescripcionFalla" class="text-danger"></span>
             </div>
             <div class="col-md-6 div-pintura d-none">
                 <label asp-for="TipoPintura" class="form-label"></label>
                 <input asp-for="TipoPintura" class="form-control" />
+                <span asp-validation-for="TipoPintura" class="text-danger"></span>
             </div>
             <div class="col-md-6 div-pintura d-none">
                 <label asp-for="Color" class="form-label"></label>
                 <input asp-for="Color" class="form-control" />
+                <span asp-validation-for="Color" class="text-danger"></span>
             </div>
             <div class="col-md-6">
                 <label asp-for="Total" class="form-label"></label>

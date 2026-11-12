@@ -12,8 +12,7 @@ namespace TallerMecanicoSantoDomingo.Tests;
 public class PruebasIntegracionSqlServerTests
 {
     private static readonly string? CadenaConexion =
-        Environment.GetEnvironmentVariable("ConnectionStrings__TallerDB")
-        ?? Environment.GetEnvironmentVariable("TALLERMECANICO_CADENA");
+        Environment.GetEnvironmentVariable("TALLERMECANICO_CADENA_PRUEBAS");
 
     private static bool? _disponible;
 
@@ -22,7 +21,7 @@ public class PruebasIntegracionSqlServerTests
         if (_disponible.HasValue)
             return _disponible.Value;
 
-        if (string.IsNullOrWhiteSpace(CadenaConexion))
+        if (Environment.GetEnvironmentVariable("TALLERMECANICO_PRUEBAS_ESCRITURA") != "1" || string.IsNullOrWhiteSpace(CadenaConexion))
             return false;
 
         try
@@ -126,6 +125,43 @@ public class PruebasIntegracionSqlServerTests
             .SelectMany(f => f.Columns.Zip(f.PrincipalColumns,
                 (c, pc) => $"{f.Table.Name}.{c.Name}->{f.PrincipalTable.Name}.{pc.Name}"));
         Assert.Equal(foraneasEsperadas.Order(StringComparer.Ordinal), foraneas.Order(StringComparer.Ordinal));
+    }
+
+    [SkippableFact]
+    public async Task Clientes_admiten_varios_ruc_nulos_y_exigen_una_identificacion_unica()
+    {
+        Skip.IfNot(ServidorDisponible(), "SQL Server no está disponible; prueba de integración omitida.");
+        var token = Guid.NewGuid().ToString("N")[..12].ToUpperInvariant();
+        await using var conexion = new SqlConnection(CadenaConexion);
+        await conexion.OpenAsync();
+        await using var transaccion = (SqlTransaction)await conexion.BeginTransactionAsync();
+        async Task Insertar(string? cedula, string? ruc)
+        {
+            await using var comando = new SqlCommand("""
+                INSERT INTO dbo.Cliente (Nombre, Apellido, Telefono, Direccion, Cedula, RUC)
+                VALUES (N'Prueba', N'Identificación', N'8888-1111', N'Managua', @cedula, @ruc);
+                """, conexion, transaccion);
+            comando.Parameters.AddWithValue("@cedula", (object?)cedula ?? DBNull.Value);
+            comando.Parameters.AddWithValue("@ruc", (object?)ruc ?? DBNull.Value);
+            await comando.ExecuteNonQueryAsync();
+        }
+
+        try
+        {
+            await Insertar("C1" + token, null);
+            await Insertar("C2" + token, null);
+            await Insertar(null, "J" + token);
+            var duplicada = await Assert.ThrowsAsync<SqlException>(() => Insertar("C1" + token, null));
+            Assert.Equal(2601, duplicada.Number);
+            var rucDuplicado = await Assert.ThrowsAsync<SqlException>(() => Insertar(null, "J" + token));
+            Assert.Equal(2601, rucDuplicado.Number);
+            var sinIdentificacion = await Assert.ThrowsAsync<SqlException>(() => Insertar(" ", null));
+            Assert.Contains("CK_Cliente_Identificacion", sinIdentificacion.Message);
+        }
+        finally
+        {
+            await transaccion.RollbackAsync();
+        }
     }
 
     [SkippableFact]
@@ -271,8 +307,8 @@ INSERT INTO dbo.Vehiculo (IdCliente, Placa, Marca, Modelo, Anio, Activo, FechaRe
 VALUES (@idCliente, N'F' + @token, N'Marca', N'Modelo', 2020, 1, SYSUTCDATETIME());
 DECLARE @idVehiculo INT = SCOPE_IDENTITY();
 
-INSERT INTO dbo.Servicio (IdVehiculo, Tipo, Descripcion, Estado, FechaInicio, FechaFin, Costo, FechaRegistro)
-VALUES (@idVehiculo, N'Mantenimiento', N'PRUEBA-FACTURA ' + @token, N'Finalizado', '2026-09-01', '2026-09-05', 1000.00, SYSUTCDATETIME());
+INSERT INTO dbo.Servicio (IdVehiculo, Tipo, Descripcion, Estado, FechaInicio, FechaFin, Costo, FechaRegistro, DescripcionFalla)
+VALUES (@idVehiculo, N'Mantenimiento', N'PRUEBA-FACTURA ' + @token, N'Finalizado', '2026-09-01', '2026-09-05', 1000.00, SYSUTCDATETIME(), N'Falla de prueba');
 DECLARE @idServicio INT = SCOPE_IDENTITY();
 
 SELECT @idCliente, @idVehiculo, @idServicio;";
@@ -319,4 +355,139 @@ DELETE FROM dbo.Cliente        WHERE IdCliente    = @idCliente;",
             _ = idServicio;
         }
     }
+
+    [SkippableFact]
+    public async Task Dos_consumos_simultaneos_no_sobrevenden_y_reintentos_no_duplican_descuentos()
+    {
+        Skip.IfNot(ServidorDisponible(), "Se necesita una base de pruebas SQL Server existente y autorización de escritura de pruebas.");
+        var escenario = await PrepararEscenario(finalizados: false);
+        try
+        {
+            using var barrera = new Barrier(2);
+            var tareas = escenario.Servicios.Take(2).Select(id => Task.Run(async () =>
+            {
+                await using var contexto = NuevoContexto();
+                barrera.SignalAndWait();
+                return (id, resultado: await new ProductoService(contexto).AgregarAlServicio(id, escenario.Producto, 1m));
+            })).ToArray();
+            var resultados = await Task.WhenAll(tareas);
+            var ganador = Assert.Single(resultados, r => r.resultado.EsCorrecto);
+            Assert.Equal(0.5m, Convert.ToDecimal(await EscalarAsync("SELECT Stock FROM dbo.Producto WHERE IdProducto=@id", ("@id", escenario.Producto))));
+            await using var db = NuevoContexto();
+            var productos = new ProductoService(db);
+            Assert.False((await productos.AgregarAlServicio(ganador.id, escenario.Producto, 1)).EsCorrecto);
+            Assert.True((await productos.ActualizarCantidad(ganador.id, escenario.Producto, 1.25m)).EsCorrecto);
+            Assert.True((await productos.ActualizarCantidad(ganador.id, escenario.Producto, 1.25m)).EsCorrecto);
+            Assert.Equal(0.25m, (await productos.ObtenerPorId(escenario.Producto))!.Stock);
+        }
+        finally { await LimpiarEscenario(escenario); }
+    }
+
+    [SkippableFact]
+    public async Task Facturacion_simultanea_no_duplica_servicio_ni_numeros()
+    {
+        Skip.IfNot(ServidorDisponible(), "Se necesita una base de pruebas SQL Server existente y autorización de escritura de pruebas.");
+        var escenario = await PrepararEscenario(finalizados: true);
+        try
+        {
+            using var barrera = new Barrier(2);
+            var tareas = Enumerable.Range(0, 2).Select(_ => Task.Run(async () =>
+            {
+                await using var contexto = NuevoContexto();
+                barrera.SignalAndWait();
+                return await new FacturacionService(contexto, FabricaDeContextos.Configuracion())
+                    .CrearFactura(escenario.Cliente, "Efectivo", [escenario.Servicios[0]], null);
+            })).ToArray();
+            Assert.Single(await Task.WhenAll(tareas), r => r.EsCorrecto);
+            var siguientes = escenario.Servicios.Skip(1).Select(id => Task.Run(async () =>
+            {
+                await using var contexto = NuevoContexto();
+                return await new FacturacionService(contexto, FabricaDeContextos.Configuracion())
+                    .CrearFactura(escenario.Cliente, "Efectivo", [id], null);
+            }));
+            Assert.All(await Task.WhenAll(siguientes), r => Assert.True(r.EsCorrecto, r.Mensaje));
+            await using var db = NuevoContexto();
+            var facturas = await db.Facturas.Where(f => f.IdCliente == escenario.Cliente).ToListAsync();
+            Assert.Equal(3, facturas.Count);
+            Assert.Equal(3, facturas.Select(f => f.NumeroFactura).Distinct().Count());
+            Assert.All(facturas, f => Assert.Equal(115m, f.Total));
+        }
+        finally { await LimpiarEscenario(escenario); }
+    }
+
+    [SkippableTheory]
+    [InlineData("Clientes")]
+    [InlineData("Vehiculos")]
+    [InlineData("Trabajadores")]
+    [InlineData("Productos")]
+    public async Task Desactivar_y_reactivar_se_refleja_en_otra_conexion_sql(string modulo)
+    {
+        Skip.IfNot(ServidorDisponible(), "Se necesita una base de pruebas SQL Server existente y autorización de escritura de pruebas.");
+        var escenario = await PrepararEscenario(finalizados: true);
+        var idTrabajador = 0;
+        try
+        {
+            await using (var db = NuevoContexto())
+            {
+                var trabajador = new Trabajador { Nombre = "Prueba", Apellido = "Estado", Telefono = "8888-1111" };
+                db.Trabajadores.Add(trabajador);
+                await db.SaveChangesAsync();
+                idTrabajador = trabajador.IdTrabajador;
+            }
+            var (tabla, columnaId, columnaEstado, id) = modulo switch
+            {
+                "Clientes" => ("Cliente", "IdCliente", "Activo", escenario.Cliente),
+                "Vehiculos" => ("Vehiculo", "IdVehiculo", "Activo", escenario.Vehiculo),
+                "Trabajadores" => ("Trabajador", "IdTrabajador", "Estado", idTrabajador),
+                _ => ("Producto", "IdProducto", "Activo", escenario.Producto)
+            };
+            foreach (var activo in new[] { false, true, false, true })
+            {
+                await using var db = NuevoContexto();
+                var resultado = modulo switch
+                {
+                    "Clientes" => await new ClienteService(db).CambiarEstado(id, activo),
+                    "Vehiculos" => await new VehiculoService(db).CambiarEstado(id, activo),
+                    "Trabajadores" => await new TrabajadorService(db).CambiarEstado(id, activo),
+                    _ => await new ProductoService(db).CambiarEstado(id, activo)
+                };
+                Assert.True(resultado.EsCorrecto, resultado.Mensaje);
+                // Solo nombres fijos del switch; el identificador va parametrizado.
+                var persistido = await EscalarAsync($"SELECT [{columnaEstado}] FROM dbo.[{tabla}] WHERE [{columnaId}]=@id", ("@id", id));
+                Assert.Equal(activo, Convert.ToBoolean(persistido));
+            }
+        }
+        finally
+        {
+            await EjecutarAsync("DELETE FROM dbo.Trabajador WHERE IdTrabajador=@id", ("@id", idTrabajador));
+            await LimpiarEscenario(escenario);
+        }
+    }
+
+    private record Escenario(int Cliente, int Vehiculo, int Producto, List<int> Servicios);
+    private static async Task<Escenario> PrepararEscenario(bool finalizados)
+    {
+        await using var db = NuevoContexto();
+        var token = Guid.NewGuid().ToString("N")[..12];
+        var cliente = new Cliente { Nombre = "Prueba", Apellido = token, Direccion = "Managua", Telefono = "8888-1111", RFC = "TST" + token };
+        var vehiculo = new Vehiculo { Cliente = cliente, Placa = "TST" + token, Marca = "Prueba", Modelo = "Prueba", Anio = 2020 };
+        var producto = new Producto { Nombre = "Prueba " + token, Descripcion = "Verificación de existencias", PrecioUnitario = 10m, Stock = 1.5m };
+        db.AddRange(vehiculo, producto);
+        var servicios = Enumerable.Range(0, 3).Select(_ => new Servicio { Vehiculo = vehiculo, TipoServicio = "Mantenimiento",
+            Descripcion = "Prueba " + token, DescripcionFalla = "Falla de prueba", Total = 100m,
+            Estado = finalizados ? "Finalizado" : "Abierto", FechaInicio = new DateOnly(2026, 9, 1),
+            FechaFin = finalizados ? new DateOnly(2026, 9, 2) : null }).ToList();
+        db.Servicios.AddRange(servicios);
+        await db.SaveChangesAsync();
+        return new Escenario(cliente.IdCliente, vehiculo.IdVehiculo, producto.IdProducto, servicios.Select(s => s.IdServicio).ToList());
+    }
+    private static Task<int> LimpiarEscenario(Escenario e) => EjecutarAsync("""
+        DELETE d FROM dbo.Detalle_Factura d JOIN dbo.Factura f ON f.IdFactura=d.IdFactura WHERE f.IdCliente=@cliente;
+        DELETE FROM dbo.Factura WHERE IdCliente=@cliente;
+        DELETE FROM dbo.Productos_Utilizados WHERE IdProducto=@producto;
+        DELETE FROM dbo.Servicio WHERE IdVehiculo=@vehiculo;
+        DELETE FROM dbo.Producto WHERE IdProducto=@producto;
+        DELETE FROM dbo.Vehiculo WHERE IdVehiculo=@vehiculo;
+        DELETE FROM dbo.Cliente WHERE IdCliente=@cliente;
+        """, ("@cliente", e.Cliente), ("@producto", e.Producto), ("@vehiculo", e.Vehiculo));
 }

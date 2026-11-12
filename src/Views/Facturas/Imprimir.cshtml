@@ -47,7 +47,11 @@
                     <section class="caja-factura h-100">
                         <h2 class="h6 fw-bold text-primary mb-2">Datos del cliente</h2>
                         <div class="fw-semibold">@(f.Cliente != null ? f.Cliente.NombreCompleto : "—")</div>
-                        <div>RUC @(f.RUC ?? "—")</div>
+                        <div>Cédula: @(f.Cliente?.Cedula ?? "—")</div>
+                        @if (!string.IsNullOrWhiteSpace(f.RUC))
+                        {
+                            <div>RUC: @f.RUC</div>
+                        }
                         <div>Tel. @(f.Cliente?.Telefono ?? "—")</div>
                         <div>@(f.Cliente?.Direccion ?? "—")</div>
                     </section>

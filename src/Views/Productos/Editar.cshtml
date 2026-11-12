@@ -13,6 +13,7 @@
 <div class="tarjeta formulario-tarjeta">
     <form asp-action="Editar" method="post" class="formulario">
         <input type="hidden" asp-for="IdProducto" />
+        <input type="hidden" asp-for="StockOriginal" />
         <div asp-validation-summary="ModelOnly" class="alerta-error" role="alert"></div>
 
         <div class="row g-3">

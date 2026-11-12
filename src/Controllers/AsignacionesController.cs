@@ -53,7 +53,7 @@ public class AsignacionesController : Controller
             ViewBag.Asignados = await _asignaciones.AsignacionesDelServicio(idServicio.Value);
         }
 
-        return View();
+        return View("Index");
     }
 
     /// <summary>Reglas 5, 6 y 7 se validan en el servidor dentro del servicio de negocio.</summary>
@@ -61,8 +61,15 @@ public class AsignacionesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Asignar(AsignarTrabajadorViewModel modelo)
     {
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Revise el servicio, el trabajador y las observaciones recibidas.";
+            return await Index(modelo.IdServicio);
+        }
+
         var resultado = await _asignaciones.Asignar(modelo.IdServicio, modelo.IdTrabajador, modelo.Observaciones);
         TempData[resultado.EsCorrecto ? "Exito" : "Error"] = resultado.Mensaje;
+        if (!resultado.EsCorrecto) return await Index(modelo.IdServicio);
         return RedirectToAction(nameof(Index), new { idServicio = modelo.IdServicio });
     }
 
@@ -71,6 +78,9 @@ public class AsignacionesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AsignarAjax([FromForm] int idServicio, [FromForm] int idTrabajador, [FromForm] string? observaciones)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(new { esCorrecto = false, mensaje = "El servicio o el trabajador recibido no es válido." });
+
         var resultado = await _asignaciones.Asignar(idServicio, idTrabajador, observaciones);
 
         var compatibles = await _asignaciones.TrabajadoresCompatibles(idServicio, soloDisponibles: false);
@@ -96,8 +106,15 @@ public class AsignacionesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Desasignar(int idTrabajador, int idServicio)
     {
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Revise el servicio, el trabajador y las observaciones recibidas.";
+            return await Index(idServicio);
+        }
+
         var resultado = await _asignaciones.Desasignar(idServicio, idTrabajador);
         TempData[resultado.EsCorrecto ? "Exito" : "Error"] = resultado.Mensaje;
+        if (!resultado.EsCorrecto) return await Index(idServicio);
         return RedirectToAction(nameof(Index), new { idServicio });
     }
 }

@@ -11,8 +11,7 @@ public record ItemUsoProducto(int IdServicio, string DescripcionServicio, string
 /// <summary>
 /// Servicio de negocio para PRODUCTOS (MER: REPUESTO) y PRODUCTOS_UTILIZADOS (MER: UTILIZA).
 /// Reglas aplicadas: 9 (pareza producto-servicio única) y 10 (cantidades mayores
-/// que cero; precios no negativos). El catálogo conserva el atributo Stock del
-/// documento original, sin implementar un módulo de inventario adicional.
+/// que cero; precios no negativos). Los consumos y Stock se guardan en una transacción.
 /// </summary>
 public class ProductoService
 {
@@ -20,62 +19,55 @@ public class ProductoService
 
     public ProductoService(TallerDbContext db) => _db = db;
 
-    public async Task<Resultado> Crear(Producto producto)
+    public Task<Resultado> Crear(Producto producto) => OperacionTaller.Ejecutar(_db, async () =>
     {
-        producto.Nombre = producto.Nombre.Trim();
-        producto.Descripcion = producto.Descripcion.Trim();
-
-        if (string.IsNullOrWhiteSpace(producto.Nombre))
-            return Resultado.Fallo("El nombre del producto es obligatorio.");
-        if (producto.PrecioUnitario < 0)
-            return Resultado.Fallo("El precio unitario no puede ser negativo.");
-        if (producto.Costo is < 0 or > 9999999999.99m)
-            return Resultado.Fallo("El costo de compra está fuera del rango permitido.");
-        if (producto.Stock < 0)
-            return Resultado.Fallo("El stock no puede ser negativo.");
-
+        if (producto.IdProducto != 0) return Resultado.Fallo("El identificador del producto se genera automáticamente.");
+        if (Validar(producto) is { } error) return Resultado.Fallo(error);
         producto.FechaRegistro = DateTime.UtcNow;
         producto.Activo = true;
+        producto.ProductosUtilizados = [];
         _db.Productos.Add(producto);
         await _db.SaveChangesAsync();
         return Resultado.Ok("Producto registrado correctamente.");
-    }
+    }, Resultado.Fallo);
 
-    public async Task<Resultado> Editar(Producto producto)
+    public Task<Resultado> Editar(Producto producto, decimal? stockOriginal) => OperacionTaller.Ejecutar(_db, async () =>
     {
-        var existente = await _db.Productos.FindAsync(producto.IdProducto);
-        if (existente is null)
-            return Resultado.Fallo("El producto indicado no existe.");
-
-        producto.Nombre = producto.Nombre.Trim();
-        if (string.IsNullOrWhiteSpace(producto.Nombre))
-            return Resultado.Fallo("El nombre del producto es obligatorio.");
-        if (producto.PrecioUnitario < 0)
-            return Resultado.Fallo("El precio unitario no puede ser negativo.");
-        if (producto.Costo is < 0 or > 9999999999.99m)
-            return Resultado.Fallo("El costo de compra está fuera del rango permitido.");
-        if (producto.Stock < 0)
-            return Resultado.Fallo("El stock no puede ser negativo.");
-
+        var existente = await _db.Productos.SingleOrDefaultAsync(p => p.IdProducto == producto.IdProducto);
+        if (existente is null) return Resultado.Fallo("El producto indicado no existe.");
+        if (!stockOriginal.HasValue || !ReglasTaller.Cantidad(stockOriginal.Value))
+            return Resultado.Fallo("Recargue el formulario antes de editar el producto; falta el saldo original de existencias.");
+        if (existente.Stock != stockOriginal.Value)
+            return Resultado.Fallo("Las existencias cambiaron mientras editaba. No se guardaron cambios; recargue el formulario y confirme el nuevo saldo.");
+        if (Validar(producto) is { } error) return Resultado.Fallo(error);
         existente.Nombre = producto.Nombre;
-        existente.Descripcion = producto.Descripcion.Trim();
+        existente.Descripcion = producto.Descripcion;
         existente.PrecioUnitario = producto.PrecioUnitario;
         existente.Costo = producto.Costo;
         existente.Stock = producto.Stock;
         await _db.SaveChangesAsync();
         return Resultado.Ok("Producto actualizado correctamente.");
+    }, Resultado.Fallo);
+
+    private static string? Validar(Producto producto)
+    {
+        producto.Nombre = producto.Nombre?.Trim() ?? "";
+        producto.Descripcion = producto.Descripcion?.Trim() ?? "";
+        if (ReglasTaller.Campos(producto) is { } error) return error;
+        if (!ReglasTaller.Importe(producto.PrecioUnitario) || !ReglasTaller.Importe(producto.Costo))
+            return "El precio unitario y el costo deben ser no negativos, con máximo dos decimales y compatibles con la base de datos.";
+        if (!ReglasTaller.Cantidad(producto.Stock)) return "Las existencias deben ser no negativas, con máximo tres decimales y compatibles con la base de datos.";
+        return null;
     }
 
-    public async Task<Resultado> CambiarEstado(int idProducto, bool activo)
+    public Task<Resultado> CambiarEstado(int idProducto, bool activo) => OperacionTaller.Ejecutar(_db, async () =>
     {
-        var producto = await _db.Productos.FindAsync(idProducto);
-        if (producto is null)
-            return Resultado.Fallo("El producto indicado no existe.");
-
+        var producto = await _db.Productos.SingleOrDefaultAsync(p => p.IdProducto == idProducto);
+        if (producto is null) return Resultado.Fallo("El producto indicado no existe.");
         producto.Activo = activo;
         await _db.SaveChangesAsync();
         return Resultado.Ok(activo ? "Producto reactivado correctamente." : "Producto desactivado.");
-    }
+    }, Resultado.Fallo);
 
     public async Task<ResultadoPaginado<Producto>> Buscar(string? termino, bool? soloActivos, int pagina, int tamPagina)
     {
@@ -106,70 +98,77 @@ public class ProductoService
     public Task<List<Producto>> ListarActivosParaSeleccion() =>
         _db.Productos.AsNoTracking().Where(p => p.Activo).OrderBy(p => p.Nombre).ToListAsync();
 
-    /// <summary>Reglas 9 y 10: la pareja producto-servicio no se repite y la cantidad debe ser mayor que cero.</summary>
-    public async Task<Resultado> AgregarAlServicio(int idServicio, int idProducto, decimal cantidad)
-    {
-        if (cantidad <= 0)
-            return Resultado.Fallo("La cantidad utilizada debe ser mayor que cero.");
-
-        var servicio = await _db.Servicios.FindAsync(idServicio);
-        if (servicio is null)
-            return Resultado.Fallo("El servicio indicado no existe.");
-        if (servicio.Estado != "Abierto")
-            return Resultado.Fallo("Solo se pueden agregar productos a servicios abiertos.");
-
-        var producto = await _db.Productos.FindAsync(idProducto);
-        if (producto is null)
-            return Resultado.Fallo("El producto indicado no existe.");
-        if (!producto.Activo)
-            return Resultado.Fallo("El producto está desactivado y no puede agregarse al servicio.");
-
-        var duplicado = await _db.ProductosUtilizados
-            .AnyAsync(pu => pu.IdServicio == idServicio && pu.IdProducto == idProducto);
-        if (duplicado)
-            return Resultado.Fallo("Este producto ya está registrado en el servicio. Modifique la cantidad en lugar de duplicarlo.");
-
-        _db.ProductosUtilizados.Add(new ProductoUtilizado
+    public Task<Resultado> AgregarAlServicio(int idServicio, int idProducto, decimal cantidad) =>
+        OperacionTaller.Ejecutar(_db, async () =>
         {
-            IdServicio = idServicio,
-            IdProducto = idProducto,
-            Cantidad = cantidad
-        });
-        await _db.SaveChangesAsync();
-        return Resultado.Ok("Producto agregado al servicio.");
-    }
+            if (cantidad <= 0 || !ReglasTaller.Cantidad(cantidad)) return Resultado.Fallo("La cantidad debe ser mayor que cero y admitir como máximo tres decimales dentro del rango de la base de datos.");
+            if (await ValidarServicio(idServicio) is { } error) return Resultado.Fallo(error);
+            var producto = await _db.Productos.SingleOrDefaultAsync(p => p.IdProducto == idProducto);
+            if (producto is null) return Resultado.Fallo("El producto indicado no existe.");
+            if (!producto.Activo) return Resultado.Fallo("El producto está desactivado y no admite nuevos consumos.");
+            if (await _db.ProductosUtilizados.AnyAsync(p => p.IdProducto == idProducto && p.IdServicio == idServicio))
+                return Resultado.Fallo("Este producto ya está registrado en el servicio. Modifique la cantidad en lugar de duplicarlo.");
+            if (!await CambiarStock(producto, cantidad)) return Resultado.Fallo("No hay existencias suficientes.");
+            _db.ProductosUtilizados.Add(new ProductoUtilizado { IdProducto = idProducto, IdServicio = idServicio, Cantidad = cantidad });
+            await _db.SaveChangesAsync();
+            return Resultado.Ok("Producto agregado al servicio y existencias actualizadas.");
+        }, Resultado.Fallo);
 
-    public async Task<Resultado> ActualizarCantidad(int idServicio, int idProducto, decimal cantidad)
+    public Task<Resultado> ActualizarCantidad(int idServicio, int idProducto, decimal cantidad) =>
+        OperacionTaller.Ejecutar(_db, async () =>
+        {
+            if (cantidad <= 0 || !ReglasTaller.Cantidad(cantidad)) return Resultado.Fallo("La cantidad debe ser mayor que cero y admitir como máximo tres decimales dentro del rango de la base de datos.");
+            if (await ValidarServicio(idServicio) is { } error) return Resultado.Fallo(error);
+            var registro = await _db.ProductosUtilizados.SingleOrDefaultAsync(p => p.IdProducto == idProducto && p.IdServicio == idServicio);
+            if (registro is null) return Resultado.Fallo("El registro de producto indicado no existe.");
+            var producto = await _db.Productos.SingleOrDefaultAsync(p => p.IdProducto == idProducto);
+            if (producto is null) return Resultado.Fallo("El producto indicado no existe.");
+            var diferencia = cantidad - registro.Cantidad;
+            if (diferencia > 0 && !producto.Activo) return Resultado.Fallo("El producto está desactivado y no admite nuevos consumos.");
+            if (!await CambiarStock(producto, diferencia)) return Resultado.Fallo("No hay existencias suficientes o la devolución supera el rango de la base de datos.");
+            registro.Cantidad = cantidad;
+            await _db.SaveChangesAsync();
+            return Resultado.Ok("Cantidad y existencias actualizadas correctamente.");
+        }, Resultado.Fallo);
+
+    public Task<Resultado> QuitarDelServicio(int idServicio, int idProducto) => OperacionTaller.Ejecutar(_db, async () =>
     {
-        if (cantidad <= 0)
-            return Resultado.Fallo("La cantidad utilizada debe ser mayor que cero.");
-
-        var registro = await _db.ProductosUtilizados
-            .Include(pu => pu.Servicio)
-            .FirstOrDefaultAsync(pu => pu.IdServicio == idServicio && pu.IdProducto == idProducto);
-        if (registro is null)
-            return Resultado.Fallo("El registro de producto indicado no existe.");
-        if (registro.Servicio?.Estado != "Abierto")
-            return Resultado.Fallo("Solo se pueden modificar productos de servicios abiertos.");
-
-        registro.Cantidad = cantidad;
-        await _db.SaveChangesAsync();
-        return Resultado.Ok("Cantidad actualizada correctamente.");
-    }
-
-    public async Task<Resultado> QuitarDelServicio(int idServicio, int idProducto)
-    {
-        var registro = await _db.ProductosUtilizados
-            .Include(pu => pu.Servicio)
-            .FirstOrDefaultAsync(pu => pu.IdServicio == idServicio && pu.IdProducto == idProducto);
-        if (registro is null)
-            return Resultado.Fallo("El registro de producto indicado no existe.");
-        if (registro.Servicio?.Estado != "Abierto")
-            return Resultado.Fallo("Solo se pueden quitar productos de servicios abiertos.");
-
+        if (await ValidarServicio(idServicio) is { } error) return Resultado.Fallo(error);
+        if (await _db.DetalleFactura.AnyAsync(d => d.IdServicio == idServicio))
+            return Resultado.Fallo("El consumo forma parte del historial de una factura y no puede eliminarse.");
+        var registro = await _db.ProductosUtilizados.SingleOrDefaultAsync(p => p.IdProducto == idProducto && p.IdServicio == idServicio);
+        if (registro is null) return Resultado.Fallo("El consumo ya fue retirado o no existe; no se modificaron las existencias.");
+        var producto = await _db.Productos.SingleOrDefaultAsync(p => p.IdProducto == idProducto);
+        if (producto is null || !await CambiarStock(producto, -registro.Cantidad)) return Resultado.Fallo("No se pudo devolver el consumo a las existencias.");
         _db.ProductosUtilizados.Remove(registro);
         await _db.SaveChangesAsync();
-        return Resultado.Ok("Producto quitado del servicio.");
+        return Resultado.Ok("Consumo corregido y existencias devueltas explícitamente.");
+    }, Resultado.Fallo);
+
+    private async Task<string?> ValidarServicio(int idServicio)
+    {
+        var servicio = await _db.Servicios.SingleOrDefaultAsync(s => s.IdServicio == idServicio);
+        if (servicio is null) return "El servicio indicado no existe.";
+        if (await ReglasTaller.Facturado(_db, idServicio)) return "Este servicio ya tiene una factura vigente; anúlela antes de corregir los consumos.";
+        if (servicio.Estado != ReglasTaller.Abierto) return "Solo se pueden corregir consumos de servicios abiertos.";
+        if (!ReglasTaller.TipoValido(servicio.TipoServicio)) return "El servicio tiene un tipo desconocido.";
+        // Pintura ya admitía consumos: se conserva ese flujo y se documenta la discrepancia del alcance.
+        return null;
+    }
+
+    private async Task<bool> CambiarStock(Producto producto, decimal diferencia)
+    {
+        if (producto.Stock < diferencia || !ReglasTaller.Cantidad(producto.Stock - diferencia)) return false;
+        if (_db.Database.IsSqlServer())
+        {
+            var filas = await _db.Productos.Where(p => p.IdProducto == producto.IdProducto && p.Stock >= diferencia &&
+                    p.Stock - diferencia <= ReglasTaller.MaxCantidad && (diferencia <= 0 || p.Activo))
+                .ExecuteUpdateAsync(set => set.SetProperty(p => p.Stock, p => p.Stock - diferencia));
+            if (filas != 1) return false;
+            await _db.Entry(producto).ReloadAsync();
+        }
+        else producto.Stock -= diferencia;
+        return true;
     }
 
     public async Task<List<ItemUsoProducto>> HistorialDelProducto(int idProducto)

@@ -12,7 +12,7 @@ public record FilaConteo(string Categoria, int Cantidad, decimal? Monto);
 
 public record FilaVehiculoReporte(string Placa, string Marca, string Modelo, string Cliente, int Servicios, decimal TotalServicios);
 
-public record FilaTrabajadorReporte(string Trabajador, string Area, int AsignacionesActivas, int AsignacionesRetiradas, int TotalAsignaciones);
+public record FilaTrabajadorReporte(string Trabajador, string Area, int AsignacionesActivas, int AsignacionesRetiradas, int TotalAsignaciones, bool Habilitado = true);
 
 public record FilaProductoReporte(string Producto, decimal CantidadTotal, int VecesUtilizado, decimal? MontoEstimado);
 
@@ -108,15 +108,15 @@ public class ReporteService
     public async Task<List<FilaTrabajadorReporte>> TrabajosPorTrabajador()
     {
         var trabajadores = await _db.Trabajadores.AsNoTracking()
-            .Include(t => t.DetalleServicios)
+            .Include(t => t.DetalleServicios).ThenInclude(d => d.Servicio)
             .ToListAsync();
 
         return trabajadores.Select(t => new FilaTrabajadorReporte(
             t.NombreCompleto,
             t.Area,
-            t.DetalleServicios.Count(d => d.Estado == "Activo"),
+            t.DetalleServicios.Where(d => d.Estado == "Activo" && d.Servicio != null && ReglasTaller.EstadosActivos.Contains(d.Servicio.Estado)).Select(d => d.IdServicio).Distinct().Count(),
             t.DetalleServicios.Count(d => d.Estado == "Retirado"),
-            t.DetalleServicios.Count))
+            t.DetalleServicios.Count, t.Activo && t.FechaSalida == null))
             .OrderByDescending(f => f.TotalAsignaciones)
             .ToList();
     }
@@ -129,12 +129,13 @@ public class ReporteService
             {
                 Nombre = t.Nombre + " " + t.Apellido,
                 t.Area,
-                Activos = t.DetalleServicios.Count(d => d.Estado == "Activo" && d.Servicio!.Estado == "Abierto")
+                Habilitado = t.Activo && t.FechaSalida == null,
+                Activos = t.DetalleServicios.Where(d => d.Estado == "Activo" && ReglasTaller.EstadosActivos.Contains(d.Servicio!.Estado)).Select(d => d.IdServicio).Distinct().Count()
             })
             .OrderBy(t => t.Nombre)
             .ToListAsync();
 
-        return trabajadores.Select(t => new FilaTrabajadorReporte(t.Nombre, t.Area, t.Activos, 0, 0)).ToList();
+        return trabajadores.Select(t => new FilaTrabajadorReporte(t.Nombre, t.Area, t.Activos, 0, 0, t.Habilitado)).ToList();
     }
 
     public async Task<List<FilaProductoReporte>> ProductosMasUtilizados(DateOnly? desde, DateOnly? hasta)

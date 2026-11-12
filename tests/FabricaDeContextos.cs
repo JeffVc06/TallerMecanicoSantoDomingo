@@ -81,6 +81,10 @@ public static class FabricaDeContextos
             IdVehiculo = idVehiculo,
             TipoServicio = tipo,
             Descripcion = descripcion,
+            DescripcionFalla = tipo == "Mantenimiento" ? "Falla de prueba" : null,
+            TipoPintura = tipo == "Pintura" ? "Base de agua" : null,
+            Color = tipo == "Pintura" ? "Blanco" : null,
+            FechaFin = estado == "Finalizado" ? new DateOnly(2026, 9, 2) : null,
             Estado = estado,
             FechaInicio = DateOnly.FromDateTime(new DateTime(2026, 9, 1)),
             Total = total

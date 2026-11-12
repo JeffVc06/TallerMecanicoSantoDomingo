@@ -28,29 +28,34 @@ public class VehiculoService
 
     public VehiculoService(TallerDbContext db) => _db = db;
 
-    public async Task<Resultado> Crear(Vehiculo vehiculo)
+    public Task<Resultado> Crear(Vehiculo vehiculo) => OperacionTaller.Ejecutar(_db, async () =>
     {
+        if (vehiculo.IdVehiculo != 0) return Resultado.Fallo("El identificador del vehículo se genera automáticamente.");
         var error = await Validar(vehiculo);
         if (error is not null)
             return error;
 
         vehiculo.FechaRegistro = DateTime.UtcNow;
         vehiculo.Activo = true;
+        vehiculo.Cliente = null;
+        vehiculo.Servicios = [];
         _db.Vehiculos.Add(vehiculo);
         await _db.SaveChangesAsync();
         return Resultado.Ok("Vehículo registrado correctamente.");
-    }
+    }, Resultado.Fallo);
 
-    public async Task<Resultado> Editar(Vehiculo vehiculo)
+    public Task<Resultado> Editar(Vehiculo vehiculo) => OperacionTaller.Ejecutar(_db, async () =>
     {
         var existente = await _db.Vehiculos.FindAsync(vehiculo.IdVehiculo);
         if (existente is null)
             return Resultado.Fallo("El vehículo indicado no existe.");
 
-        var error = await Validar(vehiculo);
+        var error = await Validar(vehiculo, existente.IdCliente);
         if (error is not null)
             return error;
 
+        if (existente.IdCliente != vehiculo.IdCliente && await _db.Servicios.AnyAsync(x => x.IdVehiculo == existente.IdVehiculo))
+            return Resultado.Fallo("No se puede cambiar el propietario de un vehículo con historial de servicios. El sistema no dispone de historial de transferencias de propiedad.");
         existente.IdCliente = vehiculo.IdCliente;
         existente.Placa = vehiculo.Placa;
         existente.Marca = vehiculo.Marca;
@@ -62,25 +67,29 @@ public class VehiculoService
         existente.Tipo = vehiculo.Tipo;
         await _db.SaveChangesAsync();
         return Resultado.Ok("Vehículo actualizado correctamente.");
-    }
+    }, Resultado.Fallo);
 
-    private async Task<Resultado?> Validar(Vehiculo vehiculo)
+    private async Task<Resultado?> Validar(Vehiculo vehiculo, int? propietarioActual = null)
     {
-        vehiculo.Placa = vehiculo.Placa.Trim().ToUpperInvariant();
-        vehiculo.Marca = vehiculo.Marca.Trim();
-        vehiculo.Modelo = vehiculo.Modelo.Trim();
+        vehiculo.Placa = (vehiculo.Placa?.Trim() ?? "").ToUpperInvariant();
+        vehiculo.Marca = vehiculo.Marca?.Trim() ?? "";
+        vehiculo.Modelo = vehiculo.Modelo?.Trim() ?? "";
         vehiculo.Color = string.IsNullOrWhiteSpace(vehiculo.Color) ? null : vehiculo.Color.Trim();
         vehiculo.NumChasis = string.IsNullOrWhiteSpace(vehiculo.NumChasis) ? null : vehiculo.NumChasis.Trim().ToUpperInvariant();
         vehiculo.Tipo = string.IsNullOrWhiteSpace(vehiculo.Tipo) ? null : vehiculo.Tipo.Trim();
 
+        if (ReglasTaller.Campos(vehiculo) is { } campos) return Resultado.Fallo(campos);
         if (vehiculo.Placa.Length == 0)
             return Resultado.Fallo("La placa del vehículo es obligatoria.");
         if (vehiculo.Anio < 1950 || vehiculo.Anio > DateTime.Now.Year + 1)
             return Resultado.Fallo("El año del vehículo no es válido.");
         if (vehiculo.Kilometraje < 0)
             return Resultado.Fallo("El kilometraje debe ser mayor o igual a cero.");
-        if (!await _db.Clientes.AnyAsync(c => c.IdCliente == vehiculo.IdCliente))
+        var cliente = await _db.Clientes.AsNoTracking().SingleOrDefaultAsync(c => c.IdCliente == vehiculo.IdCliente);
+        if (cliente is null)
             return Resultado.Fallo("El cliente seleccionado no existe.");
+        if (!cliente.Activo && propietarioActual != cliente.IdCliente)
+            return Resultado.Fallo("El cliente está desactivado. Reactívelo antes de registrar o transferirle un vehículo.");
 
         var otros = _db.Vehiculos.Where(v => v.IdVehiculo != vehiculo.IdVehiculo);
         if (await otros.AnyAsync(v => v.Placa == vehiculo.Placa))
@@ -92,7 +101,7 @@ public class VehiculoService
     }
 
     /// <summary>Regla 14: los vehículos con servicios no se eliminan; se desactivan.</summary>
-    public async Task<Resultado> CambiarEstado(int idVehiculo, bool activo)
+    public Task<Resultado> CambiarEstado(int idVehiculo, bool activo) => OperacionTaller.Ejecutar(_db, async () =>
     {
         var vehiculo = await _db.Vehiculos.FindAsync(idVehiculo);
         if (vehiculo is null)
@@ -101,7 +110,7 @@ public class VehiculoService
         if (!activo)
         {
             var tieneServiciosAbiertos = await _db.Servicios
-                .AnyAsync(s => s.IdVehiculo == idVehiculo && s.Estado == "Abierto");
+                .AnyAsync(s => s.IdVehiculo == idVehiculo && ReglasTaller.EstadosActivos.Contains(s.Estado));
             if (tieneServiciosAbiertos)
                 return Resultado.Fallo("No se puede desactivar el vehículo porque tiene servicios abiertos.");
         }
@@ -109,7 +118,7 @@ public class VehiculoService
         vehiculo.Activo = activo;
         await _db.SaveChangesAsync();
         return Resultado.Ok(activo ? "Vehículo reactivado correctamente." : "Vehículo desactivado.");
-    }
+    }, Resultado.Fallo);
 
     public async Task<ResultadoPaginado<Vehiculo>> Buscar(string? termino, int? idCliente, bool? soloActivos, int pagina, int tamPagina)
     {

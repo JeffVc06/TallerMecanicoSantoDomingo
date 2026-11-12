@@ -37,7 +37,8 @@
             <table class="tabla-lista tabla-adaptable" role="table">
                 <thead role="rowgroup">
                     <tr role="row">
-                        <th scope="col">RUC</th>
+                        <th scope="col">Cédula</th>
+                        <th scope="col">RUC de empresa</th>
                         <th scope="col">Nombre completo</th>
                         <th scope="col">Teléfono</th>
                         <th scope="col">Dirección</th>
@@ -49,7 +50,8 @@
                     @foreach (var c in Model.Elementos)
                     {
                         <tr role="row">
-                            <td role="cell" data-etiqueta="RUC" class="fw-semibold">@c.RFC</td>
+                            <td role="cell" data-etiqueta="Cédula" class="fw-semibold">@(c.Cedula ?? "—")</td>
+                            <td role="cell" data-etiqueta="RUC de empresa">@(c.RFC ?? "—")</td>
                             <td role="cell" data-etiqueta="Nombre completo">@c.NombreCompleto</td>
                             <td role="cell" data-etiqueta="Teléfono">@c.Telefono</td>
                             <td role="cell" data-etiqueta="Dirección">@c.Direccion</td>
@@ -67,7 +69,7 @@
                                 </a>
                                 <form asp-action="CambiarEstado" asp-route-id="@c.IdCliente" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
-                                    <input type="hidden" name="activo" value="@(!c.Activo)" />
+                                    <input type="hidden" name="activo" value="@(c.Activo ? "false" : "true")" />
                                     <button type="submit" class="btn btn-sm @(c.Activo ? "btn-outline-danger" : "btn-outline-success") btn-icono"
                                             title="@(c.Activo ? "Desactivar" : "Reactivar")"
                                             data-confirmar="¿Desea @(c.Activo ? "desactivar" : "reactivar") al cliente @(c.NombreCompleto)?" aria-label="@(c.Activo ? "Desactivar" : "Reactivar")">

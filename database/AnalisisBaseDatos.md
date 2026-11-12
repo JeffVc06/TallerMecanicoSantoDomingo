@@ -107,9 +107,12 @@ tasa de IVA**. Los servicios facturados pertenecen al cliente correspondiente.
 
 Los `CHECK` se aplican en un lote reutilizable tanto al crear la base como al
 actualizar una base que ya tiene las tablas del diagrama. `WITH CHECK` valida
-las filas existentes al agregar cada restricción. Los cuatro índices únicos
-filtrados de cédula, chasis, nombre de usuario y correo normalizados permiten
-varios `NULL` y exigen unicidad cuando hay valor.
+las filas existentes al agregar cada restricción. Los cinco índices únicos
+filtrados de cédula, RUC, chasis, nombre de usuario y correo normalizados permiten
+varios `NULL` y exigen unicidad cuando hay valor. Un cliente particular puede
+registrarse únicamente con cédula; el RUC es opcional para los casos de empresa.
+`CK_Cliente_Identificacion` exige al menos uno de los dos datos. El lote de
+actualización adapta el RUC obligatorio del esquema anterior sin cambiar registros.
 
 Las claves foráneas impiden referencias inexistentes y borrados con registros
 dependientes. Otras reglas, como la compatibilidad del área del trabajador, el

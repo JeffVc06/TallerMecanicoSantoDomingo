@@ -25,8 +25,8 @@ public class Cliente
     [MaxLength(20)]
     public string? Cedula { get; set; }
 
-    [Required, MaxLength(20), Column("RUC")]
-    public string RFC { get; set; } = string.Empty;
+    [MaxLength(20), Column("RUC")]
+    public string? RFC { get; set; }
     public bool Activo { get; set; } = true;
     public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
 

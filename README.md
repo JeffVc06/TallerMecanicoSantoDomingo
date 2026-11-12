@@ -64,27 +64,26 @@ En C#, `Cliente.RFC` se mapea a `RUC`, `PrecioUnitario` a `Precio`,
 `Trabajador.FechaRegistro` a `FechaIngreso`. Los formularios muestran «RUC» y
 la factura usa el valor fiscal guardado al emitirla.
 
-El script SQL es la fuente del esquema; **no se usan migraciones de EF Core**.
-`TallerMecanicoSantoDomingo.sql` contiene `CREATE DATABASE`, `CREATE TABLE`,
-claves, validaciones y el procedimiento de anulación. Se puede ejecutar una sola
-vez desde un editor de SQL para crear la base, o dejar que la aplicación la cree
-en el primer arranque.
-`DatosDemostracion.sql` contiene los `INSERT INTO ... VALUES`; se usa una sola vez
-sobre el esquema vacío. `Consultas.sql` contiene únicamente consultas `SELECT`
-para ver los datos y ejemplos de relaciones y totales; puede repetirse.
-`AnalisisBaseDatos.md` describe las tablas y los datos de demostración;
-`practica.sql` contiene diez ejercicios de consultas, de menor a mayor dificultad,
-con espacio para resolverlos y sin soluciones incluidas.
+Para clientes particulares basta la cédula; el RUC es opcional y se utiliza
+cuando el vehículo viene de una empresa. Se exige al menos una identificación
+(cédula o RUC) y se pueden guardar ambas. Cada una debe ser única cuando tenga
+valor. El RUC vacío se guarda como `NULL`, y se permite facturar sin RUC.
 
-Si la base ya contiene las tablas y columnas del diagrama, el primer arranque
-agrega las restricciones `CHECK` y el procedimiento que falten en una transacción.
-La cuenta de SQL Server necesita permisos de DDL para esa actualización. Si una
-fila incumple una restricción, SQL Server identifica la restricción y revierte
-la actualización. La carga de datos de demostración es manual y opcional.
+El SQL del proyecto se conserva como definición terminada del esquema; **no se
+usan ni ejecutan migraciones de EF Core**. El arranque comprueba que la base y
+sus tablas y columnas existan. No crea bases ni tablas, no aplica restricciones,
+no cambia la nulabilidad ni ejecuta actualizaciones de estructura. La conexión
+normal de la aplicación no necesita permisos de DDL para estas comprobaciones.
 
-Una base antigua con tablas como `Clientes`, `Areas` o `AspNetUsers`, o con
-columnas faltantes, requiere una migración específica. El arranque identifica
-el esquema incompleto antes de ejecutar la actualización.
+Los scripts de `database/` son material existente y no se ejecutan automáticamente.
+La configuración de la conexión debe apuntar a una base previamente preparada.
+Si está ausente o incompleta, el arranque informa del problema sin modificarla.
+Las cuentas iniciales, cuando corresponda crearlas, siguen usando ASP.NET Identity.
+
+Las reglas de negocio, los límites del esquema conservado y los pasos de prueba
+para el profesor están en [docs/Validaciones.md](docs/Validaciones.md).
+La revisión posterior de desactivación, reactivación y disponibilidad está en
+[docs/CorreccionEstados.md](docs/CorreccionEstados.md).
 
 ## Usuarios y trabajadores
 
@@ -109,9 +108,9 @@ La contraseña de una cuenta del sistema es independiente del acceso a SQL Serve
 - Identificación fiscal y placas únicas; relaciones entre clientes y vehículos.
 - Servicios de mantenimiento o pintura con fechas e importes válidos.
 - Personal compatible con el servicio; máximo dos asignaciones activas por
-  trabajador. La asignación usa una transacción y bloqueo por trabajador.
+  trabajador. Las escrituras usan transacciones con un bloqueo compartido entre procesos.
 - Productos sin duplicados por servicio, cantidades positivas y precios válidos.
-- Facturas con servicios del mismo cliente, sin facturarlos dos veces mientras
+- Facturas con servicios finalizados del mismo cliente, sin facturarlos dos veces mientras
   exista una factura emitida. Subtotal, IVA y total se calculan en el servidor.
 - Anulación sin borrar facturas ni detalles. El procedimiento SQL usa una sola
   actualización; los servicios quedan disponibles para volver a facturarse.
@@ -131,16 +130,17 @@ el código sin conectar una base se pueden ejecutar las pruebas en memoria:
 dotnet test TallerMecanicoSantoDomingo.sln --filter 'Categoria!=Integracion'
 ```
 
-Las pruebas de integración solo se habilitan con la variable
-`ConnectionStrings__TallerDB` o `TALLERMECANICO_CADENA` apuntando a una base de
-pruebas preparada. No leen automáticamente los secretos de la aplicación. Crean
-y eliminan sus propios registros; no deben apuntar a datos de producción.
+Las pruebas de integración requieren `TALLERMECANICO_CADENA_PRUEBAS` apuntando
+a una base de pruebas **ya preparada**, y `TALLERMECANICO_PRUEBAS_ESCRITURA=1`.
+No leen los secretos ni la conexión de la aplicación y nunca crean su esquema.
+Insertan y limpian sus propios registros de prueba; los valores de IDENTITY de
+esa base pueden avanzar. No deben apuntar a datos reales del taller.
 
 ## Trabajo en equipo
 
 Se comparten el código, los scripts y los cambios de estructura mediante Git.
-Cada integrante mantiene su contenedor, datos y conexión local. Los cambios de
-una tabla deben acompañarse de sus ajustes en modelos y consultas. Las vistas,
+Cada integrante mantiene su contenedor, datos y conexión local. En esta intervención el SQL y los mapeos del esquema están congelados; las
+validaciones se resuelven desde la aplicación. Las vistas,
 el CSS y el JavaScript se mantienen separados de esos cambios de datos.
 
 ## Editar con recarga automática
@@ -153,8 +153,7 @@ dotnet watch --project src
 
 Abra `http://localhost:5080` y guarde los cambios para verlos en el navegador.
 `dotnet watch` aplica Hot Reload o reinicia cuando el cambio lo requiere. Si
-solicita reiniciar, acepte en la terminal. Los cambios de estructura de la base
-requieren su script SQL correspondiente.
+solicita reiniciar, acepte en la terminal. La recarga no modifica la estructura de la base de datos.
 
 También puede ejecutar la tarea `dev` desde **Terminal → Ejecutar tarea** en
 VS Code. Detenga cualquier instancia anterior con Ctrl+C para liberar el puerto.

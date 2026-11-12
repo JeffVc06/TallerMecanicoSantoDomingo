@@ -75,7 +75,7 @@ public class ServiciosController : Controller
             Total = modelo.Total
         };
 
-        var resultado = await _servicios.Crear(servicio);
+        var resultado = await _servicios.Crear(servicio, modelo.IdTrabajadorInicial);
         if (!resultado.EsCorrecto)
         {
             ModelState.AddModelError(string.Empty, resultado.Mensaje ?? "No se pudo registrar el servicio.");
@@ -83,7 +83,7 @@ public class ServiciosController : Controller
             return View(modelo);
         }
 
-        TempData["Exito"] = resultado.Mensaje + " Ahora puede asignar trabajadores y registrar productos utilizados.";
+        TempData["Exito"] = resultado.Mensaje + " Puede agregar más trabajadores y registrar los productos utilizados.";
         return RedirectToAction(nameof(Detalles), new { id = resultado.Datos!.IdServicio });
     }
 
@@ -99,7 +99,7 @@ public class ServiciosController : Controller
         ViewBag.Cargas = await _servicios.CargasDeTrabajadores(
             servicio.DetalleServicios.Select(d => d.IdTrabajador).ToList());
         ViewBag.ProductosActivos = await _productos.ListarActivosParaSeleccion();
-        return View(servicio);
+        return View("Detalles", servicio);
     }
 
     [HttpGet]
@@ -109,7 +109,7 @@ public class ServiciosController : Controller
         if (servicio is null)
             return RedirectToAction(nameof(Index));
 
-        await CargarVehiculos();
+        await CargarVehiculos(soloDisponibles: false);
         return View(new ServicioFormViewModel
         {
             IdServicio = servicio.IdServicio,
@@ -130,7 +130,7 @@ public class ServiciosController : Controller
     {
         if (!ModelState.IsValid)
         {
-            await CargarVehiculos();
+            await CargarVehiculos(soloDisponibles: false);
             return View(modelo);
         }
 
@@ -150,7 +150,7 @@ public class ServiciosController : Controller
         if (!resultado.EsCorrecto)
         {
             ModelState.AddModelError(string.Empty, resultado.Mensaje ?? "No se pudo actualizar el servicio.");
-            await CargarVehiculos();
+            await CargarVehiculos(soloDisponibles: false);
             return View(modelo);
         }
 
@@ -163,8 +163,15 @@ public class ServiciosController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Finalizar(FinalizarServicioViewModel modelo)
     {
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Revise los campos recibidos: hay valores ausentes, demasiado largos o con formato incorrecto.";
+            return await Detalles(modelo.IdServicio);
+        }
+
         var resultado = await _servicios.Finalizar(modelo.IdServicio, modelo.FechaFin);
         TempData[resultado.EsCorrecto ? "Exito" : "Error"] = resultado.Mensaje;
+        if (!resultado.EsCorrecto) return await Detalles(modelo.IdServicio);
         return RedirectToAction(nameof(Detalles), new { id = modelo.IdServicio });
     }
 
@@ -172,8 +179,15 @@ public class ServiciosController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Cancelar(CancelarServicioViewModel modelo)
     {
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Revise los campos recibidos: hay valores ausentes, demasiado largos o con formato incorrecto.";
+            return await Detalles(modelo.IdServicio);
+        }
+
         var resultado = await _servicios.Cancelar(modelo.IdServicio, modelo.Motivo);
         TempData[resultado.EsCorrecto ? "Exito" : "Error"] = resultado.Mensaje;
+        if (!resultado.EsCorrecto) return await Detalles(modelo.IdServicio);
         return RedirectToAction(nameof(Detalles), new { id = modelo.IdServicio });
     }
 
@@ -182,8 +196,15 @@ public class ServiciosController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AgregarProducto(ProductoUtilizadoFormViewModel modelo)
     {
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Revise los campos recibidos: hay valores ausentes, demasiado largos o con formato incorrecto.";
+            return await Detalles(modelo.IdServicio);
+        }
+
         var resultado = await _productos.AgregarAlServicio(modelo.IdServicio, modelo.IdProducto, modelo.Cantidad);
         TempData[resultado.EsCorrecto ? "Exito" : "Error"] = resultado.Mensaje;
+        if (!resultado.EsCorrecto) return await Detalles(modelo.IdServicio);
         return RedirectToAction(nameof(Detalles), new { id = modelo.IdServicio });
     }
 
@@ -191,8 +212,15 @@ public class ServiciosController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ActualizarProducto(int idProducto, int idServicio, decimal cantidad)
     {
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Revise los campos recibidos: hay valores ausentes, demasiado largos o con formato incorrecto.";
+            return await Detalles(idServicio);
+        }
+
         var resultado = await _productos.ActualizarCantidad(idServicio, idProducto, cantidad);
         TempData[resultado.EsCorrecto ? "Exito" : "Error"] = resultado.Mensaje;
+        if (!resultado.EsCorrecto) return await Detalles(idServicio);
         return RedirectToAction(nameof(Detalles), new { id = idServicio });
     }
 
@@ -200,15 +228,22 @@ public class ServiciosController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> QuitarProducto(int idProducto, int idServicio)
     {
+        if (!ModelState.IsValid)
+        {
+            TempData["Error"] = "Revise los campos recibidos: hay valores ausentes, demasiado largos o con formato incorrecto.";
+            return await Detalles(idServicio);
+        }
+
         var resultado = await _productos.QuitarDelServicio(idServicio, idProducto);
         TempData[resultado.EsCorrecto ? "Exito" : "Error"] = resultado.Mensaje;
+        if (!resultado.EsCorrecto) return await Detalles(idServicio);
         return RedirectToAction(nameof(Detalles), new { id = idServicio });
     }
 
-    private async Task CargarVehiculos()
+    private async Task CargarVehiculos(bool soloDisponibles = true)
     {
         var vehiculos = await _db.Vehiculos.AsNoTracking()
-            .Where(v => v.Activo)
+            .Where(v => v.Activo && (!soloDisponibles || v.Cliente!.Activo))
             .Include(v => v.Cliente)
             .OrderBy(v => v.Placa)
             .Select(v => new SelectListItem(
@@ -216,5 +251,10 @@ public class ServiciosController : Controller
                 v.IdVehiculo.ToString()))
             .ToListAsync();
         ViewBag.Vehiculos = vehiculos;
+        var trabajadores = await _db.Trabajadores.AsNoTracking().Where(t => t.Activo && t.FechaSalida == null)
+            .OrderBy(t => t.Apellido).Select(t => new { t.IdTrabajador, t.Nombre, t.Apellido, t.Area }).ToListAsync();
+        var cargas = (await _servicios.CargasDeTrabajadores(trabajadores.Select(t => t.IdTrabajador).ToList())).ToDictionary(t => t.IdTrabajador);
+        ViewBag.TrabajadoresIniciales = trabajadores.Where(t => cargas[t.IdTrabajador].Disponible)
+            .Select(t => new SelectListItem($"{t.Nombre} {t.Apellido} — {t.Area} ({cargas[t.IdTrabajador].ServiciosActivos} de 2 activos)", t.IdTrabajador.ToString())).ToList();
     }
 }

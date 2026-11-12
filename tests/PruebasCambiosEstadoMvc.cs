@@ -1,0 +1,225 @@
+using System.Net;
+using System.Security.Claims;
+using System.Text.Encodings.Web;
+using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using TallerMecanicoSantoDomingo.Controllers;
+using TallerMecanicoSantoDomingo.Data;
+using TallerMecanicoSantoDomingo.Services;
+using Xunit;
+
+namespace TallerMecanicoSantoDomingo.Tests;
+
+/// <summary>HTTP, Razor, binding y persistencia en otro contexto EF InMemory. No utiliza SQL Server.</summary>
+public class PruebasCambiosEstadoMvc : IAsyncLifetime
+{
+    private WebApplication _app = null!;
+    private HttpClient _cliente = null!;
+
+    public async Task InitializeAsync()
+    {
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+        {
+            ApplicationName = typeof(ClientesController).Assembly.FullName,
+            EnvironmentName = "Testing", ContentRootPath = AppContext.BaseDirectory
+        });
+        builder.Logging.ClearProviders();
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
+        // La misma base de prueba se comparte entre las solicitudes, con un contexto nuevo en cada una.
+        var nombreBase = Guid.NewGuid().ToString();
+        builder.Services.AddDbContext<TallerDbContext>(o => o.UseInMemoryDatabase(nombreBase)
+            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning)));
+        builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();
+        builder.Services.AddAuthentication("Pruebas").AddScheme<AuthenticationSchemeOptions, AccesoPruebas>("Pruebas", _ => { });
+        builder.Services.AddAuthorization();
+        builder.Services.AddControllersWithViews().AddApplicationPart(typeof(ClientesController).Assembly);
+        builder.Services.AddScoped<ClienteService>();
+        builder.Services.AddScoped<VehiculoService>();
+        builder.Services.AddScoped<TrabajadorService>();
+        builder.Services.AddScoped<ProductoService>();
+        builder.Services.AddScoped<ServicioService>();
+        builder.Services.AddScoped<AsignacionService>();
+        builder.Services.AddScoped<FacturacionService>();
+        builder.Services.AddScoped<ReporteService>();
+        builder.Services.Configure<ConfiguracionTaller>(_ => { });
+        _app = builder.Build();
+        _app.UseRouting();
+        _app.UseAuthentication();
+        _app.UseAuthorization();
+        _app.MapControllerRoute("default", "{controller=Dashboard}/{action=Index}/{id?}");
+        using (var scope = _app.Services.CreateScope())
+            FabricaDeContextos.SembrarBase(scope.ServiceProvider.GetRequiredService<TallerDbContext>());
+        await _app.StartAsync();
+        var direccion = _app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single();
+        _cliente = new HttpClient(new HttpClientHandler { UseCookies = true, AllowAutoRedirect = true }) { BaseAddress = new Uri(direccion) };
+    }
+
+    public async Task DisposeAsync()
+    {
+        _cliente.Dispose();
+        await _app.DisposeAsync();
+    }
+
+    [Theory]
+    [InlineData("Clientes")]
+    [InlineData("Vehiculos")]
+    [InlineData("Trabajadores")]
+    [InlineData("Productos")]
+    public async Task Formulario_real_desactiva_y_reactiva_y_otro_contexto_observa_el_cambio(string modulo)
+    {
+        for (var ciclo = 0; ciclo < 2; ciclo++)
+        {
+            var html = await _cliente.GetStringAsync($"/{modulo}");
+            var formulario = FormularioEstado(html, modulo);
+            Assert.Equal("false", Valor(formulario, "activo"));
+            var respuesta = await EnviarEstado(modulo, formulario, "false");
+            Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+            Assert.False(await ActivoPersistido(modulo));
+            formulario = FormularioEstado(await respuesta.Content.ReadAsStringAsync(), modulo);
+            Assert.Equal("true", Valor(formulario, "activo"));
+            respuesta = await EnviarEstado(modulo, formulario, "true");
+            Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+            Assert.True(await ActivoPersistido(modulo));
+            Assert.Equal("false", Valor(FormularioEstado(await respuesta.Content.ReadAsStringAsync(), modulo), "activo"));
+        }
+    }
+
+    [Fact]
+    public async Task Estado_invalido_ausente_o_sin_antiforgery_no_modifica_el_cliente()
+    {
+        var formulario = FormularioEstado(await _cliente.GetStringAsync("/Clientes"), "Clientes");
+        foreach (var estado in new string?[] { "value", "", null })
+        {
+            await EnviarEstado("Clientes", formulario, estado);
+            Assert.True(await ActivoPersistido("Clientes"));
+        }
+        var sinToken = await _cliente.PostAsync("/Clientes/CambiarEstado/1", new FormUrlEncodedContent(new Dictionary<string, string> { ["activo"] = "false" }));
+        Assert.Equal(HttpStatusCode.BadRequest, sinToken.StatusCode);
+        Assert.True(await ActivoPersistido("Clientes"));
+    }
+
+    [Fact]
+    public async Task Cliente_desactivado_sigue_en_filtros_y_se_conserva_al_editar_su_vehiculo()
+    {
+        var formulario = FormularioEstado(await _cliente.GetStringAsync("/Clientes"), "Clientes");
+        await EnviarEstado("Clientes", formulario, "false");
+        var filtro = await _cliente.GetStringAsync("/Vehiculos?idCliente=1");
+        Assert.Contains("(desactivado)", filtro);
+        var editar = await _cliente.GetStringAsync("/Vehiculos/Editar/1");
+        var selector = Regex.Match(editar, "<select[^>]*name=\"IdCliente\"[^>]*>([\\s\\S]*?)</select>").Value;
+        Assert.Matches("<option(?=[^>]*value=\"1\")(?=[^>]*selected)[^>]*>", selector);
+        var datos = new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = Valor(editar, "__RequestVerificationToken"),
+            ["IdVehiculo"] = "1", ["IdCliente"] = "1", ["Placa"] = "M CORREGIDA1", ["Marca"] = "Toyota",
+            ["Modelo"] = "Corolla", ["Anio"] = "2020", ["Kilometraje"] = "85001"
+        };
+        var respuesta = await _cliente.PostAsync("/Vehiculos/Editar/1", new FormUrlEncodedContent(datos));
+        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+        using var scope = _app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<TallerDbContext>();
+        var vehiculo = await db.Vehiculos.AsNoTracking().SingleAsync(v => v.IdVehiculo == 1);
+        Assert.Equal("M CORREGIDA1", vehiculo.Placa);
+        Assert.Equal(1, vehiculo.IdCliente);
+        Assert.False(await ActivoPersistido("Clientes"));
+        var alta = await scope.ServiceProvider.GetRequiredService<VehiculoService>().Crear(new()
+        {
+            IdCliente = 1, Placa = "M NUEVO1", Marca = "Toyota", Modelo = "Corolla", Anio = 2020
+        });
+        Assert.False(alta.EsCorrecto);
+        Assert.Contains("desactivado", alta.Mensaje);
+    }
+
+    [Fact]
+    public async Task Personal_inactivo_o_con_salida_no_aparece_disponible_en_pantallas()
+    {
+        var formulario = FormularioEstado(await _cliente.GetStringAsync("/Trabajadores"), "Trabajadores");
+        var respuesta = await EnviarEstado("Trabajadores", formulario, "false");
+        var html = await respuesta.Content.ReadAsStringAsync();
+        var fila = Assert.Single(Regex.Matches(html, "<tr\\b[^>]*>[\\s\\S]*?</tr>").Cast<Match>(),
+            m => m.Value.Contains("action=\"/Trabajadores/CambiarEstado/1\""));
+        Assert.Contains("No disponible", fila.Value);
+        Assert.DoesNotContain(">Disponible<", fila.Value);
+        var ficha = await _cliente.GetStringAsync("/Trabajadores/Detalles/1");
+        Assert.Contains("No disponible: trabajador desactivado", ficha);
+        Assert.DoesNotContain("Disponible para nuevos trabajos", ficha);
+
+        formulario = FormularioEstado(html, "Trabajadores");
+        await EnviarEstado("Trabajadores", formulario, "true");
+        using (var scope = _app.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<TallerDbContext>();
+            var trabajador = await db.Trabajadores.AsNoTracking().SingleAsync(t => t.IdTrabajador == 1);
+            trabajador.FechaSalida = DateOnly.FromDateTime(trabajador.FechaRegistro).AddDays(1);
+            Assert.True((await scope.ServiceProvider.GetRequiredService<TrabajadorService>().Guardar(trabajador, false)).EsCorrecto);
+        }
+        html = await _cliente.GetStringAsync("/Trabajadores");
+        fila = Assert.Single(Regex.Matches(html, "<tr\\b[^>]*>[\\s\\S]*?</tr>").Cast<Match>(),
+            m => m.Value.Contains("action=\"/Trabajadores/CambiarEstado/1\""));
+        Assert.Contains("No disponible", fila.Value);
+        ficha = await _cliente.GetStringAsync("/Trabajadores/Detalles/1");
+        Assert.Contains("No disponible: fecha de salida registrada", ficha);
+        Assert.Contains("No disponible", await _cliente.GetStringAsync("/Reportes/Trabajadores"));
+    }
+
+    [Fact]
+    public async Task Vehiculos_de_clientes_desactivados_no_se_ofrecen_para_trabajos_nuevos()
+    {
+        var formulario = FormularioEstado(await _cliente.GetStringAsync("/Clientes"), "Clientes");
+        await EnviarEstado("Clientes", formulario, "false");
+        var html = await _cliente.GetStringAsync("/Servicios/Crear");
+        var selector = Regex.Match(html, "<select[^>]*name=\"IdVehiculo\"[^>]*>([\\s\\S]*?)</select>").Value;
+        Assert.DoesNotContain("value=\"1\"", selector);
+        Assert.DoesNotContain("value=\"2\"", selector);
+        Assert.Contains("value=\"3\"", selector);
+    }
+
+    private Task<HttpResponseMessage> EnviarEstado(string modulo, string formulario, string? estado)
+    {
+        var datos = new Dictionary<string, string> { ["__RequestVerificationToken"] = Valor(formulario, "__RequestVerificationToken") };
+        if (estado is not null) datos["activo"] = estado;
+        return _cliente.PostAsync($"/{modulo}/CambiarEstado/1", new FormUrlEncodedContent(datos));
+    }
+
+    private async Task<bool> ActivoPersistido(string modulo)
+    {
+        using var scope = _app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<TallerDbContext>();
+        return modulo switch
+        {
+            "Clientes" => await db.Clientes.AsNoTracking().Where(c => c.IdCliente == 1).Select(c => c.Activo).SingleAsync(),
+            "Vehiculos" => await db.Vehiculos.AsNoTracking().Where(c => c.IdVehiculo == 1).Select(c => c.Activo).SingleAsync(),
+            "Trabajadores" => await db.Trabajadores.AsNoTracking().Where(c => c.IdTrabajador == 1).Select(c => c.Activo).SingleAsync(),
+            _ => await db.Productos.AsNoTracking().Where(c => c.IdProducto == 1).Select(c => c.Activo).SingleAsync()
+        };
+    }
+
+    private static string FormularioEstado(string html, string modulo) => Assert.Single(
+        Regex.Matches(html, "<form\\b[^>]*>[\\s\\S]*?</form>").Cast<Match>(),
+        m => m.Value.Contains($"action=\"/{modulo}/CambiarEstado/1\"")).Value;
+
+    private static string Valor(string html, string nombre)
+    {
+        var entrada = Regex.Matches(html, "<input\\b[^>]*>").Cast<Match>()
+            .First(m => m.Value.Contains($"name=\"{nombre}\""));
+        return WebUtility.HtmlDecode(Regex.Match(entrada.Value, "\\bvalue=\"([^\"]*)\"").Groups[1].Value);
+    }
+
+    private sealed class AccesoPruebas(IOptionsMonitor<AuthenticationSchemeOptions> opciones, ILoggerFactory logger, UrlEncoder encoder)
+        : AuthenticationHandler<AuthenticationSchemeOptions>(opciones, logger, encoder)
+    {
+        protected override Task<AuthenticateResult> HandleAuthenticateAsync() => Task.FromResult(AuthenticateResult.Success(
+            new AuthenticationTicket(new ClaimsPrincipal(new ClaimsIdentity(
+                [new Claim(ClaimTypes.NameIdentifier, "operador-pruebas"), new Claim(ClaimTypes.Name, "Pruebas")], Scheme.Name)), Scheme.Name)));
+    }
+}

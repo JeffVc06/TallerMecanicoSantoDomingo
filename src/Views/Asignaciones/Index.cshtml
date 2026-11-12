@@ -13,6 +13,11 @@
     </div>
 </div>
 
+@if (!string.IsNullOrWhiteSpace(ViewData.ModelState["Observaciones"]?.AttemptedValue))
+{
+    <div class="alerta-info" role="status">Observaciones ingresadas: @ViewData.ModelState["Observaciones"]?.AttemptedValue</div>
+}
+
 <div class="tarjeta mb-3">
     <form asp-action="Index" method="get" class="filtros row g-2 align-items-end">
         <div class="col-sm-9">

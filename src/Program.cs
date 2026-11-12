@@ -69,6 +69,7 @@ builder.Services.AddAuthorization(options =>
 
 // Servicios de negocio
 builder.Services.AddScoped<ClienteService>();
+builder.Services.AddScoped<TrabajadorService>();
 builder.Services.AddScoped<VehiculoService>();
 builder.Services.AddScoped<ServicioService>();
 builder.Services.AddScoped<AsignacionService>();
@@ -81,11 +82,20 @@ builder.Services.AddControllersWithViews(options =>
 {
     // Validar el token antiforgery en los formularios POST.
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+    var mensajes = options.ModelBindingMessageProvider;
+    mensajes.SetMissingBindRequiredValueAccessor(campo => $"El campo {campo} es obligatorio.");
+    mensajes.SetAttemptedValueIsInvalidAccessor((_, campo) => $"El campo {campo} tiene un formato incorrecto.");
+    mensajes.SetUnknownValueIsInvalidAccessor(campo => $"El campo {campo} contiene un valor incorrecto.");
+    mensajes.SetValueMustBeANumberAccessor(campo => $"El campo {campo} debe contener un número válido.");
+    mensajes.SetValueMustNotBeNullAccessor(_ => "Debe ingresar un valor.");
+    mensajes.SetNonPropertyAttemptedValueIsInvalidAccessor(_ => "El valor recibido tiene un formato incorrecto.");
+    mensajes.SetNonPropertyUnknownValueIsInvalidAccessor(() => "El valor recibido no es válido.");
+    mensajes.SetNonPropertyValueMustBeANumberAccessor(() => "Debe ingresar un número válido.");
 });
 
 var app = builder.Build();
 
-// Crear la base y aplicar el esquema al primer arranque.
+// Comprobar la base existente sin crear ni modificar el esquema.
 try
 {
     DatabaseInitializer.Inicializar(app.Services);

@@ -25,8 +25,8 @@
             <dl class="row mb-0" style="font-size:.9rem">
                 <dt class="col-5 texto-secundario">Cédula</dt>
                 <dd class="col-7">@(Model.Cedula ?? "—")</dd>
-                <dt class="col-5 texto-secundario">RUC</dt>
-                <dd class="col-7 fw-semibold">@Model.RFC</dd>
+                <dt class="col-5 texto-secundario">RUC de empresa</dt>
+                <dd class="col-7 fw-semibold">@(Model.RFC ?? "—")</dd>
                 <dt class="col-5 texto-secundario">Teléfono</dt>
                 <dd class="col-7">@Model.Telefono</dd>
                 <dt class="col-5 texto-secundario">Dirección</dt>

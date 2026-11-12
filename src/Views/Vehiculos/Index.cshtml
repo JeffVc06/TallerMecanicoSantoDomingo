@@ -74,7 +74,7 @@
                                 </a>
                                 <form asp-action="CambiarEstado" asp-route-id="@v.IdVehiculo" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
-                                    <input type="hidden" name="activo" value="@(!v.Activo)" />
+                                    <input type="hidden" name="activo" value="@(v.Activo ? "false" : "true")" />
                                     <button type="submit" class="btn btn-sm @(v.Activo ? "btn-outline-danger" : "btn-outline-success") btn-icono"
                                             title="@(v.Activo ? "Desactivar" : "Reactivar")"
                                             data-confirmar="¿Desea @(v.Activo ? "desactivar" : "reactivar") el vehículo @(v.Placa)?" aria-label="@(v.Activo ? "Desactivar" : "Reactivar")">

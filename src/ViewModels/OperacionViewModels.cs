@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace TallerMecanicoSantoDomingo.ViewModels;
 
-public class ClienteFormViewModel
+public class ClienteFormViewModel : IValidatableObject
 {
     public int IdCliente { get; set; }
 
@@ -16,12 +17,11 @@ public class ClienteFormViewModel
     [Display(Name = "Apellido")]
     public string Apellido { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "El RUC es obligatorio.")]
     [StringLength(20, ErrorMessage = "El RUC no puede exceder 20 caracteres.")]
-    [Display(Name = "RUC")]
-    public string RFC { get; set; } = string.Empty;
+    [Display(Name = "RUC de la empresa (opcional)")]
+    public string? RFC { get; set; }
 
-    [StringLength(20)]
+    [StringLength(20, ErrorMessage = "El campo {0} no puede exceder {1} caracteres.")]
     [Display(Name = "Cédula")]
     public string? Cedula { get; set; }
 
@@ -35,6 +35,12 @@ public class ClienteFormViewModel
     [StringLength(200, ErrorMessage = "La dirección no puede exceder 200 caracteres.")]
     [Display(Name = "Dirección")]
     public string Direccion { get; set; } = string.Empty;
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (string.IsNullOrWhiteSpace(Cedula) && string.IsNullOrWhiteSpace(RFC))
+            yield return new ValidationResult("Ingrese la cédula del cliente o el RUC de la empresa.", [nameof(Cedula), nameof(RFC)]);
+    }
 }
 
 public class VehiculoFormViewModel
@@ -63,19 +69,20 @@ public class VehiculoFormViewModel
     [Required(ErrorMessage = "El año es obligatorio.")]
     [Range(1950, 2100, ErrorMessage = "El año debe estar entre 1950 y 2100.")]
     [Display(Name = "Año")]
+    [BindRequired]
     public int Anio { get; set; } = DateTime.Now.Year;
 
     [Range(0, int.MaxValue, ErrorMessage = "El kilometraje debe ser mayor o igual a cero.")]
     public int Kilometraje { get; set; }
 
-    [StringLength(50)]
+    [StringLength(50, ErrorMessage = "El campo {0} no puede exceder {1} caracteres.")]
     public string? Color { get; set; }
 
-    [StringLength(50)]
+    [StringLength(50, ErrorMessage = "El campo {0} no puede exceder {1} caracteres.")]
     [Display(Name = "Número de chasis")]
     public string? NumChasis { get; set; }
 
-    [StringLength(50)]
+    [StringLength(50, ErrorMessage = "El campo {0} no puede exceder {1} caracteres.")]
     [Display(Name = "Tipo de vehículo")]
     public string? Tipo { get; set; }
 }
@@ -104,11 +111,12 @@ public class TrabajadorFormViewModel : IValidatableObject
     [Display(Name = "Área de trabajo")]
     public string Area { get; set; } = string.Empty;
 
-    [StringLength(256), EmailAddress(ErrorMessage = "Debe ingresar un correo válido.")]
+    [StringLength(256, ErrorMessage = "El campo {0} no puede exceder {1} caracteres."), EmailAddress(ErrorMessage = "Debe ingresar un correo válido.")]
     public string? Correo { get; set; }
 
     [Required(ErrorMessage = "La fecha de ingreso es obligatoria.")]
     [Display(Name = "Fecha de ingreso")]
+    [BindRequired]
     public DateOnly? FechaIngreso { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
 
     [Display(Name = "Fecha de salida")]
@@ -121,7 +129,7 @@ public class TrabajadorFormViewModel : IValidatableObject
     }
 }
 
-public class ServicioFormViewModel
+public class ServicioFormViewModel : IValidatableObject
 {
     public int IdServicio { get; set; }
 
@@ -131,6 +139,7 @@ public class ServicioFormViewModel
 
     [Required(ErrorMessage = "Debe seleccionar el tipo de servicio.")]
     [Display(Name = "Tipo de servicio")]
+    [BindRequired]
     public string TipoServicio { get; set; } = "Mantenimiento";
 
     [Required(ErrorMessage = "La descripción del trabajo es obligatoria.")]
@@ -152,11 +161,28 @@ public class ServicioFormViewModel
 
     [Required(ErrorMessage = "La fecha de inicio es obligatoria.")]
     [Display(Name = "Fecha de inicio")]
+    [BindRequired]
     public DateOnly FechaInicio { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
-    [Range(typeof(decimal), "0", "99999999", ErrorMessage = "El monto del servicio debe ser mayor o igual a cero.")]
+    [Range(typeof(decimal), "0", "9999999999.99", ErrorMessage = "El monto debe ser no negativo y estar dentro del rango de la base de datos.")]
     [Display(Name = "Monto del servicio (C$)")]
+    [BindRequired]
     public decimal Total { get; set; }
+    [Display(Name = "Trabajador inicial")]
+    public int? IdTrabajadorInicial { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (IdServicio == 0 && (!IdTrabajadorInicial.HasValue || IdTrabajadorInicial <= 0))
+            yield return new ValidationResult("Seleccione un trabajador habilitado para abrir el servicio.", [nameof(IdTrabajadorInicial)]);
+        if (TipoServicio == "Mantenimiento" && string.IsNullOrWhiteSpace(DescripcionFalla))
+            yield return new ValidationResult("La descripción de la falla es obligatoria para mantenimiento.", [nameof(DescripcionFalla)]);
+        if (TipoServicio == "Pintura")
+        {
+            if (string.IsNullOrWhiteSpace(TipoPintura)) yield return new ValidationResult("El tipo de pintura es obligatorio.", [nameof(TipoPintura)]);
+            if (string.IsNullOrWhiteSpace(Color)) yield return new ValidationResult("El color es obligatorio para pintura.", [nameof(Color)]);
+        }
+    }
 }
 
 public class FinalizarServicioViewModel
@@ -165,6 +191,7 @@ public class FinalizarServicioViewModel
 
     [Required(ErrorMessage = "La fecha de finalización es obligatoria.")]
     [Display(Name = "Fecha de finalización")]
+    [BindRequired]
     public DateOnly FechaFin { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 }
 
@@ -181,6 +208,9 @@ public class ProductoFormViewModel
 {
     public int IdProducto { get; set; }
 
+    // Comparación contra el saldo persistido para detectar un formulario de edición desactualizado.
+    public decimal? StockOriginal { get; set; }
+
     [Required(ErrorMessage = "El nombre del producto es obligatorio.")]
     [StringLength(100, ErrorMessage = "El nombre no puede exceder 100 caracteres.")]
     [Display(Name = "Nombre del producto")]
@@ -192,8 +222,9 @@ public class ProductoFormViewModel
     public string Descripcion { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "El precio unitario es obligatorio.")]
-    [Range(typeof(decimal), "0", "99999999", ErrorMessage = "El precio unitario debe ser mayor o igual a cero.")]
+    [Range(typeof(decimal), "0", "9999999999.99", ErrorMessage = "El precio debe ser no negativo y estar dentro del rango de la base de datos.")]
     [Display(Name = "Precio unitario (C$)")]
+    [BindRequired]
     public decimal PrecioUnitario { get; set; }
 
     [Range(typeof(decimal), "0", "9999999999.99", ErrorMessage = "El costo de compra debe estar entre 0 y 9 999 999 999,99.")]
@@ -201,8 +232,9 @@ public class ProductoFormViewModel
     public decimal Costo { get; set; }
 
     [Required(ErrorMessage = "El stock es obligatorio.")]
-    [Range(typeof(decimal), "0", "9999999", ErrorMessage = "El stock no puede ser negativo.")]
+    [Range(typeof(decimal), "0", "999999999.999", ErrorMessage = "El stock debe ser no negativo y estar dentro del rango de la base de datos.")]
     [Display(Name = "Stock")]
+    [BindRequired]
     public decimal Stock { get; set; }
 }
 
@@ -215,8 +247,9 @@ public class ProductoUtilizadoFormViewModel
     public int IdProducto { get; set; }
 
     [Required(ErrorMessage = "La cantidad es obligatoria.")]
-    [Range(typeof(decimal), "0.001", "9999999", ErrorMessage = "La cantidad debe ser mayor que cero.")]
+    [Range(typeof(decimal), "0.001", "999999999.999", ErrorMessage = "La cantidad debe ser mayor que cero.")]
     [Display(Name = "Cantidad utilizada")]
+    [BindRequired]
     public decimal Cantidad { get; set; } = 1;
 }
 
@@ -241,6 +274,7 @@ public class FacturaCrearViewModel
 
     [Required(ErrorMessage = "Debe seleccionar el método de pago.")]
     [Display(Name = "Método de pago")]
+    [BindRequired]
     public string MetodoPago { get; set; } = "Efectivo";
 
     [Required(ErrorMessage = "Debe seleccionar al menos un servicio para facturar.")]

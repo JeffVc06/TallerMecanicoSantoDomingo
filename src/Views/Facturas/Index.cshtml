@@ -17,8 +17,8 @@
     <form asp-action="Index" method="get" data-busqueda class="filtros row g-2 align-items-end mb-3">
         <input type="hidden" name="pagina" value="1" />
         <div class="col-md-4">
-            <label for="filtro-buscar" class="form-label fw-semibold text-primary">Número de factura</label>
-            <input id="filtro-buscar" type="text" name="buscar" value="@ViewBag.Buscar" class="form-control" placeholder="FAC-2026-0001" />
+            <label for="filtro-buscar" class="form-label fw-semibold text-primary">Factura, cliente o identificación</label>
+            <input id="filtro-buscar" type="text" name="buscar" value="@ViewBag.Buscar" class="form-control" placeholder="Número de factura, nombre, cédula o RUC" />
         </div>
         <div class="col-md-3">
             <label for="filtro-desde" class="form-label fw-semibold text-primary">Fecha desde</label>

@@ -11,7 +11,7 @@ CREATE TABLE dbo.Cliente (
     Nombre nvarchar(100) NOT NULL,
     Apellido nvarchar(100) NOT NULL,
     Telefono nvarchar(20) NOT NULL,
-    RUC nvarchar(20) NOT NULL UNIQUE,
+    RUC nvarchar(20) NULL,
     Direccion nvarchar(200) NOT NULL,
     Activo bit NOT NULL DEFAULT 1,
     FechaRegistro datetime2 NOT NULL DEFAULT SYSUTCDATETIME()
@@ -20,6 +20,10 @@ CREATE TABLE dbo.Cliente (
 CREATE UNIQUE INDEX UQ_Cliente_Cedula
 ON dbo.Cliente(Cedula)
 WHERE Cedula IS NOT NULL;
+
+CREATE UNIQUE INDEX UQ_Cliente_RUC
+ON dbo.Cliente(RUC)
+WHERE RUC IS NOT NULL;
 
 CREATE TABLE dbo.Vehiculo (
     IdVehiculo int IDENTITY(1,1) PRIMARY KEY,
@@ -140,10 +144,35 @@ WHERE NormalizedEmail IS NOT NULL;
 GO
 
 -- Validaciones que también se pueden aplicar a una base creada con el esquema anterior.
+-- Permitir clientes particulares sin RUC, conservando la unicidad cuando se proporciona.
+-- El inicializador ejecuta este lote dentro de una transacción también en bases existentes.
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID(N'dbo.Cliente') AND name = N'RUC' AND is_nullable = 0)
+   OR NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Cliente') AND name = N'UQ_Cliente_RUC' AND is_unique = 1 AND has_filter = 1)
+BEGIN
+    DECLARE @quitarUnicidadRuc nvarchar(max);
+    SELECT @quitarUnicidadRuc = STRING_AGG(CAST(
+        CASE WHEN i.is_unique_constraint = 1
+            THEN N'ALTER TABLE dbo.Cliente DROP CONSTRAINT ' + QUOTENAME(i.name) + N';'
+            ELSE N'DROP INDEX ' + QUOTENAME(i.name) + N' ON dbo.Cliente;'
+        END AS nvarchar(max)), NCHAR(10))
+    FROM sys.indexes i
+    WHERE i.object_id = OBJECT_ID(N'dbo.Cliente') AND i.is_unique = 1 AND i.is_primary_key = 0
+      AND (SELECT COUNT(*) FROM sys.index_columns ic WHERE ic.object_id = i.object_id AND ic.index_id = i.index_id AND ic.key_ordinal > 0) = 1
+      AND EXISTS (SELECT 1 FROM sys.index_columns ic JOIN sys.columns c ON c.object_id = ic.object_id AND c.column_id = ic.column_id
+                  WHERE ic.object_id = i.object_id AND ic.index_id = i.index_id AND ic.key_ordinal = 1 AND c.name = N'RUC');
+    IF @quitarUnicidadRuc IS NOT NULL
+        EXEC sys.sp_executesql @quitarUnicidadRuc;
+
+    ALTER TABLE dbo.Cliente ALTER COLUMN RUC nvarchar(20) NULL;
+    CREATE UNIQUE INDEX UQ_Cliente_RUC ON dbo.Cliente(RUC) WHERE RUC IS NOT NULL;
+END;
+
 IF OBJECT_ID(N'dbo.CK_Cliente_Nombre', N'C') IS NULL
     ALTER TABLE dbo.Cliente WITH CHECK ADD CONSTRAINT CK_Cliente_Nombre CHECK (LTRIM(Nombre) <> '');
 IF OBJECT_ID(N'dbo.CK_Cliente_Apellido', N'C') IS NULL
     ALTER TABLE dbo.Cliente WITH CHECK ADD CONSTRAINT CK_Cliente_Apellido CHECK (LTRIM(Apellido) <> '');
+IF OBJECT_ID(N'dbo.CK_Cliente_Identificacion', N'C') IS NULL
+    ALTER TABLE dbo.Cliente WITH CHECK ADD CONSTRAINT CK_Cliente_Identificacion CHECK (NULLIF(LTRIM(RTRIM(Cedula)), N'') IS NOT NULL OR NULLIF(LTRIM(RTRIM(RUC)), N'') IS NOT NULL);
 
 IF OBJECT_ID(N'dbo.CK_Vehiculo_Anio', N'C') IS NULL
     ALTER TABLE dbo.Vehiculo WITH CHECK ADD CONSTRAINT CK_Vehiculo_Anio CHECK (Anio BETWEEN 1950 AND YEAR(GETDATE()) + 1);

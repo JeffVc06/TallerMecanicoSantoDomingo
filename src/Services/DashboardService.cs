@@ -38,7 +38,7 @@ public class DashboardService
         // Tarjetas: cifras reales; 0 cuando la base está vacía.
         var totalClientes = await _db.Clientes.CountAsync();
         var totalVehiculos = await _db.Vehiculos.CountAsync();
-        var serviciosActivos = await _db.Servicios.CountAsync(s => s.Estado == "Abierto");
+        var serviciosActivos = await _db.Servicios.CountAsync(s => ReglasTaller.EstadosActivos.Contains(s.Estado));
         var serviciosFinalizados = await _db.Servicios.CountAsync(s => s.Estado == "Finalizado");
         var totalTrabajadores = await _db.Trabajadores.CountAsync();
         var totalProductos = await _db.Productos.CountAsync();
@@ -93,9 +93,9 @@ public class DashboardService
         // traducir a SQL.
         var trabajadoresAlLimite = (await _db.DetalleServicio.AsNoTracking()
                 .Where(d => d.Estado == "Activo"
-                            && d.Servicio!.Estado == "Abierto")
+                            && ReglasTaller.EstadosActivos.Contains(d.Servicio!.Estado))
                 .GroupBy(d => new { d.IdTrabajador, d.Trabajador!.Nombre, d.Trabajador.Apellido })
-                .Where(g => g.Count() >= 2)
+                .Where(g => g.Select(d => d.IdServicio).Distinct().Count() >= 2)
                 .Select(g => new { g.Key.Nombre, g.Key.Apellido })
                 .ToListAsync())
             .Select(t => $"{t.Nombre} {t.Apellido}")

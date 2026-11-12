@@ -1,11 +1,10 @@
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace TallerMecanicoSantoDomingo.Data;
 
-/// <summary>Prepara la base de datos y crea el administrador inicial si se configuró.</summary>
+/// <summary>Comprueba la base existente sin DDL y crea el administrador inicial si se configuró.</summary>
 public static class DatabaseInitializer
 {
     public static void Inicializar(IServiceProvider servicios)
@@ -16,35 +15,16 @@ public static class DatabaseInitializer
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseInitializer");
         var cadena = db.Database.GetConnectionString()
             ?? throw new InvalidOperationException("No se encontró la conexión 'TallerDB'.");
-        var conexion = new SqlConnectionStringBuilder(cadena);
-        if (conexion.InitialCatalog != "TallerMecanicoSantoDomingo")
-            throw new InvalidOperationException("El script SQL requiere Database=TallerMecanicoSantoDomingo en la conexión.");
-
-        using var recurso = typeof(TallerDbContext).Assembly.GetManifestResourceStream("EsquemaBD.sql")
-            ?? throw new InvalidOperationException("No se encontró el esquema SQL incrustado.");
-        using var lector = new StreamReader(recurso);
-        var lotes = Regex.Split(lector.ReadToEnd(), @"(?im)^[ \t]*GO[ \t]*;?[ \t]*\r?$")
-            .Where(lote => !string.IsNullOrWhiteSpace(lote))
-            .ToArray();
-        if (lotes is not [var crearBase, _, var crearTablas, var restricciones, var procedimiento])
-            throw new InvalidOperationException("El script SQL no contiene los lotes esperados de creación y actualización.");
-
-        conexion.InitialCatalog = "master";
-        using var sql = new SqlConnection(conexion.ConnectionString);
+        // La base SQL está terminada: este arranque solo lee su estructura.
+        using var sql = new SqlConnection(cadena);
         sql.Open();
-        using var existe = new SqlCommand("SELECT DB_ID(N'TallerMecanicoSantoDomingo')", sql);
-        if (existe.ExecuteScalar() is DBNull)
-            EjecutarLote(sql, null, crearBase);
-        sql.ChangeDatabase("TallerMecanicoSantoDomingo");
-
-        using var transaccion = sql.BeginTransaction();
         var columnas = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
         using (var consulta = new SqlCommand("""
             SELECT t.name, c.name
             FROM sys.tables AS t
             INNER JOIN sys.columns AS c ON c.object_id = t.object_id
             WHERE t.schema_id = SCHEMA_ID(N'dbo');
-            """, sql, transaccion))
+            """, sql))
         using (var filas = consulta.ExecuteReader())
         {
             while (filas.Read())
@@ -57,32 +37,11 @@ public static class DatabaseInitializer
         }
 
         if (NecesitaEsquema(db, columnas.Keys))
-            EjecutarLote(sql, transaccion, crearTablas);
-        else
-            ValidarColumnas(db, columnas);
-
-        try
-        {
-            EjecutarLote(sql, transaccion, restricciones);
-        }
-        catch (SqlException ex) when (ex.Number == 547)
-        {
-            throw new InvalidOperationException("Hay registros que incumplen una restricción del taller. Revise el detalle de SQL Server para corregirlos antes de iniciar.", ex);
-        }
-
-        using var existeProcedimiento = new SqlCommand("SELECT OBJECT_ID(N'dbo.usp_AnularFactura', N'P')", sql, transaccion);
-        if (existeProcedimiento.ExecuteScalar() is DBNull)
-            EjecutarLote(sql, transaccion, procedimiento);
-        transaccion.Commit();
+            throw new InvalidOperationException("La base de datos no está preparada. Configure una base existente con el esquema del taller; el sistema no crea ni modifica su estructura.");
+        ValidarColumnas(db, columnas);
 
         var gestor = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
         SemillarAdministradorInicial(db, gestor, config, logger).GetAwaiter().GetResult();
-    }
-
-    private static void EjecutarLote(SqlConnection conexion, SqlTransaction? transaccion, string lote)
-    {
-        using var comando = new SqlCommand(lote, conexion, transaccion);
-        comando.ExecuteNonQuery();
     }
 
     private static void ValidarColumnas(TallerDbContext db, IReadOnlyDictionary<string, HashSet<string>> columnas)
@@ -101,7 +60,7 @@ public static class DatabaseInitializer
         if (existentes.Count == 0) return true;
         var esperadas = db.Model.GetEntityTypes().Select(e => e.GetTableName()!);
         if (esperadas.All(existentes.Contains)) return false;
-        throw new InvalidOperationException("La base tiene un esquema anterior o incompleto. Prepare su migración antes de continuar; no se modificaron las tablas.");
+        throw new InvalidOperationException("La base tiene un esquema anterior o incompleto. Configure la base terminada del taller; no se modificaron las tablas.");
     }
 
     /// <summary>
