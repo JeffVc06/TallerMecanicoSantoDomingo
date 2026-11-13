@@ -18,13 +18,14 @@
         <div class="row g-3">
             <div class="col-md-6">
                 <label asp-for="Nombre" class="form-label"></label>
-                <input asp-for="Nombre" class="form-control" />
+                <input asp-for="Nombre" class="form-control" maxlength="100" aria-describedby="ayuda-nombres" />
                 <span asp-validation-for="Nombre" class="text-danger"></span>
             </div>
             <div class="col-md-6">
                 <label asp-for="Apellido" class="form-label"></label>
-                <input asp-for="Apellido" class="form-control" />
+                <input asp-for="Apellido" class="form-control" maxlength="100" aria-describedby="ayuda-nombres" />
                 <span asp-validation-for="Apellido" class="text-danger"></span>
+                <div id="ayuda-nombres" class="form-text">Nombres y apellidos con letras; se permiten tildes, espacios, guiones y apóstrofos.</div>
             </div>
             <div class="col-md-6">
                 <label asp-for="Cedula" class="form-label"></label>
@@ -40,7 +41,8 @@
             <div class="col-12"><h2 class="formulario-seccion">Contacto</h2></div>
             <div class="col-md-6">
                 <label asp-for="Telefono" class="form-label"></label>
-                <input asp-for="Telefono" class="form-control" />
+                <input asp-for="Telefono" class="form-control" type="tel" inputmode="numeric" pattern="[0-9]{8}" minlength="8" maxlength="8" required placeholder="88888888" aria-describedby="ayuda-telefono" />
+                <div id="ayuda-telefono" class="form-text">Exactamente 8 dígitos, sin guiones ni prefijos. No puede repetirse en clientes ni trabajadores.</div>
                 <span asp-validation-for="Telefono" class="text-danger"></span>
             </div>
             <div class="col-12">

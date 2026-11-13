@@ -71,6 +71,181 @@ public class PruebasCambiosEstadoMvc : IAsyncLifetime
     }
 
     [Theory]
+    [InlineData("Clientes", true)]
+    [InlineData("Clientes", false)]
+    [InlineData("Trabajadores", true)]
+    [InlineData("Trabajadores", false)]
+    public async Task Formulario_de_contacto_exige_ocho_digitos_y_rechaza_telefono_del_otro_modulo(string modulo, bool nuevo)
+    {
+        var ruta = $"/{modulo}/{(nuevo ? "Crear" : "Editar/1")}";
+        var html = await _cliente.GetStringAsync(ruta);
+        var campo = Regex.Match(html, "<input\\b(?=[^>]*name=\"Telefono\")[^>]*>").Value;
+        Assert.Contains("type=\"tel\"", campo);
+        Assert.Contains("pattern=\"[0-9]{8}\"", campo);
+        Assert.Contains("minlength=\"8\"", campo);
+        Assert.Contains("maxlength=\"8\"", campo);
+        var datos = new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = Valor(html, "__RequestVerificationToken"),
+            ["Nombre"] = "Contacto", ["Apellido"] = "Prueba"
+        };
+        if (modulo == "Clientes")
+        {
+            datos["IdCliente"] = nuevo ? "0" : "1";
+            datos["Cedula"] = "CONTACTO-PRUEBA";
+            datos["Direccion"] = "Managua";
+        }
+        else
+        {
+            datos["IdTrabajador"] = nuevo ? "0" : "1";
+            datos["Area"] = "Mantenimiento mecánico";
+            datos["FechaIngreso"] = "2026-09-01";
+        }
+
+        datos["Telefono"] = "81234567";
+        datos["Nombre"] = "Ana123";
+        var nombreInvalido = await _cliente.PostAsync(ruta, new FormUrlEncodedContent(datos));
+        Assert.Contains(ReglasTaller.ErrorNombre, WebUtility.HtmlDecode(await nombreInvalido.Content.ReadAsStringAsync()));
+        datos["Nombre"] = "Contacto";
+        if (modulo == "Trabajadores")
+        {
+            datos["Correo"] = "ana@dominio";
+            var correoInvalido = await _cliente.PostAsync(ruta, new FormUrlEncodedContent(datos));
+            Assert.Contains(ReglasTaller.ErrorCorreo, WebUtility.HtmlDecode(await correoInvalido.Content.ReadAsStringAsync()));
+            datos.Remove("Correo");
+        }
+        var repetido = modulo == "Clientes" ? "85554444" : "88881111";
+        foreach (var telefono in new[] { "8888", repetido, "81234567" })
+        {
+            datos["Telefono"] = telefono;
+            var respuesta = await _cliente.PostAsync(ruta, new FormUrlEncodedContent(datos));
+            Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+            html = WebUtility.HtmlDecode(await respuesta.Content.ReadAsStringAsync());
+            if (telefono == "8888") Assert.Contains(ReglasTaller.ErrorTelefono, html);
+            if (telefono == repetido) Assert.Contains("El teléfono ya está registrado", html);
+
+            using var scope = _app.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<TallerDbContext>();
+            var telefonos = modulo == "Clientes"
+                ? await db.Clientes.AsNoTracking().OrderBy(c => c.IdCliente).Select(c => c.Telefono).ToListAsync()
+                : await db.Trabajadores.AsNoTracking().OrderBy(t => t.IdTrabajador).Select(t => t.Telefono).ToListAsync();
+            if (telefono == "81234567")
+            {
+                Assert.Equal(nuevo ? 3 : 2, telefonos.Count);
+                Assert.Equal(telefono, nuevo ? telefonos[^1] : telefonos[0]);
+            }
+            else
+            {
+                Assert.Equal(2, telefonos.Count);
+                Assert.Equal(modulo == "Clientes" ? "88881111" : "85554444", telefonos[0]);
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Formulario_de_vehiculo_rechaza_placa_equivalente_anio_fuera_de_rango_y_chasis_invalido(bool nuevo)
+    {
+        var ruta = nuevo ? "/Vehiculos/Crear" : "/Vehiculos/Editar/1";
+        var html = await _cliente.GetStringAsync(ruta);
+        var campoAnio = Regex.Match(html, "<input\\b(?=[^>]*name=\"Anio\")[^>]*>").Value;
+        Assert.Contains($"max=\"{DateTime.Now.Year + 1}\"", campoAnio);
+        var token = Valor(html, "__RequestVerificationToken");
+        foreach (var caso in new[] { "placa", "anio", "chasis", "valido" })
+        {
+            var datos = new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token, ["IdVehiculo"] = nuevo ? "0" : "1", ["IdCliente"] = "1",
+                ["Placa"] = caso == "placa" ? "mgb5678" : "M NUEVA9", ["Marca"] = "Toyota", ["Modelo"] = "Corolla",
+                ["Anio"] = (caso == "anio" ? DateTime.Now.Year + 2 : 2020).ToString(),
+                ["NumChasis"] = caso == "chasis" ? "***" : "ABCD999"
+            };
+            var respuesta = await _cliente.PostAsync(ruta, new FormUrlEncodedContent(datos));
+            Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+            html = WebUtility.HtmlDecode(await respuesta.Content.ReadAsStringAsync());
+            if (caso == "placa") Assert.Contains("Ya existe un vehículo registrado con la placa", html);
+            if (caso == "anio") Assert.Contains(ReglasTaller.ErrorAnio, html);
+            if (caso == "chasis") Assert.Contains(ReglasTaller.ErrorIdentificadorVehiculo, html);
+            using var scope = _app.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<TallerDbContext>();
+            var vehiculos = await db.Vehiculos.AsNoTracking().OrderBy(v => v.IdVehiculo).ToListAsync();
+            Assert.Equal(caso == "valido" && nuevo ? 4 : 3, vehiculos.Count);
+            if (caso == "valido") Assert.Equal("M NUEVA9", nuevo ? vehiculos[^1].Placa : vehiculos[0].Placa);
+            else
+            {
+                Assert.Equal("MGA-1234", vehiculos[0].Placa);
+                Assert.Equal(2018, vehiculos[0].Anio);
+                Assert.Null(vehiculos[0].NumChasis);
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Formulario_de_producto_muestra_error_de_precision_y_conserva_saldo_tras_rechazo(bool nuevo)
+    {
+        var ruta = nuevo ? "/Productos/Crear" : "/Productos/Editar/1";
+        var token = Valor(await _cliente.GetStringAsync(ruta), "__RequestVerificationToken");
+        foreach (var caso in new[] { "precio", "stock", "valido" })
+        {
+            var datos = new Dictionary<string, string>
+            {
+                ["__RequestVerificationToken"] = token, ["IdProducto"] = nuevo ? "0" : "1",
+                ["StockOriginal"] = "20", ["Nombre"] = "Aceite", ["Descripcion"] = "10W-30",
+                ["PrecioUnitario"] = caso == "precio" ? "10.001" : "10.01",
+                ["Costo"] = "5.01", ["Stock"] = caso == "stock" ? "10.0001" : "10.001"
+            };
+            var respuesta = await _cliente.PostAsync(ruta, new FormUrlEncodedContent(datos));
+            Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+            var html = WebUtility.HtmlDecode(await respuesta.Content.ReadAsStringAsync());
+            if (caso == "precio") Assert.Contains(ReglasTaller.ErrorImporte, html);
+            if (caso == "stock") Assert.Contains(ReglasTaller.ErrorCantidad, html);
+            using var scope = _app.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<TallerDbContext>();
+            var productos = await db.Productos.AsNoTracking().OrderBy(p => p.IdProducto).ToListAsync();
+            Assert.Equal(caso == "valido" && nuevo ? 3 : 2, productos.Count);
+            if (caso == "valido")
+            {
+                var guardado = nuevo ? productos[^1] : productos[0];
+                Assert.Equal(10.01m, guardado.PrecioUnitario);
+                Assert.Equal(10.001m, guardado.Stock);
+            }
+            else
+            {
+                Assert.Equal(350m, productos[0].PrecioUnitario);
+                Assert.Equal(20m, productos[0].Stock);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Factura_con_servicio_repetido_muestra_error_y_permite_corregir_sin_crear_detalles()
+    {
+        var id = await AbrirTrabajo();
+        using (var scope = _app.Services.CreateScope())
+            Assert.True((await scope.ServiceProvider.GetRequiredService<ServicioService>().Finalizar(id, new DateOnly(2026, 9, 2))).EsCorrecto);
+        var token = Valor(await _cliente.GetStringAsync("/Facturas/Crear?idCliente=1"), "__RequestVerificationToken");
+        foreach (var repetido in new[] { true, false })
+        {
+            var datos = new List<KeyValuePair<string, string>>
+            {
+                new("__RequestVerificationToken", token), new("IdCliente", "1"),
+                new("MetodoPago", "Efectivo"), new("IdServicios", id.ToString())
+            };
+            if (repetido) datos.Add(new("IdServicios", id.ToString()));
+            var respuesta = await _cliente.PostAsync("/Facturas/Crear", new FormUrlEncodedContent(datos));
+            Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
+            if (repetido) Assert.Contains(ReglasTaller.ErrorServiciosRepetidos, WebUtility.HtmlDecode(await respuesta.Content.ReadAsStringAsync()));
+            using var scope = _app.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<TallerDbContext>();
+            Assert.Equal(repetido ? 0 : 1, await db.Facturas.CountAsync());
+            Assert.Equal(repetido ? 0 : 1, await db.DetalleFactura.CountAsync());
+        }
+    }
+
+    [Theory]
     [InlineData("Clientes")]
     [InlineData("Vehiculos")]
     [InlineData("Trabajadores")]
@@ -114,7 +289,7 @@ public class PruebasCambiosEstadoMvc : IAsyncLifetime
             var db = scope.ServiceProvider.GetRequiredService<TallerDbContext>();
             var nuevos = Enumerable.Range(1, 12).Select(n => new TallerMecanicoSantoDomingo.Models.Cliente
             {
-                Nombre = "Filtro", Apellido = $"Prueba {n:00}", RFC = $"FILTRO-{n}", Telefono = "8888-1111", Direccion = "Managua"
+                Nombre = "Filtro", Apellido = $"Prueba {n:00}", RFC = $"FILTRO-{n}", Telefono = $"7000{n:0000}", Direccion = "Managua"
             }).ToList();
             db.Clientes.AddRange(nuevos);
             await db.SaveChangesAsync();

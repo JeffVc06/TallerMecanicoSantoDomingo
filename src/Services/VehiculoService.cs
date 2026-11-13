@@ -81,8 +81,10 @@ public class VehiculoService
         if (ReglasTaller.Campos(vehiculo) is { } campos) return Resultado.Fallo(campos);
         if (vehiculo.Placa.Length == 0)
             return Resultado.Fallo("La placa del vehículo es obligatoria.");
-        if (vehiculo.Anio < 1950 || vehiculo.Anio > DateTime.Now.Year + 1)
-            return Resultado.Fallo("El año del vehículo no es válido.");
+        if (!ReglasTaller.IdentificadorVehiculoValido(vehiculo.Placa) || !ReglasTaller.IdentificadorVehiculoValido(vehiculo.NumChasis))
+            return Resultado.Fallo($"Placa o número de chasis: {ReglasTaller.ErrorIdentificadorVehiculo}");
+        if (!ReglasTaller.AnioVehiculoValido(vehiculo.Anio))
+            return Resultado.Fallo(ReglasTaller.ErrorAnio);
         if (vehiculo.Kilometraje < 0)
             return Resultado.Fallo("El kilometraje debe ser mayor o igual a cero.");
         var cliente = await _db.Clientes.AsNoTracking().SingleOrDefaultAsync(c => c.IdCliente == vehiculo.IdCliente);
@@ -91,10 +93,9 @@ public class VehiculoService
         if (!cliente.Activo && propietarioActual != cliente.IdCliente)
             return Resultado.Fallo("El cliente está desactivado. Reactívelo antes de registrar o transferirle un vehículo.");
 
-        var otros = _db.Vehiculos.Where(v => v.IdVehiculo != vehiculo.IdVehiculo);
-        if (await otros.AnyAsync(v => v.Placa == vehiculo.Placa))
+        if (await ReglasTaller.IdentificadorVehiculoRepetido(_db, vehiculo.Placa, chasis: false, vehiculo.IdVehiculo))
             return Resultado.Fallo($"Ya existe un vehículo registrado con la placa {vehiculo.Placa}.");
-        if (vehiculo.NumChasis is not null && await otros.AnyAsync(v => v.NumChasis == vehiculo.NumChasis))
+        if (vehiculo.NumChasis is not null && await ReglasTaller.IdentificadorVehiculoRepetido(_db, vehiculo.NumChasis, chasis: true, vehiculo.IdVehiculo))
             return Resultado.Fallo($"Ya existe un vehículo registrado con el número de chasis {vehiculo.NumChasis}.");
 
         return null;

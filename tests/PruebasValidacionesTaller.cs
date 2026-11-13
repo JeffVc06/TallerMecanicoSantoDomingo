@@ -75,7 +75,7 @@ public class PruebasValidacionesTaller
     {
         using var db = FabricaDeContextos.EnMemoria();
         FabricaDeContextos.SembrarBase(db);
-        db.Trabajadores.Add(new Trabajador { IdTrabajador = 3, Nombre = "José Ángel", Apellido = "De la Cruz", Telefono = "8888-9999" });
+        db.Trabajadores.Add(new Trabajador { IdTrabajador = 3, Nombre = "José Ángel", Apellido = "De la Cruz", Telefono = "88889999" });
         await db.SaveChangesAsync();
         var servicio = await new ServicioService(db).Crear(Entrada(), 1);
         var id = servicio.Datos!.IdServicio;

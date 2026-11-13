@@ -27,7 +27,8 @@
             <div class="col-12"><h2 class="formulario-seccion">Datos del vehículo</h2></div>
             <div class="col-md-4">
                 <label asp-for="Placa" class="form-label"></label>
-                <input asp-for="Placa" class="form-control text-uppercase" placeholder="M" style="text-transform:uppercase" />
+                <input asp-for="Placa" class="form-control text-uppercase" placeholder="MGA-1234" maxlength="20" style="text-transform:uppercase" aria-describedby="ayuda-placa" />
+                <div id="ayuda-placa" class="form-text">Letras y números; admite espacios o guiones. Cambiar los separadores no permite repetir una placa.</div>
                 <span asp-validation-for="Placa" class="text-danger"></span>
             </div>
             <div class="col-md-4">
@@ -42,7 +43,7 @@
             </div>
             <div class="col-md-4">
                 <label asp-for="Anio" class="form-label"></label>
-                <input asp-for="Anio" class="form-control" type="number" min="1950" max="2100" />
+                <input asp-for="Anio" class="form-control" type="number" min="1950" max="@(DateTime.Now.Year + 1)" required />
                 <span asp-validation-for="Anio" class="text-danger"></span>
             </div>
             <div class="col-md-6">
@@ -57,7 +58,8 @@
             </div>
             <div class="col-md-6">
                 <label asp-for="NumChasis" class="form-label"></label>
-                <input asp-for="NumChasis" class="form-control text-uppercase" />
+                <input asp-for="NumChasis" class="form-control text-uppercase" maxlength="50" aria-describedby="ayuda-chasis" />
+                <div id="ayuda-chasis" class="form-text">Opcional. Letras y números; admite espacios o guiones y no puede pertenecer a otro vehículo.</div>
                 <span asp-validation-for="NumChasis" class="text-danger"></span>
             </div>
             <div class="col-md-6">

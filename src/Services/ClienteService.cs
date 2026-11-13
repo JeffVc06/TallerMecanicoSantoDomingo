@@ -62,13 +62,13 @@ public class ClienteService
         cliente.Nombre = cliente.Nombre?.Trim() ?? "";
         cliente.Apellido = cliente.Apellido?.Trim() ?? "";
         cliente.RFC = string.IsNullOrWhiteSpace(cliente.RFC) ? null : cliente.RFC.Trim().ToUpperInvariant();
-        cliente.Telefono = cliente.Telefono?.Trim() ?? "";
+        cliente.Telefono ??= "";
         cliente.Direccion = cliente.Direccion?.Trim() ?? "";
         cliente.Cedula = string.IsNullOrWhiteSpace(cliente.Cedula) ? null : cliente.Cedula.Trim().ToUpperInvariant();
 
         if (ReglasTaller.Campos(cliente) is { } campos) return Resultado.Fallo(campos);
-        if (!new System.ComponentModel.DataAnnotations.PhoneAttribute().IsValid(cliente.Telefono))
-            return Resultado.Fallo("Debe ingresar un teléfono válido.");
+        if (await ReglasTaller.ValidarTelefono(_db, cliente.Telefono, idCliente: cliente.IdCliente) is { } telefono)
+            return Resultado.Fallo(telefono);
         if (cliente.Nombre.Length == 0 || cliente.Apellido.Length == 0)
             return Resultado.Fallo("El nombre y el apellido del cliente son obligatorios.");
         if (cliente.Cedula is null && cliente.RFC is null)

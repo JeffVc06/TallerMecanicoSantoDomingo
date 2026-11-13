@@ -20,7 +20,7 @@ public class PruebasIdentificacionCliente
     {
         var formulario = new ClienteFormViewModel
         {
-            Nombre = "Ana", Apellido = "López", Telefono = "8888-1111",
+            Nombre = "Ana", Apellido = "López", Telefono = "88881111",
             Direccion = "Managua", RFC = ruc, Cedula = cedula
         };
         var errores = new List<ValidationResult>();
@@ -40,6 +40,7 @@ public class PruebasIdentificacionCliente
         var clientes = new ClienteService(db);
         var primero = Particular(" 001-120690-0001a ");
         var segundo = Particular("001-120690-0002B");
+        segundo.Telefono = "87772222";
         segundo.RFC = " ";
 
         Assert.True((await clientes.Crear(primero)).EsCorrecto);
@@ -50,7 +51,9 @@ public class PruebasIdentificacionCliente
         Assert.Equal(primero.IdCliente, Assert.Single((await clientes.Buscar("0001A", true, 1, 10)).Elementos).IdCliente);
         Assert.Empty((await clientes.Buscar("sin coincidencias", true, 1, 10)).Elementos);
 
-        var duplicado = await clientes.Crear(Particular("001-120690-0001a"));
+        var repetido = Particular("001-120690-0001a");
+        repetido.Telefono = "86663333";
+        var duplicado = await clientes.Crear(repetido);
         Assert.False(duplicado.EsCorrecto);
         Assert.Contains("cédula", duplicado.Mensaje);
     }
@@ -104,7 +107,7 @@ public class PruebasIdentificacionCliente
 
     private static Cliente Particular(string cedula) => new()
     {
-        Nombre = "Ana", Apellido = "López", Telefono = "8888-1111",
+        Nombre = "Ana", Apellido = "López", Telefono = "88881111",
         Direccion = "Managua", Cedula = cedula
     };
 }

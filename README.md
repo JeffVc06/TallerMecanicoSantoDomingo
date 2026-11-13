@@ -110,6 +110,13 @@ La contraseña de una cuenta del sistema es independiente del acceso a SQL Serve
 ## Reglas que se conservan
 
 - Identificación fiscal y placas únicas; relaciones entre clientes y vehículos.
+- Teléfonos de exactamente ocho dígitos, sin espacios, guiones ni prefijos,
+  únicos entre clientes y trabajadores, incluidos los registros inactivos.
+- Nombres personales con letras, correos con usuario y dominio completo y
+  textos que contengan letras o números. Placas y chasis no se duplican al
+  cambiar mayúsculas, espacios o guiones; año entre 1950 y el siguiente al actual.
+- Importes con máximo dos decimales y cantidades con tres; selección de opciones
+  válidas y servicios sin repeticiones dentro de una factura.
 - Servicios de mantenimiento o pintura con fechas e importes válidos.
 - Personal compatible con el servicio; máximo dos asignaciones activas por
   trabajador. Las escrituras usan transacciones con un bloqueo compartido entre procesos.

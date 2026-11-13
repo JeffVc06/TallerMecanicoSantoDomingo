@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using TallerMecanicoSantoDomingo.Data;
 using TallerMecanicoSantoDomingo.Models;
@@ -11,17 +10,18 @@ public class TrabajadorService(TallerDbContext db)
     {
         entrada.Nombre = entrada.Nombre?.Trim() ?? "";
         entrada.Apellido = entrada.Apellido?.Trim() ?? "";
-        entrada.Telefono = entrada.Telefono?.Trim() ?? "";
+        entrada.Telefono ??= "";
         entrada.Area = entrada.Area?.Trim() ?? "";
         entrada.Correo = ReglasTaller.Opcional(entrada.Correo)?.ToLowerInvariant();
         if (ReglasTaller.Campos(entrada) is { } error) return Resultado.Fallo(error);
         if (entrada.Area is not ("Mantenimiento mecánico" or "Pintura")) return Resultado.Fallo("El área de trabajo seleccionada no existe.");
-        if (!new PhoneAttribute().IsValid(entrada.Telefono)) return Resultado.Fallo("Debe ingresar un teléfono válido.");
-        if (entrada.Correo is not null && !new EmailAddressAttribute().IsValid(entrada.Correo)) return Resultado.Fallo("Debe ingresar un correo válido.");
+        if (await ReglasTaller.ValidarTelefono(db, entrada.Telefono, idTrabajador: nuevo ? null : entrada.IdTrabajador) is { } telefono)
+            return Resultado.Fallo(telefono);
+        if (!ReglasTaller.CorreoValido(entrada.Correo)) return Resultado.Fallo(ReglasTaller.ErrorCorreo);
         if (entrada.FechaRegistro == default || entrada.FechaSalida < DateOnly.FromDateTime(entrada.FechaRegistro))
             return Resultado.Fallo("La fecha de ingreso es obligatoria y la salida no puede ser anterior al ingreso.");
         if (entrada.Correo is not null && await db.Trabajadores.AnyAsync(t => t.IdTrabajador != entrada.IdTrabajador &&
-            t.Correo != null && t.Correo.ToLower() == entrada.Correo))
+            t.Correo != null && t.Correo.Trim().ToLower() == entrada.Correo))
             return Resultado.Fallo("El correo ya está registrado para otro trabajador.");
         if (nuevo)
         {

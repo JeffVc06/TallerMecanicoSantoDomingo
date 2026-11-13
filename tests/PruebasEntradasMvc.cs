@@ -46,7 +46,7 @@ public class PruebasEntradasMvc
     {
         var vehiculo = await Enlazar<VehiculoFormViewModel>(new() { ["IdCliente"] = "1", ["Placa"] = "M 123456", ["Marca"] = "Toyota", ["Modelo"] = "Corolla" });
         Assert.NotEmpty(vehiculo[nameof(VehiculoFormViewModel.Anio)]!.Errors);
-        var trabajador = await Enlazar<TrabajadorFormViewModel>(new() { ["Nombre"] = "José", ["Apellido"] = "De la Cruz", ["Telefono"] = "8888-1111", ["Area"] = "Pintura" });
+        var trabajador = await Enlazar<TrabajadorFormViewModel>(new() { ["Nombre"] = "José", ["Apellido"] = "De la Cruz", ["Telefono"] = "88881111", ["Area"] = "Pintura" });
         Assert.NotEmpty(trabajador[nameof(TrabajadorFormViewModel.FechaIngreso)]!.Errors);
         var servicio = await Enlazar<ServicioFormViewModel>(new() { ["IdVehiculo"] = "1", ["IdTrabajadorInicial"] = "1", ["Descripcion"] = "Prueba", ["DescripcionFalla"] = "Ruido", ["FechaInicio"] = "2026-09-01", ["Total"] = "100" });
         Assert.NotEmpty(servicio[nameof(ServicioFormViewModel.TipoServicio)]!.Errors);

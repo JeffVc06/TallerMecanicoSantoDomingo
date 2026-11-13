@@ -21,11 +21,12 @@ utilizando Identity y escrituras normales en `Usuarios`.
 | Factura | `Factura` y `Detalle_Factura`. Solo servicios finalizados del mismo cliente, al menos un detalle y ninguna segunda factura vigente para el mismo servicio. Cabecera, detalles e importes se guardan juntos. |
 | Historial | Facturas anuladas conservan número, cliente, RUC copiado al emitir, detalles e importes. Anular no devuelve existencias. Los consumos de un servicio con historial de facturas no se eliminan. |
 
-Se normalizan espacios exteriores sin restringir tildes, apellidos compuestos o
-nombres legítimos. Las longitudes proceden de los atributos existentes de las
+Se recortan los textos generales. Los nombres admiten letras Unicode, tildes,
+espacios, guiones y apóstrofos entre palabras. El teléfono exige el formato
+estricto descrito abajo. Las longitudes de los demás campos proceden de los atributos de las
 entidades. Los importes respetan `decimal(12,2)` y las cantidades/Stock,
 `decimal(12,3)`; se rechaza un exceso de decimales o rango antes de escribir.
-No se impone unicidad a nombres, teléfonos ni al RUC copiado en facturas.
+No se impone unicidad a nombres ni al RUC copiado en facturas.
 
 ### Revisión de identificaciones, duplicados y contacto
 
@@ -37,13 +38,13 @@ en el modelo o formulario actual.
 |---|---|---|
 | Cédula de cliente | Sí, al crear y editar, incluidos clientes desactivados. | Se recortan espacios exteriores y se convierte a mayúsculas; índice único filtrado en el SQL del proyecto. |
 | RUC de cliente | Sí, al crear y editar, incluidos clientes desactivados. | Misma normalización; índice único filtrado en el SQL del proyecto. |
-| Teléfono de cliente o trabajador | **No**. Se permite compartirlo dentro de cada módulo y entre ambos. | Obligatorio, máximo 20 caracteres y validación general con `PhoneAttribute`, tanto en formularios como en servicios. No hay índice único de teléfono. |
-| Nombre y apellido | No. | Se permiten personas con el mismo nombre; cada campo es obligatorio y admite hasta 100 caracteres. |
-| Correo de trabajador | Sí, cuando tiene valor, incluidos trabajadores inactivos. | Se recorta y convierte a minúsculas; comprobación en `TrabajadorService`, sin índice único en el SQL del proyecto. |
-| Placa y chasis | Sí; el chasis solo cuando tiene valor. | Comprobaciones en `VehiculoService` e índices únicos en el SQL del proyecto. |
+| Teléfono de cliente o trabajador | **Sí**, al crear y editar, dentro de cada módulo y entre ambos, incluidos registros inactivos. | Exactamente 8 dígitos ASCII consecutivos (`88881111`), sin espacios, guiones ni prefijos. Se valida en formularios y servicios; la comprobación de duplicados y la escritura usan el bloqueo transaccional común. No hay índice único de teléfono. |
+| Nombre y apellido | No. | Obligatorios, hasta 100 caracteres; letras, tildes, espacios, guiones y apóstrofos entre palabras. Se rechazan números y otros signos. |
+| Correo de trabajador | Sí, cuando tiene valor, incluidos trabajadores inactivos. | Se recorta y convierte a minúsculas, también al comparar valores previos. Exige usuario y dominio con punto; sin espacios, puntos consecutivos ni etiquetas de dominio que empiecen o terminen con guion. Sin índice único de correo. |
+| Placa y chasis | Sí; el chasis solo cuando tiene valor. | Solo caracteres alfanuméricos ASCII, con espacios o guiones como separadores. Al comparar se ignoran esos separadores y las mayúsculas, incluso con vehículos inactivos; los índices existentes conservan su comparación original. |
 | RUC copiado en factura | No. | Un cliente puede tener varias facturas que conserven el mismo RUC. |
 
-Editar un registro conservando sus propios documentos, placa, chasis o correo
+Editar un registro conservando sus propios documentos, teléfono, placa, chasis o correo
 no lo considera duplicado: las consultas excluyen su identificador. Desactivar
 al titular no libera sus valores únicos para un registro nuevo.
 
@@ -54,29 +55,70 @@ equipara automáticamente `001-120690-0001A` con `0011206900001A`. La unicidad
 se aplica a los valores comparados tras la normalización descrita, no a todas
 las representaciones posibles de un documento.
 
-La validación telefónica **no exige ocho dígitos ni un prefijo local concreto**.
-`8888`, `8888-1111` y `+505 8888-1111` pasan el control general; un teléfono
-vacío, con texto como `sin telefono` o de más de 20 caracteres se rechaza.
-Que un valor pase esa validación no comprueba que sea un número completo,
-existente o perteneciente a la persona. Las reglas actuales se documentan sin
-imponer una nueva política de unicidad o modificar el esquema.
+La validación telefónica **exige exactamente ocho dígitos**. `88881111` es un
+formato válido; `8888`, `888811111`, `8888-1111`, `+505 8888-1111`, espacios y
+letras se rechazan. Los ceros iniciales se conservan. El número no puede estar
+asignado a otra ficha de cliente o trabajador, aunque esté desactivada; editar
+la propia ficha sin cambiar el número sí está permitido.
+
+Para comparar teléfonos previos se quitan espacios, guiones, puntos y paréntesis,
+y se reconocen los prefijos `+505` y `00505`. Así, una ficha antigua con
+`8888-1111` o `+505 8888-1111` impide registrar `88881111` en otra ficha. No se
+modifican ni corrigen datos históricos automáticamente: al editarlos se debe
+introducir el formato de ocho dígitos y resolver los duplicados que ya existan.
+Esta comprobación no acredita que el número exista o pertenezca a la persona.
+La regla se aplica en la aplicación sin modificar el esquema de la base.
+
+### Validaciones adicionales de captura
+
+- Nombres y apellidos: `José Ángel`, `María-José`, `O'Connor` y `D’Ávila` son
+  válidos; `Ana123` o `***` se rechazan tanto en formularios como en servicios.
+  Esto no impone unicidad a los nombres.
+- Dirección, nombres de productos, descripciones, marca, modelo, color y tipo:
+  cuando tienen valor deben contener alguna letra o número. Se rechazan textos
+  formados solo por signos o caracteres invisibles, y controles como el carácter
+  nulo. Las descripciones pueden conservar saltos de línea y referencias como
+  `10W-30`; los campos opcionales pueden quedar vacíos.
+- Placa y chasis: `MGA-1234`, `mga1234` y `MGA 1234` se comparan como la misma
+  clave. No se pueden reutilizar en otro vehículo ni estando desactivado el
+  titular, y se puede conservar la clave propia al editar. No se impone una
+  longitud de VIN ni se comprueba la autenticidad del identificador. Esta
+  comparación no cambia la regla de cédulas/RUC descrita anteriormente.
+- Año del vehículo: desde 1950 hasta el año siguiente al actual, tanto en el
+  formulario como al guardar. El máximo de la vista se calcula en cada petición.
+- Correo: `nombre+avisos@sub.dominio.com` es válido; `ana@dominio`,
+  `ana..lopez@dominio.com` y `ana@-dominio.com` se rechazan. Sigue siendo opcional.
+  Se comprueba su estructura de captura, sin consultar si el dominio o buzón existen.
+- Importes y cantidades: los formularios muestran errores en el campo de precio,
+  costo o importe si se exceden dos decimales; Stock y consumos admiten tres.
+  Se mantienen los controles de rango y signo de los servicios, sin redondear
+  silenciosamente una entrada que perdería precisión.
+- Selecciones: los identificadores seleccionados deben ser positivos; área,
+  tipo de servicio y método de pago deben corresponder a opciones permitidas.
+  Una factura necesita al menos un servicio y rechaza identificadores repetidos
+  dentro de la misma solicitud, antes de crear cabecera o detalles.
 
 La [guía de defensa CRUD](GuiaDefensaCRUD.txt) incluye estas respuestas y una
-secuencia para demostrar duplicados, edición y teléfonos compartidos.
+secuencia para demostrar duplicados, edición y teléfonos de ocho dígitos únicos.
 
 Verificación de esta revisión (13 de noviembre de 2026):
 
-- Se añadieron 14 casos en `tests/PruebasDuplicadosYContacto.cs`: documentos
-  duplicados al crear/editar con titulares activos e inactivos, conservación
-  de documentos propios, teléfonos compartidos en ambos módulos, rechazo de
-  teléfonos vacíos/inválidos/largos y conservación del dato tras una edición
-  rechazada. También se comprobaron los límites actuales: teléfonos cortos,
-  documentos sin máscara y variantes con/sin guiones admitidos.
+- Se actualizaron los casos de `tests/PruebasDuplicadosYContacto.cs`: documentos
+  duplicados, teléfonos únicos al crear/editar entre ambos módulos con titulares
+  activos o inactivos, conservación del número propio, rechazo de formatos
+  diferentes de ocho dígitos y comparación de formatos telefónicos previos.
+  Se mantienen los casos de documentos sin máscara y con/sin guiones admitidos.
+- `tests/PruebasFormatosEntrada.cs` comprueba nombres, textos con contenido,
+  correos, placas/chasis equivalentes, años, precisión y selecciones de factura,
+  incluidas altas/ediciones válidas y conservación de los datos ante un rechazo.
+- Las comprobaciones de contacto utilizan EF InMemory y validación de formularios;
+  las de traducción comprueban las consultas del proveedor SQL Server sin conexión.
+  No se ejecutan escrituras sobre una base instalada para esta revisión.
+- Las pruebas HTTP comprueban altas/ediciones de contacto, vehículos y productos,
+  y una factura con servicios repetidos. Los errores se muestran en la vista,
+  se conserva el dato persistido y se permite corregir y volver a enviar.
 - `dotnet test TallerMecanicoSantoDomingo.sln --no-restore --filter 'Categoria!=Integracion' --verbosity minimal`:
-  **117 pruebas aprobadas, 0 fallidas**. Incluye los 14 casos nuevos.
-- Las pruebas nuevas utilizan EF InMemory y validación de formularios. En esta
-  revisión no se ejecutaron pruebas de integración SQL; la revisión de índices
-  se hizo sobre el esquema del repositorio, sin comprobar una base instalada.
+  **219 pruebas aprobadas, 0 fallidas**.
 
 ### Estados conservados
 

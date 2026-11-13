@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using TallerMecanicoSantoDomingo.Services;
 
 namespace TallerMecanicoSantoDomingo.ViewModels;
 
@@ -26,8 +27,7 @@ public class ClienteFormViewModel : IValidatableObject
     public string? Cedula { get; set; }
 
     [Required(ErrorMessage = "El teléfono es obligatorio.")]
-    [StringLength(20, ErrorMessage = "El teléfono no puede exceder 20 caracteres.")]
-    [Phone(ErrorMessage = "Debe ingresar un teléfono válido.")]
+    [RegularExpression(ReglasTaller.PatronTelefono, ErrorMessage = ReglasTaller.ErrorTelefono)]
     [Display(Name = "Teléfono")]
     public string Telefono { get; set; } = string.Empty;
 
@@ -38,21 +38,26 @@ public class ClienteFormViewModel : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        if (!ReglasTaller.NombrePersonaValido(Nombre)) yield return new ValidationResult(ReglasTaller.ErrorNombre, [nameof(Nombre)]);
+        if (!ReglasTaller.NombrePersonaValido(Apellido)) yield return new ValidationResult(ReglasTaller.ErrorNombre, [nameof(Apellido)]);
+        foreach (var error in ReglasTaller.ValidarTextos((nameof(Direccion), Direccion))) yield return error;
         if (string.IsNullOrWhiteSpace(Cedula) && string.IsNullOrWhiteSpace(RFC))
             yield return new ValidationResult("Ingrese la cédula del cliente o el RUC de la empresa.", [nameof(Cedula), nameof(RFC)]);
     }
 }
 
-public class VehiculoFormViewModel
+public class VehiculoFormViewModel : IValidatableObject
 {
     public int IdVehiculo { get; set; }
 
     [Required(ErrorMessage = "Debe seleccionar el cliente propietario.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un cliente propietario válido.")]
     [Display(Name = "Cliente propietario")]
     public int IdCliente { get; set; }
 
     [Required(ErrorMessage = "La placa es obligatoria.")]
     [StringLength(20, ErrorMessage = "La placa no puede exceder 20 caracteres.")]
+    [RegularExpression(ReglasTaller.PatronIdentificadorVehiculo, ErrorMessage = ReglasTaller.ErrorIdentificadorVehiculo)]
     [Display(Name = "Placa")]
     public string Placa { get; set; } = string.Empty;
 
@@ -67,7 +72,7 @@ public class VehiculoFormViewModel
     public string Modelo { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "El año es obligatorio.")]
-    [Range(1950, 2100, ErrorMessage = "El año debe estar entre 1950 y 2100.")]
+    [Range(1950, int.MaxValue, ErrorMessage = "El año debe ser igual o posterior a 1950.")]
     [Display(Name = "Año")]
     [BindRequired]
     public int Anio { get; set; } = DateTime.Now.Year;
@@ -80,11 +85,19 @@ public class VehiculoFormViewModel
 
     [StringLength(50, ErrorMessage = "El campo {0} no puede exceder {1} caracteres.")]
     [Display(Name = "Número de chasis")]
+    [RegularExpression(ReglasTaller.PatronIdentificadorVehiculo, ErrorMessage = ReglasTaller.ErrorIdentificadorVehiculo)]
     public string? NumChasis { get; set; }
 
     [StringLength(50, ErrorMessage = "El campo {0} no puede exceder {1} caracteres.")]
     [Display(Name = "Tipo de vehículo")]
     public string? Tipo { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (!ReglasTaller.AnioVehiculoValido(Anio)) yield return new ValidationResult(ReglasTaller.ErrorAnio, [nameof(Anio)]);
+        foreach (var error in ReglasTaller.ValidarTextos((nameof(Marca), Marca), (nameof(Modelo), Modelo),
+            (nameof(Color), Color), (nameof(Tipo), Tipo))) yield return error;
+    }
 }
 
 public class TrabajadorFormViewModel : IValidatableObject
@@ -102,16 +115,17 @@ public class TrabajadorFormViewModel : IValidatableObject
     public string Apellido { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "El teléfono es obligatorio.")]
-    [StringLength(20, ErrorMessage = "El teléfono no puede exceder 20 caracteres.")]
-    [Phone(ErrorMessage = "Debe ingresar un teléfono válido.")]
+    [RegularExpression(ReglasTaller.PatronTelefono, ErrorMessage = ReglasTaller.ErrorTelefono)]
     [Display(Name = "Teléfono")]
     public string Telefono { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Debe seleccionar el área de trabajo.")]
+    [AllowedValues("Mantenimiento mecánico", "Pintura", ErrorMessage = "El área de trabajo seleccionada no existe.")]
     [Display(Name = "Área de trabajo")]
     public string Area { get; set; } = string.Empty;
 
-    [StringLength(256, ErrorMessage = "El campo {0} no puede exceder {1} caracteres."), EmailAddress(ErrorMessage = "Debe ingresar un correo válido.")]
+    [StringLength(256, ErrorMessage = "El campo {0} no puede exceder {1} caracteres.")]
+    [DataType(DataType.EmailAddress)]
     public string? Correo { get; set; }
 
     [Required(ErrorMessage = "La fecha de ingreso es obligatoria.")]
@@ -124,6 +138,9 @@ public class TrabajadorFormViewModel : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        if (!ReglasTaller.NombrePersonaValido(Nombre)) yield return new ValidationResult(ReglasTaller.ErrorNombre, [nameof(Nombre)]);
+        if (!ReglasTaller.NombrePersonaValido(Apellido)) yield return new ValidationResult(ReglasTaller.ErrorNombre, [nameof(Apellido)]);
+        if (!ReglasTaller.CorreoValido(Correo)) yield return new ValidationResult(ReglasTaller.ErrorCorreo, [nameof(Correo)]);
         if (FechaSalida < FechaIngreso)
             yield return new ValidationResult("La fecha de salida debe ser igual o posterior a la de ingreso.", [nameof(FechaSalida)]);
     }
@@ -134,10 +151,12 @@ public class ServicioFormViewModel : IValidatableObject
     public int IdServicio { get; set; }
 
     [Required(ErrorMessage = "Debe seleccionar el vehículo.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un vehículo válido.")]
     [Display(Name = "Vehículo")]
     public int IdVehiculo { get; set; }
 
     [Required(ErrorMessage = "Debe seleccionar el tipo de servicio.")]
+    [AllowedValues("Mantenimiento", "Pintura", ErrorMessage = "El tipo de servicio debe ser Mantenimiento o Pintura.")]
     [Display(Name = "Tipo de servicio")]
     [BindRequired]
     public string TipoServicio { get; set; } = "Mantenimiento";
@@ -169,10 +188,14 @@ public class ServicioFormViewModel : IValidatableObject
     [BindRequired]
     public decimal Total { get; set; }
     [Display(Name = "Trabajador inicial")]
+    [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un trabajador válido.")]
     public int? IdTrabajadorInicial { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        foreach (var error in ReglasTaller.ValidarTextos((nameof(Descripcion), Descripcion), (nameof(DescripcionFalla), DescripcionFalla),
+            (nameof(TipoPintura), TipoPintura), (nameof(Color), Color))) yield return error;
+        if (!ReglasTaller.Importe(Total)) yield return new ValidationResult(ReglasTaller.ErrorImporte, [nameof(Total)]);
         if (IdServicio == 0 && (!IdTrabajadorInicial.HasValue || IdTrabajadorInicial <= 0))
             yield return new ValidationResult("Seleccione un trabajador habilitado para abrir el servicio.", [nameof(IdTrabajadorInicial)]);
         if (TipoServicio == "Mantenimiento" && string.IsNullOrWhiteSpace(DescripcionFalla))
@@ -204,7 +227,7 @@ public class CancelarServicioViewModel
     public string? Motivo { get; set; }
 }
 
-public class ProductoFormViewModel
+public class ProductoFormViewModel : IValidatableObject
 {
     public int IdProducto { get; set; }
 
@@ -236,13 +259,23 @@ public class ProductoFormViewModel
     [Display(Name = "Stock")]
     [BindRequired]
     public decimal Stock { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        foreach (var error in ReglasTaller.ValidarTextos((nameof(Nombre), Nombre), (nameof(Descripcion), Descripcion))) yield return error;
+        if (!ReglasTaller.Importe(PrecioUnitario)) yield return new ValidationResult(ReglasTaller.ErrorImporte, [nameof(PrecioUnitario)]);
+        if (!ReglasTaller.Importe(Costo)) yield return new ValidationResult(ReglasTaller.ErrorImporte, [nameof(Costo)]);
+        if (!ReglasTaller.Cantidad(Stock)) yield return new ValidationResult(ReglasTaller.ErrorCantidad, [nameof(Stock)]);
+    }
 }
 
-public class ProductoUtilizadoFormViewModel
+public class ProductoUtilizadoFormViewModel : IValidatableObject
 {
+    [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un servicio válido.")]
     public int IdServicio { get; set; }
 
     [Required(ErrorMessage = "Debe seleccionar el producto.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un producto válido.")]
     [Display(Name = "Producto")]
     public int IdProducto { get; set; }
 
@@ -251,13 +284,20 @@ public class ProductoUtilizadoFormViewModel
     [Display(Name = "Cantidad utilizada")]
     [BindRequired]
     public decimal Cantidad { get; set; } = 1;
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (!ReglasTaller.Cantidad(Cantidad)) yield return new ValidationResult(ReglasTaller.ErrorCantidad, [nameof(Cantidad)]);
+    }
 }
 
 public class AsignarTrabajadorViewModel
 {
+    [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un servicio válido.")]
     public int IdServicio { get; set; }
 
     [Required(ErrorMessage = "Debe seleccionar el trabajador.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un trabajador válido.")]
     [Display(Name = "Trabajador")]
     public int IdTrabajador { get; set; }
 
@@ -266,18 +306,21 @@ public class AsignarTrabajadorViewModel
     public string? Observaciones { get; set; }
 }
 
-public class FacturaCrearViewModel
+public class FacturaCrearViewModel : IValidatableObject
 {
     [Required(ErrorMessage = "Debe seleccionar el cliente.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un cliente válido.")]
     [Display(Name = "Cliente")]
     public int IdCliente { get; set; }
 
     [Required(ErrorMessage = "Debe seleccionar el método de pago.")]
+    [AllowedValues("Efectivo", "Tarjeta", "Transferencia", ErrorMessage = "El método de pago no es válido.")]
     [Display(Name = "Método de pago")]
     [BindRequired]
     public string MetodoPago { get; set; } = "Efectivo";
 
     [Required(ErrorMessage = "Debe seleccionar al menos un servicio para facturar.")]
+    [MinLength(1, ErrorMessage = "Debe seleccionar al menos un servicio para facturar.")]
     [Display(Name = "Servicios a facturar")]
     public List<int> IdServicios { get; set; } = new();
 
@@ -287,4 +330,13 @@ public class FacturaCrearViewModel
 
     /// <summary>Porcentaje de IVA mostrado en el formulario (solo informativo; el cálculo es del servidor).</summary>
     public decimal PorcentajeIVA { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (IdServicios is null) yield break;
+        if (IdServicios.Any(id => id <= 0))
+            yield return new ValidationResult("Debe seleccionar servicios válidos.", [nameof(IdServicios)]);
+        if (IdServicios.Distinct().Count() != IdServicios.Count)
+            yield return new ValidationResult(ReglasTaller.ErrorServiciosRepetidos, [nameof(IdServicios)]);
+    }
 }

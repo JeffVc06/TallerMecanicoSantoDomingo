@@ -18,14 +18,14 @@ public class PruebasUnitariasReglas
 
         var primero = await servicio.Crear(new Cliente
         {
-            Nombre = "Juan", Apellido = "Pérez", Telefono = "8888-1111",
+            Nombre = "Juan", Apellido = "Pérez", Telefono = "88881111",
             Direccion = "Managua", RFC = "RFC-0001"
         });
         Assert.True(primero.EsCorrecto);
 
         var duplicado = await servicio.Crear(new Cliente
         {
-            Nombre = "Otro", Apellido = "Cliente", Telefono = "8999-9999",
+            Nombre = "Otro", Apellido = "Cliente", Telefono = "89999999",
             Direccion = "León", RFC = "rfc-0001"
         });
 
@@ -42,7 +42,7 @@ public class PruebasUnitariasReglas
 
         await servicio.Crear(new Cliente
         {
-            Nombre = "  Juan ", Apellido = " Pérez ", Telefono = " 8888 ",
+            Nombre = "  Juan ", Apellido = " Pérez ", Telefono = "88881111",
             Direccion = " Managua ", RFC = " rfc-abc "
         });
 
@@ -222,7 +222,7 @@ public class PruebasUnitariasReglas
         await asignaciones.Asignar(s1.IdServicio, 1, null);
         await asignaciones.Asignar(s2.IdServicio, 1, null);
 
-        db.Trabajadores.Add(new Trabajador { IdTrabajador = 3, Nombre = "Relevo", Apellido = "Mecánica", Telefono = "8888-1111", Area = "Mantenimiento mecánico" });
+        db.Trabajadores.Add(new Trabajador { IdTrabajador = 3, Nombre = "Relevo", Apellido = "Mecánica", Telefono = "86663333", Area = "Mantenimiento mecánico" });
         await db.SaveChangesAsync();
         Assert.True((await asignaciones.Asignar(s1.IdServicio, 3, null)).EsCorrecto);
         var primera = await db.DetalleServicio.FirstAsync(d => d.IdServicio == s1.IdServicio);

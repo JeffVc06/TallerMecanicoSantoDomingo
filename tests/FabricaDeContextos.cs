@@ -48,12 +48,12 @@ public static class FabricaDeContextos
             new Cliente
             {
                 IdCliente = 1, Nombre = "Juan", Apellido = "Pérez López",
-                Telefono = "8888-1111", Direccion = "Managua", RFC = "RFC-0001", Activo = true
+                Telefono = "88881111", Direccion = "Managua", RFC = "RFC-0001", Activo = true
             },
             new Cliente
             {
                 IdCliente = 2, Nombre = "María", Apellido = "Sánchez Ruiz",
-                Telefono = "8777-2222", Direccion = "Managua", RFC = "RFC-0002", Activo = true
+                Telefono = "87772222", Direccion = "Managua", RFC = "RFC-0002", Activo = true
             });
 
         db.Vehiculos.AddRange(
@@ -62,8 +62,8 @@ public static class FabricaDeContextos
             new Vehiculo { IdVehiculo = 3, IdCliente = 2, Placa = "MGC-9012", Marca = "Hyundai", Modelo = "Tucson", Anio = 2019, Activo = true });
 
         db.Trabajadores.AddRange(
-            new Trabajador { IdTrabajador = 1, Nombre = "Pedro", Apellido = "Martínez", Telefono = "8555-4444", Area = "Mantenimiento mecánico", Activo = true },
-            new Trabajador { IdTrabajador = 2, Nombre = "Ana", Apellido = "González", Telefono = "8333-6666", Area = "Pintura", Activo = true });
+            new Trabajador { IdTrabajador = 1, Nombre = "Pedro", Apellido = "Martínez", Telefono = "85554444", Area = "Mantenimiento mecánico", Activo = true },
+            new Trabajador { IdTrabajador = 2, Nombre = "Ana", Apellido = "González", Telefono = "83336666", Area = "Pintura", Activo = true });
 
         db.Productos.AddRange(
             new Producto { IdProducto = 1, Nombre = "Filtro de aceite", Descripcion = "Filtro", PrecioUnitario = 350m, Stock = 20m, Activo = true },

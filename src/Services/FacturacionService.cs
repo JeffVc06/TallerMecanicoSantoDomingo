@@ -41,8 +41,9 @@ public class FacturacionService
     public Task<Resultado<Factura>> CrearFactura(int idCliente, string metodoPago, List<int> idsServicios, string? notas) =>
         OperacionTaller.Ejecutar(_db, async () =>
         {
-            var ids = (idsServicios ?? []).Distinct().ToList();
+            var ids = (idsServicios ?? []).ToList();
             if (ids.Count == 0) return Resultado<Factura>.Fallo("Debe seleccionar al menos un servicio para facturar.");
+            if (ids.Distinct().Count() != ids.Count) return Resultado<Factura>.Fallo(ReglasTaller.ErrorServiciosRepetidos);
             if (ids.Any(id => id <= 0)) return Resultado<Factura>.Fallo("Uno o más servicios seleccionados no existen.");
             if (metodoPago is not ("Efectivo" or "Tarjeta" or "Transferencia")) return Resultado<Factura>.Fallo("El método de pago no es válido.");
             notas = ReglasTaller.Opcional(notas);

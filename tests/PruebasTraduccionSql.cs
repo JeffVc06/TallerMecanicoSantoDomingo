@@ -12,6 +12,45 @@ namespace TallerMecanicoSantoDomingo.Tests;
 public class PruebasTraduccionSql
 {
     [Fact]
+    public async Task Placas_y_chasis_se_comparan_sin_separadores_y_sin_distinguir_mayusculas_en_sql()
+    {
+        var comandos = new ComandosVacios();
+        using var db = new TallerDbContext(new DbContextOptionsBuilder<TallerDbContext>()
+            .UseSqlServer("Server=unused;Database=unused;User Id=unused;Password=unused")
+            .AddInterceptors(new SinConexion(), comandos).Options);
+
+        Assert.False(await ReglasTaller.IdentificadorVehiculoRepetido(db, " mga-1234 ", chasis: false, 1));
+        Assert.False(await ReglasTaller.IdentificadorVehiculoRepetido(db, " abcd-123 ", chasis: true, 1));
+        Assert.Equal(2, comandos.Sql.Count);
+        Assert.All(comandos.Sql, sql =>
+        {
+            Assert.Contains("[dbo].[Vehiculo]", sql);
+            Assert.Contains("REPLACE", sql);
+            Assert.Contains("UPPER", sql);
+        });
+    }
+
+    [Fact]
+    public async Task Telefonos_se_comparan_en_ambos_modulos_con_formato_previo_y_exclusion_de_la_ficha_propia_en_sql()
+    {
+        var comandos = new ComandosVacios();
+        using var db = new TallerDbContext(new DbContextOptionsBuilder<TallerDbContext>()
+            .UseSqlServer("Server=unused;Database=unused;User Id=unused;Password=unused")
+            .AddInterceptors(new SinConexion(), comandos).Options);
+
+        Assert.Null(await ReglasTaller.ValidarTelefono(db, "88881111", idCliente: 1));
+        Assert.Null(await ReglasTaller.ValidarTelefono(db, "88881111", idTrabajador: 1));
+        Assert.Equal(2, comandos.Sql.Count);
+        Assert.All(comandos.Sql, sql =>
+        {
+            Assert.Contains("[dbo].[Cliente]", sql);
+            Assert.Contains("[dbo].[Trabajador]", sql);
+            Assert.Contains("UNION ALL", sql);
+            Assert.Contains("REPLACE", sql);
+        });
+    }
+
+    [Fact]
     public async Task Consultas_de_listados_y_reportes_se_traducen_con_el_nuevo_esquema()
     {
         var comandos = new ComandosVacios();
@@ -64,6 +103,11 @@ public class PruebasTraduccionSql
             {
                 tabla.Columns.Add("Value", typeof(int));
                 tabla.Rows.Add(0);
+            }
+            else if (command.CommandText.StartsWith("SELECT CASE") && command.CommandText.Contains("EXISTS"))
+            {
+                tabla.Columns.Add("Value", typeof(bool));
+                tabla.Rows.Add(false);
             }
             return ValueTask.FromResult(InterceptionResult<DbDataReader>.SuppressWithResult(tabla.CreateDataReader()));
         }
