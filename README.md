@@ -84,6 +84,8 @@ Las reglas de negocio, los límites del esquema conservado y los pasos de prueba
 para el profesor están en [docs/Validaciones.md](docs/Validaciones.md).
 La revisión posterior de desactivación, reactivación y disponibilidad está en
 [docs/CorreccionEstados.md](docs/CorreccionEstados.md).
+La [guía de trabajo diario](docs/GuiaTrabajo.md) explica el recorrido para el
+personal del taller y las mejoras de uso de servicios, asignaciones e historial.
 
 ## Usuarios y trabajadores
 

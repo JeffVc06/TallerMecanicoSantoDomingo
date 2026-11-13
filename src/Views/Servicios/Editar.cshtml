@@ -13,25 +13,27 @@
 
 <div class="alerta-info" style="font-size:.85rem">
     <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
-    Puede editar los servicios abiertos que aún no se han facturado.
+    Puede corregir la descripción, la falla, las fechas y el importe de un servicio abierto sin factura. El vehículo y el tipo se conservan para mantener su historial.
 </div>
 
 <div class="tarjeta formulario-tarjeta">
-    <form asp-action="Editar" method="post" class="formulario">
+    <form asp-action="Editar" method="post" class="formulario" data-formulario-servicio>
         <input type="hidden" asp-for="IdServicio" />
         <div asp-validation-summary="ModelOnly" class="alerta-error" role="alert"></div>
 
         <div class="row g-3">
             <div class="col-12">
                 <label asp-for="IdVehiculo" class="form-label"></label>
-                <select asp-for="IdVehiculo" class="form-select" asp-items="vehiculos">
+                <input type="hidden" asp-for="IdVehiculo" id="vehiculo-actual" />
+                <select asp-for="IdVehiculo" class="form-select" asp-items="vehiculos" disabled>
                     <option value="">— Seleccione el vehículo —</option>
                 </select>
                 <span asp-validation-for="IdVehiculo" class="text-danger"></span>
             </div>
             <div class="col-md-6">
                 <label asp-for="TipoServicio" for="campo-tipo" class="form-label"></label>
-                <select asp-for="TipoServicio" class="form-select" id="campo-tipo">
+                <input type="hidden" asp-for="TipoServicio" id="tipo-servicio-actual" />
+                <select asp-for="TipoServicio" class="form-select" id="campo-tipo" disabled>
                     <option value="Mantenimiento">Mantenimiento mecánico</option>
                     <option value="Pintura">Trabajo de pintura</option>
                 </select>
@@ -67,6 +69,7 @@
                 <label asp-for="Total" class="form-label"></label>
                 <input asp-for="Total" class="form-control" type="number" step="0.01" min="0" />
                 <span asp-validation-for="Total" class="text-danger"></span>
+                <div class="form-text">Importe total del trabajo: incluya los productos que correspondan. El consumo no se suma automáticamente.</div>
             </div>
         </div>
 
@@ -79,16 +82,4 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        (function () {
-            const tipo = document.getElementById('campo-tipo');
-            function actualizar() {
-                const esPintura = tipo.value === 'Pintura';
-                document.querySelectorAll('.div-pintura').forEach(e => e.classList.toggle('d-none', !esPintura));
-                document.querySelectorAll('.div-mantenimiento').forEach(e => e.classList.toggle('d-none', esPintura));
-            }
-            tipo.addEventListener('change', actualizar);
-            actualizar();
-        })();
-    </script>
 }

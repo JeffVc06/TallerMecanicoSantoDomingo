@@ -148,17 +148,17 @@ public class VehiculosController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CambiarEstado(int id, [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] bool activo)
+    public async Task<IActionResult> CambiarEstado(int id, [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] bool activo, string? buscar = null, int pagina = 1, int? idCliente = null)
     {
         if (!ModelState.IsValid)
         {
             TempData["Error"] = "El estado o el identificador recibido no es válido.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { buscar, pagina = Math.Max(1, pagina), idCliente });
         }
 
         var resultado = await _vehiculos.CambiarEstado(id, activo);
         TempData[resultado.EsCorrecto ? "Exito" : "Error"] = resultado.Mensaje;
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Index), new { buscar, pagina = Math.Max(1, pagina), idCliente });
     }
 
     private async Task<List<SelectListItem>> ListaDeClientes(bool incluirInactivos = false, int? idConservar = null)

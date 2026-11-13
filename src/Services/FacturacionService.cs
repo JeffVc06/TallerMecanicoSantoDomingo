@@ -131,8 +131,9 @@ public class FacturacionService
         }
 
         var total = await query.CountAsync();
+        pagina = Paginacion.Ajustar(pagina, total, tamPagina);
         var elementos = await query
-            .OrderByDescending(f => f.FechaFactura)
+            .OrderByDescending(f => f.FechaFactura).ThenByDescending(f => f.IdFactura)
             .Skip((pagina - 1) * tamPagina).Take(tamPagina)
             .ToListAsync();
 

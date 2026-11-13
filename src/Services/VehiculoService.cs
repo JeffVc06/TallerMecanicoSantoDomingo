@@ -139,6 +139,7 @@ public class VehiculoService
         }
 
         var total = await query.CountAsync();
+        pagina = Paginacion.Ajustar(pagina, total, tamPagina);
         var elementos = await query
             .OrderBy(v => v.Placa)
             .Skip((pagina - 1) * tamPagina).Take(tamPagina)

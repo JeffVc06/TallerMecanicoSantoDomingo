@@ -30,12 +30,12 @@ public class AsignacionesController : Controller
     {
         var serviciosAbiertos = await _db.Servicios.AsNoTracking()
             .Include(s => s.Vehiculo).ThenInclude(v => v!.Cliente)
-            .Where(s => s.Estado == "Abierto")
+            .Where(s => s.Estado == "Abierto" || s.IdServicio == idServicio)
             .OrderByDescending(s => s.FechaRegistro)
             .Select(s => new
             {
                 s.IdServicio,
-                Etiqueta = $"#{s.IdServicio} — {s.Vehiculo!.Placa} — {s.TipoServicio} — {s.Descripcion}"
+                Etiqueta = $"#{s.IdServicio} — {s.Vehiculo!.Placa} — {s.TipoServicio} — {s.Descripcion} ({s.Estado})"
             })
             .ToListAsync();
 
@@ -47,8 +47,11 @@ public class AsignacionesController : Controller
         {
             var servicio = await _db.Servicios.AsNoTracking()
                 .Include(s => s.Vehiculo).ThenInclude(v => v!.Cliente)
+                .Include(s => s.DetalleFacturas).ThenInclude(d => d.Factura)
                 .FirstOrDefaultAsync(s => s.IdServicio == idServicio.Value);
             ViewBag.Servicio = servicio;
+            if (servicio is null)
+                TempData["Error"] = "El servicio seleccionado no existe. Elija otro servicio de la lista.";
             ViewBag.Compatibles = await _asignaciones.TrabajadoresCompatibles(idServicio.Value, soloDisponibles: false);
             ViewBag.Asignados = await _asignaciones.AsignacionesDelServicio(idServicio.Value);
         }

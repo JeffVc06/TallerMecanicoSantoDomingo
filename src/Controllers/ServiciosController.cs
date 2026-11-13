@@ -108,6 +108,11 @@ public class ServiciosController : Controller
         var servicio = await _servicios.ObtenerPorId(id);
         if (servicio is null)
             return RedirectToAction(nameof(Index));
+        if (servicio.Estado != "Abierto" || servicio.DetalleFacturas.Any(d => d.Factura?.Estado == "Emitida"))
+        {
+            TempData["Error"] = "Este trabajo ya está cerrado o facturado. Consulte su ficha e historial.";
+            return RedirectToAction(nameof(Detalles), new { id });
+        }
 
         await CargarVehiculos(soloDisponibles: false);
         return View(new ServicioFormViewModel
@@ -255,6 +260,6 @@ public class ServiciosController : Controller
             .OrderBy(t => t.Apellido).Select(t => new { t.IdTrabajador, t.Nombre, t.Apellido, t.Area }).ToListAsync();
         var cargas = (await _servicios.CargasDeTrabajadores(trabajadores.Select(t => t.IdTrabajador).ToList())).ToDictionary(t => t.IdTrabajador);
         ViewBag.TrabajadoresIniciales = trabajadores.Where(t => cargas[t.IdTrabajador].Disponible)
-            .Select(t => new SelectListItem($"{t.Nombre} {t.Apellido} — {t.Area} ({cargas[t.IdTrabajador].ServiciosActivos} de 2 activos)", t.IdTrabajador.ToString())).ToList();
+            .Select(t => cargas[t.IdTrabajador]).ToList();
     }
 }

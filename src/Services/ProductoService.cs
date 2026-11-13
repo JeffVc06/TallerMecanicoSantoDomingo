@@ -84,8 +84,9 @@ public class ProductoService
         }
 
         var total = await query.CountAsync();
+        pagina = Paginacion.Ajustar(pagina, total, tamPagina);
         var elementos = await query
-            .OrderBy(p => p.Nombre)
+            .OrderBy(p => p.Nombre).ThenBy(p => p.IdProducto)
             .Skip((pagina - 1) * tamPagina).Take(tamPagina)
             .ToListAsync();
 

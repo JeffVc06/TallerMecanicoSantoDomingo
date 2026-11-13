@@ -132,16 +132,16 @@ public class TrabajadoresController : Controller
     /// <summary>Regla 14: desactivación lógica; el historial de asignaciones se conserva.</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CambiarEstado(int id, [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] bool activo)
+    public async Task<IActionResult> CambiarEstado(int id, [Microsoft.AspNetCore.Mvc.ModelBinding.BindRequired] bool activo, string? buscar = null)
     {
         if (!ModelState.IsValid)
         {
             TempData["Error"] = "El estado o el identificador recibido no es válido.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { buscar });
         }
         var resultado = await _trabajadores.CambiarEstado(id, activo);
         TempData[resultado.EsCorrecto ? "Exito" : "Error"] = resultado.Mensaje;
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Index), new { buscar });
     }
 
     private static Trabajador Mapear(TrabajadorFormViewModel modelo) => new()

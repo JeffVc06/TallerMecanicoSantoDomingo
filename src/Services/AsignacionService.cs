@@ -6,7 +6,7 @@ namespace TallerMecanicoSantoDomingo.Services;
 
 public record ItemAsignacion(int IdServicio, string DescripcionServicio, string TipoServicio,
     string EstadoServicio, int IdTrabajador, string NombreTrabajador, string Area, DateTime FechaAsignacion,
-    string EstadoAsignacion, string? Observaciones);
+    string EstadoAsignacion, string? Observaciones, bool Habilitado = true);
 
 public class AsignacionService
 {
@@ -97,7 +97,9 @@ public class AsignacionService
     public async Task<List<TrabajadorCarga>> TrabajadoresCompatibles(int idServicio, bool soloDisponibles)
     {
         var servicio = await _db.Servicios.AsNoTracking().FirstOrDefaultAsync(s => s.IdServicio == idServicio);
-        if (servicio is null)
+        if (servicio is null || servicio.Estado != ReglasTaller.Abierto || !ReglasTaller.TipoValido(servicio.TipoServicio))
+            return new List<TrabajadorCarga>();
+        if (await ReglasTaller.Facturado(_db, idServicio))
             return new List<TrabajadorCarga>();
 
         var nombreArea = servicio.TipoServicio == "Mantenimiento"
@@ -132,5 +134,7 @@ public class AsignacionService
         d.Trabajador?.Area ?? "",
         d.FechaAsignacion,
         d.Estado,
-        d.Observaciones);
+        d.Observaciones,
+        d.Trabajador is { Activo: true, FechaSalida: null } t &&
+            d.Servicio is not null && ReglasTaller.Compatible(t.Area, d.Servicio.TipoServicio));
 }

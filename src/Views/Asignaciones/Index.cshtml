@@ -3,6 +3,7 @@
     var serviciosAbiertos = (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.ServiciosAbiertos;
     var servicio = ViewBag.Servicio as TallerMecanicoSantoDomingo.Models.Servicio;
     var compatibles = ViewBag.Compatibles as List<TallerMecanicoSantoDomingo.Services.TrabajadorCarga>;
+    bool soloLectura = servicio != null && (servicio.Estado != "Abierto" || servicio.DetalleFacturas.Any(d => d.Factura?.Estado == "Emitida"));
     var asignados = ViewBag.Asignados as List<TallerMecanicoSantoDomingo.Services.ItemAsignacion>;
 }
 
@@ -11,6 +12,10 @@
         <h1><i class="bi bi-person-check me-2" aria-hidden="true"></i>Asignación de personal</h1>
         <div class="ruta">Asignar trabajadores compatibles a los servicios abiertos</div>
     </div>
+    @if (servicio != null)
+    {
+        <a asp-controller="Servicios" asp-action="Detalles" asp-route-id="@servicio.IdServicio" class="btn btn-outline-primary">Volver al servicio #@servicio.IdServicio</a>
+    }
 </div>
 
 @if (!string.IsNullOrWhiteSpace(ViewData.ModelState["Observaciones"]?.AttemptedValue))
@@ -38,19 +43,23 @@
         <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
         <strong>Servicio #@servicio.IdServicio</strong> — @servicio.TipoServicio — @servicio.Vehiculo?.Placa
         (@servicio.Vehiculo?.Cliente?.NombreCompleto). Solo se muestran trabajadores del área compatible
-        y no asignados previamente a este servicio.
+        que todavía no tengan una asignación activa aquí. El personal retirado puede volver a asignarse si tiene cupo.
     </div>
 
     <div class="row g-3">
         <div class="col-lg-5">
             <div class="tarjeta">
                 <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-people me-1" aria-hidden="true"></i> Trabajadores compatibles</h2>
-                @if (compatibles.Count == 0)
+                @if (soloLectura)
+                {
+                    <div class="alerta-info">Este servicio se consulta como historial. Para asignar personal, seleccione un servicio abierto sin factura vigente.</div>
+                }
+                else if (compatibles.Count == 0)
                 {
                     <div class="estado-vacio">
                         <i class="bi bi-person-x" aria-hidden="true"></i>
-                        <div>No hay trabajadores compatibles libres para este servicio.</div>
-                        <div style="font-size:.83rem">Los del área ya están asignados o alcanzaron el límite de 2 servicios activos.</div>
+                        <div>No hay otro trabajador disponible para este servicio.</div>
+                        <div style="font-size:.83rem">El personal del área ya está asignado, no está habilitado o tiene dos trabajos activos.</div>
                     </div>
                 }
                 else
@@ -89,7 +98,8 @@
 
         <div class="col-lg-7">
             <div class="tarjeta">
-                <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-list-check me-1" aria-hidden="true"></i> Trabajadores asignados a este servicio</h2>
+                <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-list-check me-1" aria-hidden="true"></i> Personal de este servicio</h2>
+                <p class="form-text">Un trabajo abierto debe conservar al menos un responsable habilitado. Asigne el reemplazo antes de retirar al último.</p>
                 @if (asignados.Count == 0)
                 {
                     <div class="estado-vacio">
@@ -114,13 +124,14 @@
                                         <td><span class="estado estado-@a.EstadoAsignacion.ToLowerInvariant()">@a.EstadoAsignacion</span></td>
                                         <td style="font-size:.82rem">@(a.Observaciones ?? "—")</td>
                                         <td class="acciones">
-                                            @if (a.EstadoAsignacion == "Activo")
+                                            @if (!soloLectura && a.EstadoAsignacion == "Activo")
                                             {
+                                                var puedeRetirar = asignados.Any(otra => otra.IdTrabajador != a.IdTrabajador && otra.EstadoAsignacion == "Activo" && otra.Habilitado);
                                                 <form asp-action="Desasignar" method="post" class="d-inline">
                                                     @Html.AntiForgeryToken()
                                                     <input type="hidden" name="idTrabajador" value="@a.IdTrabajador" />
                                                     <input type="hidden" name="idServicio" value="@servicio.IdServicio" />
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger btn-icono" title="Retirar"
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger btn-icono" title="@(puedeRetirar ? "Retirar" : "Asigne primero un reemplazo habilitado")" disabled="@(!puedeRetirar)"
                                                             data-confirmar="¿Retirar a @a.NombreTrabajador de este servicio?" aria-label="Retirar">
                                                         <i class="bi bi-person-dash" aria-hidden="true"></i><span class="etiqueta-accion">Retirar</span>
                                                     </button>

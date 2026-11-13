@@ -95,3 +95,35 @@ document.addEventListener('submit', function (evento) {
         if (campoPagina) campoPagina.value = '1';
     }
 });
+
+// ===== Formulario de trabajo: área, responsable y datos específicos =====
+document.querySelectorAll('[data-formulario-servicio]').forEach(function (formulario) {
+    const tipo = formulario.querySelector('#campo-tipo');
+    if (!tipo) return;
+    const responsable = formulario.querySelector('#IdTrabajadorInicial');
+    const aviso = formulario.querySelector('#aviso-sin-personal');
+    function actualizar() {
+        const esPintura = tipo.value === 'Pintura';
+        formulario.querySelectorAll('.div-pintura, .div-mantenimiento').forEach(function (seccion) {
+            const visible = seccion.classList.contains('div-pintura') ? esPintura : !esPintura;
+            seccion.classList.toggle('d-none', !visible);
+            seccion.querySelectorAll('input, textarea').forEach(function (campo) {
+                campo.required = visible;
+                campo.setAttribute('aria-required', String(visible));
+            });
+        });
+        if (!responsable) return;
+        let disponibles = 0;
+        Array.from(responsable.options).forEach(function (opcion) {
+            if (!opcion.value) return;
+            const compatible = opcion.dataset.tipo === tipo.value;
+            opcion.hidden = !compatible;
+            opcion.disabled = !compatible;
+            if (compatible) disponibles++;
+        });
+        if (responsable.selectedOptions[0]?.disabled) responsable.value = '';
+        if (aviso) aviso.classList.toggle('d-none', disponibles > 0);
+    }
+    tipo.addEventListener('change', actualizar);
+    actualizar();
+});

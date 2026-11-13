@@ -1,6 +1,7 @@
 @model TallerMecanicoSantoDomingo.ViewModels.ServicioFormViewModel
 @{
     ViewData["Title"] = "Registrar servicio";
+    var trabajadores = (List<TallerMecanicoSantoDomingo.Services.TrabajadorCarga>)ViewBag.TrabajadoresIniciales;
     var vehiculos = (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Vehiculos;
 }
 
@@ -11,8 +12,16 @@
     </div>
 </div>
 
+@if (vehiculos.Count == 0)
+{
+    <div class="alerta-advertencia" role="status">
+        No hay vehículos disponibles. Registre o reactive un vehículo y su cliente antes de abrir un trabajo.
+        <a asp-controller="Vehiculos" asp-action="Index">Ver vehículos</a>
+    </div>
+}
+
 <div class="tarjeta formulario-tarjeta">
-    <form asp-action="Crear" method="post" class="formulario">
+    <form asp-action="Crear" method="post" class="formulario" data-formulario-servicio>
         <div asp-validation-summary="ModelOnly" class="alerta-error" role="alert"></div>
 
         <div class="row g-3">
@@ -23,14 +32,6 @@
                 </select>
                 <span asp-validation-for="IdVehiculo" class="text-danger"></span>
                 <div class="form-text">Seleccione el vehículo que recibirá el servicio.</div>
-            </div>
-            <div class="col-12">
-                <label asp-for="IdTrabajadorInicial" class="form-label"></label>
-                <select asp-for="IdTrabajadorInicial" class="form-select" asp-items="@((List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.TrabajadoresIniciales)" required>
-                    <option value="">— Seleccione un trabajador del área del servicio —</option>
-                </select>
-                <span asp-validation-for="IdTrabajadorInicial" class="text-danger"></span>
-                <div class="form-text">El servicio se abre con este trabajador. Solo se muestran trabajadores habilitados con capacidad disponible; su área debe corresponder al tipo de servicio.</div>
             </div>
             <div class="col-md-6">
                 <label asp-for="TipoServicio" for="campo-tipo" class="form-label"></label>
@@ -44,6 +45,22 @@
                 <label asp-for="FechaInicio" class="form-label"></label>
                 <input asp-for="FechaInicio" class="form-control" type="date" />
                 <span asp-validation-for="FechaInicio" class="text-danger"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="IdTrabajadorInicial" class="form-label"></label>
+                <select asp-for="IdTrabajadorInicial" class="form-select" aria-describedby="ayuda-trabajador-inicial" required>
+                    <option value="">— Elija al responsable —</option>
+                    @foreach (var t in trabajadores)
+                    {
+                        <option value="@t.IdTrabajador" data-tipo="@(t.Area == "Pintura" ? "Pintura" : "Mantenimiento")" selected="@(Model.IdTrabajadorInicial == t.IdTrabajador)">@t.NombreCompleto — @t.Area (@t.ServiciosActivos de 2 trabajos activos)</option>
+                    }
+                </select>
+                <span asp-validation-for="IdTrabajadorInicial" class="text-danger"></span>
+                <div class="form-text" id="ayuda-trabajador-inicial">El responsable debe pertenecer al área elegida y tener menos de dos trabajos activos. Después puede agregar más personal.</div>
+            </div>
+            <div class="col-12 alerta-advertencia d-none" id="aviso-sin-personal" role="status">
+                No hay personal disponible para el área elegida. Revise las asignaciones activas o registre un trabajador antes de abrir el servicio.
+                <a asp-controller="Trabajadores" asp-action="Index">Ver personal del taller</a>
             </div>
             <div class="col-12"><h2 class="formulario-seccion">Detalle del trabajo</h2></div>
             <div class="col-12">
@@ -76,11 +93,11 @@
 
         <div class="alerta-info mt-3" style="font-size:.85rem">
             <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
-            Después de guardar podrá asignar trabajadores compatibles con el área del servicio y registrar los productos utilizados.
+            Al guardar se abre el trabajo con su responsable. Después podrá registrar los productos utilizados y agregar más personal.
         </div>
 
         <div class="acciones-formulario">
-            <button type="submit" class="btn btn-naranja"><i class="bi bi-save me-1" aria-hidden="true"></i> Guardar servicio</button>
+            <button type="submit" class="btn btn-naranja"><i class="bi bi-save me-1" aria-hidden="true"></i> Abrir servicio</button>
             <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
         </div>
     </form>
@@ -88,16 +105,4 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        (function () {
-            const tipo = document.getElementById('campo-tipo');
-            function actualizar() {
-                const esPintura = tipo.value === 'Pintura';
-                document.querySelectorAll('.div-pintura').forEach(e => e.classList.toggle('d-none', !esPintura));
-                document.querySelectorAll('.div-mantenimiento').forEach(e => e.classList.toggle('d-none', esPintura));
-            }
-            tipo.addEventListener('change', actualizar);
-            actualizar();
-        })();
-    </script>
 }

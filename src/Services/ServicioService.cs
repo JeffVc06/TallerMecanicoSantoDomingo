@@ -163,8 +163,9 @@ public class ServicioService
         }
 
         var total = await query.CountAsync();
+        pagina = Paginacion.Ajustar(pagina, total, tamPagina);
         var elementos = await query
-            .OrderByDescending(s => s.FechaRegistro)
+            .OrderByDescending(s => s.FechaRegistro).ThenByDescending(s => s.IdServicio)
             .Skip((pagina - 1) * tamPagina).Take(tamPagina)
             .ToListAsync();
 

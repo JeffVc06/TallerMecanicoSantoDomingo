@@ -165,7 +165,7 @@ public class ServicioFormViewModel : IValidatableObject
     public DateOnly FechaInicio { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
     [Range(typeof(decimal), "0", "9999999999.99", ErrorMessage = "El monto debe ser no negativo y estar dentro del rango de la base de datos.")]
-    [Display(Name = "Monto del servicio (C$)")]
+    [Display(Name = "Importe completo del trabajo (C$)")]
     [BindRequired]
     public decimal Total { get; set; }
     [Display(Name = "Trabajador inicial")]

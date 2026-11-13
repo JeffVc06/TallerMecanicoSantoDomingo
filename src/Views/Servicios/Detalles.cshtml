@@ -1,14 +1,15 @@
 @model TallerMecanicoSantoDomingo.Models.Servicio
 @{
-    ViewData["Title"] = $"Servicio #{Model.IdServicio}";
+    ViewData["Title"] = $"Servicio #{Model.IdServicio} · {Model.Vehiculo?.Placa}";
     var asignaciones = (List<TallerMecanicoSantoDomingo.Services.ItemAsignacion>)ViewBag.Asignaciones;
     var compatibles = (List<TallerMecanicoSantoDomingo.Services.TrabajadorCarga>)ViewBag.TrabajadoresCompatibles;
-    bool abierto = Model.Estado == "Abierto";
+    var facturaVigente = Model.DetalleFacturas.Select(d => d.Factura).FirstOrDefault(f => f?.Estado == "Emitida");
+    bool abierto = Model.Estado == "Abierto" && facturaVigente == null;
 }
 
 <div class="encabezado-pagina">
     <div>
-        <h1><i class="bi bi-gear-wide-connected me-2" aria-hidden="true"></i>Servicio #@Model.IdServicio</h1>
+        <h1><i class="bi bi-gear-wide-connected me-2" aria-hidden="true"></i>Servicio #@Model.IdServicio <span class="texto-secundario">· @Model.Vehiculo?.Placa</span></h1>
         <div class="ruta"><a asp-action="Index">Servicios</a> / Detalle del servicio</div>
     </div>
     <div class="d-flex gap-2 flex-wrap">
@@ -20,6 +21,43 @@
             <i class="bi bi-car-front me-1" aria-hidden="true"></i> Ver vehículo
         </a>
     </div>
+</div>
+
+<div class="tarjeta" aria-label="Siguiente paso del trabajo">
+    @if (facturaVigente != null)
+    {
+        <div class="fw-semibold">Este trabajo ya tiene una factura emitida.</div>
+        <p class="form-text">El importe y los productos quedan protegidos. Consulte el documento para revisar el cobro.</p>
+        <a asp-controller="Facturas" asp-action="Detalles" asp-route-id="@facturaVigente.IdFactura" class="btn btn-outline-primary">Ver factura @facturaVigente.NumeroFactura</a>
+    }
+    else if (abierto)
+    {
+        <div class="fw-semibold">Trabajo abierto · en atención</div>
+        <p class="form-text mb-2">Revise el personal, registre los productos realmente utilizados y confirme el importe completo antes de finalizar.</p>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="#personal-servicio" class="btn btn-sm btn-outline-primary">Personal asignado</a>
+            <a href="#productos-servicio" class="btn btn-sm btn-outline-primary">Productos utilizados</a>
+            <a href="#cierre-servicio" class="btn btn-sm btn-azul">Finalizar trabajo</a>
+        </div>
+    }
+    else if (Model.Estado == "Finalizado")
+    {
+        <div class="fw-semibold">Trabajo finalizado</div>
+        @if (Model.Vehiculo?.Cliente?.Activo == true)
+        {
+            <p class="form-text">Puede preparar la factura. Se mostrarán los trabajos finalizados del mismo cliente que aún estén pendientes de facturar.</p>
+            <a asp-controller="Facturas" asp-action="Crear" asp-route-idCliente="@Model.Vehiculo.IdCliente" class="btn btn-naranja">Preparar factura</a>
+        }
+        else
+        {
+            <p class="form-text mb-0">El cliente debe estar activo para emitir una factura. Revise su ficha desde el vehículo.</p>
+        }
+    }
+    else
+    {
+        <div class="fw-semibold">Consulte el historial de este trabajo.</div>
+        <p class="form-text mb-0">Cancelar conserva los registros. Los productos utilizados no se devuelven automáticamente al inventario.</p>
+    }
 </div>
 
 <div class="row g-3">
@@ -39,7 +77,7 @@
                 <dt class="col-5 texto-secundario">Inicio</dt>
                 <dd class="col-7">@Model.FechaInicio.ToString("dd/MM/yyyy")</dd>
                 <dt class="col-5 texto-secundario">Fin</dt>
-                <dd class="col-7">@(Model.FechaFin?.ToString("dd/MM/yyyy") ?? "Pendiente")</dd>
+                <dd class="col-7">@(Model.FechaFin?.ToString("dd/MM/yyyy") ?? (Model.Estado == "Cancelado" ? "No aplica" : Model.Estado == "Abierto" ? "Sin finalizar" : "Sin fecha registrada"))</dd>
                 <dt class="col-5 texto-secundario">Monto</dt>
                 <dd class="col-7 fw-semibold">C$ @Model.Total.ToString("N2")</dd>
             </dl>
@@ -81,7 +119,7 @@
     <!-- Columna derecha: operación -->
     <div class="col-lg-8">
         <!-- Trabajadores asignados -->
-        <div class="tarjeta">
+        <div class="tarjeta" id="personal-servicio">
             <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-person-badge me-1" aria-hidden="true"></i> Trabajadores asignados</h2>
 
             @if (asignaciones.Count == 0)
@@ -94,26 +132,27 @@
             else
             {
                 <div class="tabla-envuelta" role="region" aria-label="Trabajadores asignados" tabindex="0">
-                    <table class="tabla-lista" id="tabla-asignados">
-                        <thead>
-                            <tr><th scope="col">Trabajador</th><th scope="col">Área</th><th scope="col">Asignado el</th><th scope="col">Estado</th><th scope="col" class="acciones"><span class="visually-hidden">Acciones</span></th></tr>
+                    <table class="tabla-lista tabla-adaptable" role="table" id="tabla-asignados">
+                        <thead role="rowgroup">
+                            <tr role="row"><th scope="col">Trabajador</th><th scope="col">Área</th><th scope="col">Asignado el</th><th scope="col">Estado</th><th scope="col" class="acciones"><span class="visually-hidden">Acciones</span></th></tr>
                         </thead>
-                        <tbody>
+                        <tbody role="rowgroup">
                             @foreach (var a in asignaciones)
                             {
-                                <tr>
-                                    <td class="fw-semibold">@a.NombreTrabajador</td>
-                                    <td>@a.Area</td>
-                                    <td>@a.FechaAsignacion.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-                                    <td><span class="estado estado-@a.EstadoAsignacion.ToLowerInvariant()">@a.EstadoAsignacion</span></td>
-                                    <td class="acciones">
+                                <tr role="row">
+                                    <td role="cell" data-etiqueta="Trabajador" class="fw-semibold">@a.NombreTrabajador</td>
+                                    <td role="cell" data-etiqueta="Área">@a.Area</td>
+                                    <td role="cell" data-etiqueta="Asignado el">@a.FechaAsignacion.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td role="cell" data-etiqueta="Asignación"><span class="estado estado-@a.EstadoAsignacion.ToLowerInvariant()">@a.EstadoAsignacion</span></td>
+                                    <td role="cell" data-etiqueta="Acciones" class="acciones">
                                         @if (abierto && a.EstadoAsignacion == "Activo")
                                         {
+                                            var puedeRetirar = asignaciones.Any(otra => otra.IdTrabajador != a.IdTrabajador && otra.EstadoAsignacion == "Activo" && otra.Habilitado);
                                             <form asp-controller="Asignaciones" asp-action="Desasignar" method="post" class="d-inline">
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="idTrabajador" value="@a.IdTrabajador" />
                                                 <input type="hidden" name="idServicio" value="@Model.IdServicio" />
-                                                <button type="submit" class="btn btn-sm btn-outline-danger btn-icono" title="Retirar del servicio"
+                                                <button type="submit" class="btn btn-sm btn-outline-danger btn-icono" title="@(puedeRetirar ? "Retirar del servicio" : "Asigne primero un reemplazo habilitado")" disabled="@(!puedeRetirar)"
                                                         data-confirmar="¿Retirar a @a.NombreTrabajador de este servicio?" aria-label="Retirar del servicio">
                                                     <i class="bi bi-person-dash" aria-hidden="true"></i><span class="etiqueta-accion">Retirar</span>
                                                 </button>
@@ -130,7 +169,8 @@
             @if (abierto)
             {
                 <div class="subformulario">
-                    <h3>Asignar trabajador compatible</h3>
+                    <h3>Agregar personal al trabajo</h3>
+                    <p class="form-text">Para retirar al último responsable, primero asigne un reemplazo habilitado.</p>
                     <form asp-controller="Asignaciones" asp-action="Asignar" method="post" class="row g-2 align-items-end" id="formulario-asignacion">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="IdServicio" value="@Model.IdServicio" />
@@ -140,7 +180,7 @@
                                 <option value="">— Seleccione —</option>
                                 @foreach (var t in compatibles)
                                 {
-                                    <option value="@t.IdTrabajador" selected="@(ViewData.ModelState["IdTrabajador"]?.AttemptedValue == t.IdTrabajador.ToString())" data-activos="@t.ServiciosActivos" data-disponible="@t.Disponible">
+                                    <option value="@t.IdTrabajador" selected="@(ViewData.ModelState["IdTrabajador"]?.AttemptedValue == t.IdTrabajador.ToString())" data-activos="@t.ServiciosActivos" data-disponible="@t.Disponible" disabled="@(!t.Disponible)">
                                         @t.NombreCompleto — @t.Area (@t.ServiciosActivos de 2 activos)
                                     </option>
                                 }
@@ -152,14 +192,14 @@
                             <input id="observaciones-asignacion" name="Observaciones" class="form-control" placeholder="Opcional" maxlength="200" value="@(ViewData.ModelState["Observaciones"]?.AttemptedValue)" />
                         </div>
                         <div class="col-md-3">
-                            <button type="submit" class="btn btn-naranja w-100"><i class="bi bi-person-check me-1" aria-hidden="true"></i> Asignar</button>
+                            <button type="submit" class="btn btn-naranja w-100" disabled="@(!compatibles.Any(t => t.Disponible))"><i class="bi bi-person-check me-1" aria-hidden="true"></i> Asignar</button>
                         </div>
                     </form>
-                    @if (compatibles.Count == 0)
+                    @if (!compatibles.Any(t => t.Disponible))
                     {
                         <div class="alerta-info mt-2 mb-0" style="font-size:.85rem">
                             <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
-                            No hay trabajadores disponibles para este tipo de servicio.
+                            No hay otro trabajador disponible para agregar a este servicio. El personal del área ya está asignado o no tiene cupo.
                         </div>
                     }
                 </div>
@@ -167,7 +207,7 @@
         </div>
 
         <!-- Productos utilizados -->
-        <div class="tarjeta">
+        <div class="tarjeta" id="productos-servicio">
             <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-box-seam me-1" aria-hidden="true"></i> Productos utilizados</h2>
 
             @if (!Model.ProductosUtilizados.Any())
@@ -180,19 +220,19 @@
             else
             {
                 <div class="tabla-envuelta" role="region" aria-label="Productos utilizados" tabindex="0">
-                    <table class="tabla-lista">
-                        <thead>
-                            <tr><th scope="col">Producto</th><th scope="col" class="text-end">Cantidad</th><th scope="col" class="text-end">Precio actual</th><th scope="col" class="text-end">Estimación actual</th><th scope="col" class="acciones"><span class="visually-hidden">Acciones</span></th></tr>
+                    <table class="tabla-lista tabla-adaptable" role="table">
+                        <thead role="rowgroup">
+                            <tr role="row"><th scope="col">Producto</th><th scope="col" class="text-end">Cantidad</th><th scope="col" class="text-end">Precio actual (C$)</th><th scope="col" class="text-end">Estimación actual (C$)</th><th scope="col" class="acciones"><span class="visually-hidden">Acciones</span></th></tr>
                         </thead>
-                        <tbody>
+                        <tbody role="rowgroup">
                             @foreach (var pu in Model.ProductosUtilizados.Where(pu => pu.Producto != null))
                             {
-                                <tr>
-                                    <td class="fw-semibold">@pu.Producto!.Nombre</td>
-                                    <td class="text-end">@pu.Cantidad.ToString("0.###")</td>
-                                    <td class="text-end">@pu.Producto.PrecioUnitario.ToString("N2")</td>
-                                    <td class="text-end">@((pu.Cantidad * pu.Producto.PrecioUnitario).ToString("N2"))</td>
-                                    <td class="acciones">
+                                <tr role="row">
+                                    <td role="cell" data-etiqueta="Producto" class="fw-semibold">@pu.Producto!.Nombre</td>
+                                    <td role="cell" data-etiqueta="Cantidad" class="text-end">@pu.Cantidad.ToString("0.###")</td>
+                                    <td role="cell" data-etiqueta="Precio actual" class="text-end">C$ @pu.Producto.PrecioUnitario.ToString("N2")</td>
+                                    <td role="cell" data-etiqueta="Estimación actual" class="text-end">C$ @((pu.Cantidad * pu.Producto.PrecioUnitario).ToString("N2"))</td>
+                                    <td role="cell" data-etiqueta="Acciones" class="acciones">
                                         @if (abierto)
                                         {
                                             <form asp-action="ActualizarProducto" method="post" class="d-inline">
@@ -255,18 +295,19 @@
         <!-- Estado del servicio -->
         @if (abierto)
         {
-            <div class="tarjeta">
-                <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-send-check me-1" aria-hidden="true"></i> Cambiar estado del servicio</h2>
+            <div class="tarjeta" id="cierre-servicio">
+                <h2 class="h6 fw-bold text-primary mb-3"><i class="bi bi-send-check me-1" aria-hidden="true"></i> Cerrar el trabajo</h2>
+                <p class="form-text">Finalice cuando el trabajo esté terminado y el importe revisado. Cancelar cierra las asignaciones, pero conserva los productos consumidos.</p>
                 <div class="row g-3">
                     <div class="col-md-7">
                         <form asp-action="Finalizar" method="post" class="formulario">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="IdServicio" value="@Model.IdServicio" />
                             <label for="fecha-finalizacion" class="form-label">Fecha de finalización</label>
-                            <div class="input-group">
+                            <div class="d-grid gap-2">
                                 <input id="fecha-finalizacion" type="date" name="FechaFin" class="form-control" value="@(ViewData.ModelState["FechaFin"]?.AttemptedValue ?? DateTime.Today.ToString("yyyy-MM-dd"))" required />
                                 <button type="submit" class="btn btn-azul" data-confirmar="¿Finalizar este servicio? Se cerrarán sus asignaciones de personal.">
-                                    <i class="bi bi-check2-circle me-1" aria-hidden="true"></i> Finalizar
+                                    <i class="bi bi-check2-circle me-1" aria-hidden="true"></i> Finalizar trabajo
                                 </button>
                             </div>
                         </form>
@@ -278,8 +319,8 @@
                             <label for="filtro-motivo" class="form-label">Cancelar servicio</label>
                             <input id="filtro-motivo" type="text" name="Motivo" value="@(ViewData.ModelState["Motivo"]?.AttemptedValue)" class="form-control mb-2" placeholder="Motivo (opcional)" maxlength="200" />
                             <button type="submit" class="btn btn-outline-danger w-100"
-                                    data-confirmar="¿Cancelar este servicio? Los trabajadores quedarán disponibles.">
-                                <i class="bi bi-x-circle me-1" aria-hidden="true"></i> Cancelar servicio
+                                    data-confirmar="¿Cancelar este servicio? Se cerrarán las asignaciones. Los productos registrados seguirán descontados del inventario.">
+                                <i class="bi bi-x-circle me-1" aria-hidden="true"></i> Cancelar trabajo
                             </button>
                         </form>
                     </div>

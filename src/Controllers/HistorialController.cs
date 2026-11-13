@@ -28,7 +28,7 @@ public class HistorialController : Controller
             .OrderBy(v => v.Placa)
             .Select(v => new SelectListItem(
                 $"{v.Placa} — {v.Marca} {v.Modelo} ({v.Cliente!.Nombre} {v.Cliente.Apellido})",
-                v.IdVehiculo.ToString()))
+                v.IdVehiculo.ToString(), v.IdVehiculo == idVehiculo))
             .ToListAsync();
         ViewBag.Vehiculos = vehiculos;
 
@@ -40,6 +40,8 @@ public class HistorialController : Controller
                 ViewBag.Vehiculo = vehiculo;
                 ViewBag.Historial = await _vehiculos.ObtenerHistorial(idVehiculo.Value);
             }
+            else
+                TempData["Error"] = "El vehículo seleccionado no existe. Elija una placa de la lista.";
         }
 
         return View();

@@ -113,8 +113,9 @@ public class ClienteService
         }
 
         var total = await query.CountAsync();
+        pagina = Paginacion.Ajustar(pagina, total, tamPagina);
         var elementos = await query
-            .OrderBy(c => c.Apellido).ThenBy(c => c.Nombre)
+            .OrderBy(c => c.Apellido).ThenBy(c => c.Nombre).ThenBy(c => c.IdCliente)
             .Skip((pagina - 1) * tamPagina).Take(tamPagina)
             .ToListAsync();
 

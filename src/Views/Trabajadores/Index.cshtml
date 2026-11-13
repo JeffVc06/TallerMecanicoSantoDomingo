@@ -90,6 +90,7 @@
                                 </a>
                                 <form asp-action="CambiarEstado" asp-route-id="@t.IdTrabajador" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
+                                    <input type="hidden" name="buscar" value="@ViewBag.Buscar" />
                                     <input type="hidden" name="activo" value="@(t.Activo ? "false" : "true")" />
                                     <button type="submit" class="btn btn-sm @(t.Activo ? "btn-outline-danger" : "btn-outline-success") btn-icono"
                                             title="@(t.Activo ? "Desactivar" : "Reactivar")"

@@ -66,14 +66,19 @@
                         <th scope="col">Tipo</th>
                         <th scope="col">Descripción</th>
                         <th scope="col">Estado</th>
-                        <th scope="col">Trabajadores</th>
-                        <th scope="col" class="text-end">Monto</th>
+                        <th scope="col">Personal</th>
+                        <th scope="col" class="text-end">Importe (C$)</th>
                         <th scope="col" class="acciones">Acciones</th>
                     </tr>
                 </thead>
                 <tbody role="rowgroup">
                     @foreach (var s in Model.Elementos)
                     {
+                        var equipo = s.DetalleServicios
+                            .Where(d => s.Estado != "Abierto" || d.Estado == "Activo")
+                            .Where(d => d.Trabajador != null)
+                            .OrderBy(d => d.Trabajador!.Apellido).ThenBy(d => d.IdTrabajador)
+                            .Select(d => d.Trabajador!.NombreCompleto).ToList();
                         <tr role="row">
                             <td role="cell" data-etiqueta="#" class="fw-semibold">@s.IdServicio</td>
                             <td role="cell" data-etiqueta="Fecha inicio">@s.FechaInicio.ToString("dd/MM/yyyy")</td>
@@ -82,11 +87,24 @@
                             <td role="cell" data-etiqueta="Tipo"><span class="estado tipo-@s.TipoServicio.ToLowerInvariant()">@s.TipoServicio</span></td>
                             <td role="cell" data-etiqueta="Descripción" style="max-width:220px">@s.Descripcion</td>
                             <td role="cell" data-etiqueta="Estado"><span class="estado estado-@s.Estado.ToLowerInvariant()">@s.Estado</span></td>
-                            <td role="cell" data-etiqueta="Trabajadores">@s.DetalleServicios.Count(d => d.Estado == "Activo")</td>
-                            <td role="cell" data-etiqueta="Monto" class="text-end">@s.Total.ToString("N2")</td>
+                            <td role="cell" data-etiqueta="Personal">
+                                @if (equipo.Count == 0)
+                                {
+                                    <span class="@(s.Estado == "Abierto" ? "text-danger" : "texto-secundario")">Sin personal registrado</span>
+                                }
+                                else
+                                {
+                                    <span>@string.Join(", ", equipo)</span>
+                                    @if (s.Estado != "Abierto")
+                                    {
+                                        <div class="form-text m-0">Personal del historial</div>
+                                    }
+                                }
+                            </td>
+                            <td role="cell" data-etiqueta="Importe (C$)" class="text-end">@s.Total.ToString("N2")</td>
                             <td role="cell" data-etiqueta="Acciones" class="acciones">
-                                <a asp-action="Detalles" asp-route-id="@s.IdServicio" class="btn btn-sm btn-outline-primary btn-icono" title="Gestionar servicio" aria-label="Gestionar servicio">
-                                    <i class="bi bi-eye" aria-hidden="true"></i><span class="etiqueta-accion">Gestionar</span>
+                                <a asp-action="Detalles" asp-route-id="@s.IdServicio" class="btn btn-sm btn-outline-primary btn-icono" title="Ver trabajo y personal" aria-label="Ver trabajo y personal">
+                                    <i class="bi bi-eye" aria-hidden="true"></i><span class="etiqueta-accion">Ver trabajo</span>
                                 </a>
                                 @if (s.Estado == "Abierto")
                                 {
