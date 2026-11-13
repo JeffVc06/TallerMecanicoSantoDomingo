@@ -64,6 +64,7 @@ Registrar nombre, apellido, teléfono, dirección e identificación.
 Para un particular basta la cédula como documento. El RUC es opcional y se
 utiliza cuando corresponde a una empresa. Se puede guardar cédula, RUC o
 ambos; el registro debe tener al menos una identificación.
+El campo se llama Cédula. No existe un campo separado llamado Carnet.
 
 CONSULTAR:
 Buscar por nombre, apellido, cédula, RUC o teléfono. Revisar su ficha, sus
@@ -72,6 +73,26 @@ vehículos y su información de facturación.
 ACTUALIZAR:
 Corregir sus datos, por ejemplo teléfono o dirección. Los documentos no
 deben repetirse en otro cliente cuando tengan valor.
+Puedes conservar la cédula y el RUC del propio cliente al editar su ficha.
+Desactivar un cliente no deja sus documentos disponibles para otra persona.
+
+VALIDACIONES DE IDENTIFICACIÓN Y CONTACTO:
+- Cédula y RUC: cada uno admite hasta 20 caracteres. Se quitan los espacios
+  del principio y del final y se guardan las letras en mayúsculas. Después
+  se comprueba que el valor no pertenezca a otro cliente.
+- Teléfono: es obligatorio, admite hasta 20 caracteres y se revisa su formato
+  telefónico general. Actualmente SÍ puede repetirse entre clientes.
+  Un número compartido no identifica por sí solo a una persona.
+- Nombre y apellido: obligatorios, hasta 100 caracteres cada uno. Pueden
+  repetirse; dos personas pueden llamarse igual.
+- Dirección: obligatoria, hasta 200 caracteres.
+
+Límite que debes explicar con precisión:
+No se comprueba la autenticidad de la cédula o del RUC ni se exige una máscara
+exacta. Tampoco se unifican documentos escritos con y sin guiones. Utiliza
+siempre el mismo formato; no afirmes que se detectan todas las variantes de
+un documento. El teléfono tampoco exige exactamente ocho dígitos: un valor
+como 8888 pasa la validación general, aunque esté incompleto para tu uso.
 
 DESACTIVAR Y REACTIVAR:
 Desactivar conserva la ficha y el historial. Para utilizar nuevamente al
@@ -132,6 +153,9 @@ ACTUALIZAR:
 Corregir información de contacto y otros datos permitidos. Antes de cambiar
 su área o registrar su salida, deben resolverse sus asignaciones activas.
 El correo no debe repetirse entre trabajadores cuando tenga valor.
+El teléfono es obligatorio y se revisan su formato general y su longitud
+máxima de 20 caracteres, pero SÍ puede repetirse. No hay un campo de cédula
+o carnet para trabajadores en el formulario actual.
 
 DESACTIVAR Y REACTIVAR:
 No se permite desactivar a alguien que todavía tiene trabajos activos.
@@ -437,6 +461,38 @@ Puede ser necesario recargar la pantalla para verla actualizada. Las
 operaciones verifican las condiciones al guardar; no debe suponerse que
 todas las ventanas se actualizan instantáneamente.
 
+33) ¿Se puede registrar dos veces la misma cédula o carnet de un cliente?
+El dato se registra en Cédula. Se rechaza si el mismo valor, después de quitar
+espacios exteriores y pasar a mayúsculas, ya pertenece a otro cliente.
+También se comprueba al editar. No se unifican variantes con y sin guiones.
+
+34) ¿El RUC también debe ser único?
+Sí, entre clientes cuando se proporciona. No es obligatorio si se registra
+una cédula. El RUC copiado en facturas puede aparecer en varias facturas del
+mismo cliente; eso no es una ficha de cliente duplicada.
+
+35) ¿El sistema impide repetir un teléfono?
+No. Actualmente admite el mismo teléfono en varios clientes o trabajadores,
+incluso entre ambos módulos. Comprueba que sea obligatorio, que no exceda
+20 caracteres y que tenga un formato telefónico general.
+
+36) ¿Puedo reutilizar la cédula de un cliente desactivado?
+No. Su identificación sigue reservada en la ficha conservada. Si vuelve la
+misma persona, busca su ficha y reactívala en lugar de crear otra.
+
+37) ¿Al editar debo cambiar la cédula, el RUC o el correo del trabajador?
+No. Se permite conservar el valor del propio registro; se rechaza cuando
+pertenece a otro registro del mismo módulo.
+
+38) ¿Se comprueba que el documento sea real o que el teléfono tenga ocho dígitos?
+No. Los documentos tienen controles de presencia, longitud y duplicados,
+pero no de autenticidad ni de formato exacto. El teléfono usa una validación
+general que puede aceptar un número corto como 8888.
+
+39) ¿Basta con que el formulario me deje escribir algo?
+No. Las reglas se comprueban nuevamente al guardar. Si falla una validación,
+se muestra el mensaje y no se confirma la operación.
+
 
 12. GUION PARA DEMOSTRAR EL CRUD EN LA DEFENSA
 ------------------------------------------------------------
@@ -452,6 +508,18 @@ PASO 1. CLIENTE.
 Registra un cliente de prueba con cédula y RUC vacío. Búscalo, abre su ficha,
 cambia su teléfono, desactívalo y reactívalo. Déjalo activo para continuar.
 Con esto muestras las cuatro operaciones del CRUD de clientes.
+
+COMPROBACIÓN DE DUPLICADOS Y CONTACTO:
+- Intenta registrar otra ficha con la misma cédula, cambiando solo las letras
+  a minúsculas o agregando espacios exteriores: debe rechazarse.
+- Con documentos distintos, el mismo teléfono sí permite guardar otra ficha.
+- Intenta editar esa segunda ficha para usar la cédula de la primera: se rechaza
+  y conserva la identificación anterior. Guardar su propia cédula sí funciona.
+- Desactiva la primera ficha y vuelve a intentar duplicar su documento: sigue
+  rechazándose. Reactívala antes de continuar con el vehículo.
+- Prueba un teléfono vacío, el texto "sin telefono" o más de 20 caracteres:
+  se rechaza.
+Haz estas comprobaciones solo con fichas y documentos de prueba.
 
 PASO 2. VEHÍCULO.
 Registra una placa de prueba para ese cliente. Consulta la ficha y corrige
@@ -499,8 +567,15 @@ conservando sus datos y sin devolver existencias automáticamente.
 13. CASOS INVÁLIDOS QUE DEBES SABER EXPLICAR
 ------------------------------------------------------------
 
-- Cliente con cédula o RUC ya registrado: se rechaza el duplicado.
-- Vehículo con placa repetida: se rechaza.
+- Cliente con cédula o RUC de otro cliente, incluso desactivado: se rechaza
+  al registrar o editar, con la normalización explicada en el apartado 3.
+- Teléfono vacío, texto como "sin telefono" o más de 20 caracteres: se rechaza.
+- Nombre, apellido o dirección obligatorios vacíos: se rechaza.
+- Vehículo con placa o chasis repetidos: se rechaza; el chasis es opcional.
+- Año del vehículo anterior a 1950 o posterior al próximo año: se rechaza.
+- Kilometraje, precios, costos o existencias negativos: se rechazan.
+- Correo de trabajador inválido o ya usado por otro trabajador: se rechaza
+  cuando se proporciona. Se permite dejarlo vacío.
 - Trabajo sin personal inicial: no se abre.
 - Pintor seleccionado para mantenimiento: no corresponde al área.
 - Trabajador con dos servicios activos: no recibe un tercero.
@@ -511,6 +586,13 @@ conservando sus datos y sin devolver existencias automáticamente.
 - Factura vacía o con un servicio abierto: no se emite.
 - Servicios de clientes diferentes: no se mezclan en una factura.
 - Servicio con factura vigente: no se factura de nuevo.
+
+CASOS QUE SÍ SE ADMITEN:
+- Teléfono compartido entre clientes o trabajadores.
+- Nombre y apellido iguales en personas distintas.
+- Conservar los documentos propios al editar una ficha.
+- Cliente con cédula y RUC vacío, o con RUC y cédula vacía.
+- Un RUC de cliente en varias facturas y visitas repetidas del mismo vehículo.
 
 Si un botón aparece deshabilitado por una regla, explica el motivo. No necesitas
 manipular solicitudes ni mostrar programación para defender ese comportamiento.
@@ -540,6 +622,12 @@ Di: “El sistema es de gestión interna del taller”.
 No digas: “Hay roles o funciones que no he comprobado”.
 Di únicamente lo que puedes mostrar en la aplicación actual.
 
+No digas: “El sistema no deja repetir ningún dato, ni siquiera el teléfono”.
+Di: “Cédula y RUC se controlan entre clientes; el teléfono sí puede compartirse”.
+
+No digas: “El sistema verifica que una cédula sea auténtica”.
+Di: “Comprueba presencia, longitud y duplicados con la normalización indicada”.
+
 
 15. RESUMEN PARA REPASAR JUSTO ANTES DE ENTRAR
 ------------------------------------------------------------
@@ -547,6 +635,9 @@ Di únicamente lo que puedes mostrar en la aplicación actual.
 ¿QUÉ HACE? Organiza clientes, vehículos, personal, servicios, productos y facturas.
 ¿QUÉ ES CRUD? Registrar, consultar, actualizar y retirar del uso según las reglas.
 ¿POR QUÉ DESACTIVAR? Para conservar el historial.
+¿CÉDULA Y RUC REPETIDOS? Se rechazan entre clientes, también desactivados.
+¿TELÉFONO REPETIDO? Sí se permite; se revisan presencia, longitud y formato general.
+¿DOCUMENTO AUTÉNTICO? No se verifica su autenticidad ni se unifican los guiones.
 ¿CÓMO SE ABRE UN SERVICIO? Con vehículo válido, tipo, datos y personal habilitado.
 ¿CUÁNTOS TRABAJOS POR PERSONA? Máximo dos activos distintos.
 ¿QUÉ PASA CON EL ÚLTIMO RESPONSABLE? Se necesita reemplazo antes de retirarlo.

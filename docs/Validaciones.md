@@ -27,6 +27,57 @@ entidades. Los importes respetan `decimal(12,2)` y las cantidades/Stock,
 `decimal(12,3)`; se rechaza un exceso de decimales o rango antes de escribir.
 No se impone unicidad a nombres, teléfonos ni al RUC copiado en facturas.
 
+### Revisión de identificaciones, duplicados y contacto
+
+El dato que puede llamarse informalmente «carnet» aparece como **Cédula** del
+cliente. No existe un campo separado de carnet, ni una cédula de trabajador
+en el modelo o formulario actual.
+
+| Dato | ¿Se rechaza si pertenece a otro registro? | Alcance |
+|---|---|---|
+| Cédula de cliente | Sí, al crear y editar, incluidos clientes desactivados. | Se recortan espacios exteriores y se convierte a mayúsculas; índice único filtrado en el SQL del proyecto. |
+| RUC de cliente | Sí, al crear y editar, incluidos clientes desactivados. | Misma normalización; índice único filtrado en el SQL del proyecto. |
+| Teléfono de cliente o trabajador | **No**. Se permite compartirlo dentro de cada módulo y entre ambos. | Obligatorio, máximo 20 caracteres y validación general con `PhoneAttribute`, tanto en formularios como en servicios. No hay índice único de teléfono. |
+| Nombre y apellido | No. | Se permiten personas con el mismo nombre; cada campo es obligatorio y admite hasta 100 caracteres. |
+| Correo de trabajador | Sí, cuando tiene valor, incluidos trabajadores inactivos. | Se recorta y convierte a minúsculas; comprobación en `TrabajadorService`, sin índice único en el SQL del proyecto. |
+| Placa y chasis | Sí; el chasis solo cuando tiene valor. | Comprobaciones en `VehiculoService` e índices únicos en el SQL del proyecto. |
+| RUC copiado en factura | No. | Un cliente puede tener varias facturas que conserven el mismo RUC. |
+
+Editar un registro conservando sus propios documentos, placa, chasis o correo
+no lo considera duplicado: las consultas excluyen su identificador. Desactivar
+al titular no libera sus valores únicos para un registro nuevo.
+
+La cédula y el RUC admiten hasta 20 caracteres y se exige al menos uno de los
+dos. **No se valida su autenticidad ni una máscara exacta**; tampoco se eliminan
+guiones o espacios interiores para comparar variantes. Por ejemplo, no se
+equipara automáticamente `001-120690-0001A` con `0011206900001A`. La unicidad
+se aplica a los valores comparados tras la normalización descrita, no a todas
+las representaciones posibles de un documento.
+
+La validación telefónica **no exige ocho dígitos ni un prefijo local concreto**.
+`8888`, `8888-1111` y `+505 8888-1111` pasan el control general; un teléfono
+vacío, con texto como `sin telefono` o de más de 20 caracteres se rechaza.
+Que un valor pase esa validación no comprueba que sea un número completo,
+existente o perteneciente a la persona. Las reglas actuales se documentan sin
+imponer una nueva política de unicidad o modificar el esquema.
+
+La [guía de defensa CRUD](GuiaDefensaCRUD.txt) incluye estas respuestas y una
+secuencia para demostrar duplicados, edición y teléfonos compartidos.
+
+Verificación de esta revisión (13 de noviembre de 2026):
+
+- Se añadieron 14 casos en `tests/PruebasDuplicadosYContacto.cs`: documentos
+  duplicados al crear/editar con titulares activos e inactivos, conservación
+  de documentos propios, teléfonos compartidos en ambos módulos, rechazo de
+  teléfonos vacíos/inválidos/largos y conservación del dato tras una edición
+  rechazada. También se comprobaron los límites actuales: teléfonos cortos,
+  documentos sin máscara y variantes con/sin guiones admitidos.
+- `dotnet test TallerMecanicoSantoDomingo.sln --no-restore --filter 'Categoria!=Integracion' --verbosity minimal`:
+  **117 pruebas aprobadas, 0 fallidas**. Incluye los 14 casos nuevos.
+- Las pruebas nuevas utilizan EF InMemory y validación de formularios. En esta
+  revisión no se ejecutaron pruebas de integración SQL; la revisión de índices
+  se hizo sobre el esquema del repositorio, sin comprobar una base instalada.
+
 ### Estados conservados
 
 - Servicio: `Abierto`, `Finalizado`, `Cancelado`. El esquema actual no admite
@@ -172,7 +223,7 @@ Pruebas manuales, sobre esa misma base de pruebas:
 | 12 | Anular con motivo y consultar la factura anulada. | No deben desaparecer detalles, reutilizarse el número ni reponerse Stock. |
 | 13 | Iniciar sesión y usar formularios con token. | Sin autenticación o sin token antiforgery; cantidades o fechas manipuladas no deben producir escrituras. |
 
-Resultados de esta ejecución:
+Resultados de la intervención inicial (anteriores a la revisión de contacto):
 
 - `dotnet build`: correcto, sin advertencias ni errores.
 - `dotnet test`: 84 pruebas aprobadas y 8 de SQL Server omitidas; no había una

@@ -86,6 +86,8 @@ La revisión posterior de desactivación, reactivación y disponibilidad está e
 [docs/CorreccionEstados.md](docs/CorreccionEstados.md).
 La [guía de trabajo diario](docs/GuiaTrabajo.md) explica el recorrido para el
 personal del taller y las mejoras de uso de servicios, asignaciones e historial.
+La [guía de defensa CRUD](docs/GuiaDefensaCRUD.txt) reúne preguntas, respuestas y
+demostraciones, incluidos los controles de duplicados y los límites de formato.
 
 ## Usuarios y trabajadores
 
