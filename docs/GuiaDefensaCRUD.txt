@@ -1,0 +1,562 @@
+GUÍA DE ESTUDIO PARA LA DEFENSA
+TALLER MECÁNICO SANTO DOMINGO
+
+Enfoque: qué hace el sistema, cómo se utiliza y cómo funcionan sus CRUD.
+Esta guía no contiene preguntas de programación.
+
+
+1. PRESENTACIÓN QUE PUEDES PRACTICAR EN VOZ ALTA
+------------------------------------------------------------
+
+“Nuestro proyecto es un sistema de gestión interna para el Taller Mecánico
+Santo Domingo. Permite registrar clientes y sus vehículos, organizar al
+personal, abrir servicios de mantenimiento o pintura, registrar los productos
+utilizados y emitir facturas por los trabajos finalizados.
+
+También permite consultar el historial de cada vehículo y revisar reportes.
+La finalidad es mantener ordenada la información del taller, saber quién
+atiende cada trabajo, controlar las existencias y conservar el historial de
+servicios y cobros.”
+
+Idea central para recordar:
+CLIENTE → VEHÍCULO → SERVICIO → PERSONAL Y PRODUCTOS → FACTURA → HISTORIAL.
+
+Los clientes son las personas o responsables cuyos vehículos atiende el
+taller. Los usuarios que ingresan al programa son el personal interno.
+No es una tienda independiente de repuestos ni una plataforma de suscripciones.
+
+
+2. QUÉ SIGNIFICA CRUD EN ESTE PROYECTO
+------------------------------------------------------------
+
+C: CREAR. Registrar información nueva.
+Ejemplo: registrar un cliente o abrir un servicio.
+
+R: CONSULTAR. Buscar, listar o revisar información existente.
+Ejemplo: buscar un vehículo por placa y ver su ficha.
+
+U: ACTUALIZAR. Corregir información existente, respetando las reglas del taller.
+Ejemplo: cambiar el teléfono de un cliente o corregir el kilometraje.
+
+D: ELIMINAR. En los registros principales, el sistema utiliza desactivación
+para retirar un registro del uso operativo sin perder su historial.
+Ejemplo: desactivar un producto para impedir nuevos consumos.
+
+IMPORTANTE:
+No todas las entidades permiten las mismas operaciones. Un cliente se puede
+editar; una factura emitida no permite modificar libremente sus importes.
+Las facturas se anulan y los servicios se cancelan. Esas operaciones cambian
+su situación, pero conservan los registros.
+
+Respuesta corta si preguntan por qué no se borra todo:
+“Porque los registros están relacionados con trabajos, vehículos y facturas.
+Conservarlos permite consultar lo que ocurrió en el taller.”
+
+
+3. CRUD DE CLIENTES
+------------------------------------------------------------
+
+¿Para qué sirve?
+Para identificar al cliente y relacionarlo con sus vehículos y facturas.
+
+CREAR:
+Registrar nombre, apellido, teléfono, dirección e identificación.
+Para un particular basta la cédula como documento. El RUC es opcional y se
+utiliza cuando corresponde a una empresa. Se puede guardar cédula, RUC o
+ambos; el registro debe tener al menos una identificación.
+
+CONSULTAR:
+Buscar por nombre, apellido, cédula, RUC o teléfono. Revisar su ficha, sus
+vehículos y su información de facturación.
+
+ACTUALIZAR:
+Corregir sus datos, por ejemplo teléfono o dirección. Los documentos no
+deben repetirse en otro cliente cuando tengan valor.
+
+DESACTIVAR Y REACTIVAR:
+Desactivar conserva la ficha y el historial. Para utilizar nuevamente al
+cliente en operaciones nuevas, se puede reactivar su registro.
+Desactivarlo no significa borrar sus vehículos ni sus facturas.
+
+Ejemplo de defensa:
+“Registro al cliente, lo busco para comprobar que aparece, edito su teléfono
+y demuestro la desactivación y reactivación. No tengo que crear otra ficha
+para la misma persona.”
+
+
+4. CRUD DE VEHÍCULOS
+------------------------------------------------------------
+
+¿Para qué sirve?
+Para identificar el vehículo por su placa y conservar sus trabajos anteriores.
+
+CREAR:
+Seleccionar un cliente y registrar placa, marca, modelo, año y los demás
+datos que correspondan: kilometraje, color, chasis y tipo de vehículo.
+El cliente seleccionado para registrar un vehículo debe estar activo.
+
+CONSULTAR:
+Buscar por placa, marca, modelo o cliente. Revisar la ficha y el historial.
+
+ACTUALIZAR:
+Corregir datos como kilometraje o color. La placa es obligatoria y no debe
+repetirse. El chasis tampoco debe repetirse cuando se proporciona.
+
+DESACTIVAR Y REACTIVAR:
+Se conserva el registro. No se permite desactivar un vehículo con servicios
+abiertos. Su historial sigue disponible para consulta.
+
+Regla importante:
+Si el vehículo ya tiene historial de servicios, no se cambia su propietario
+para evitar que los trabajos anteriores pasen a interpretarse como trabajos
+de otra persona. La transferencia histórica de propietarios está fuera del
+flujo actual.
+
+Un cliente puede tener varios vehículos. Cada vehículo tiene un cliente.
+
+
+5. CRUD DE TRABAJADORES
+------------------------------------------------------------
+
+¿Para qué sirve?
+Para registrar al personal y conocer su área, disponibilidad y asignaciones.
+
+CREAR:
+Registrar nombre, apellido, teléfono, área y fecha de ingreso. El correo y la
+fecha de salida se registran cuando corresponda.
+
+CONSULTAR:
+Buscar al trabajador y revisar su ficha, sus trabajos y su carga actual.
+
+ACTUALIZAR:
+Corregir información de contacto y otros datos permitidos. Antes de cambiar
+su área o registrar su salida, deben resolverse sus asignaciones activas.
+El correo no debe repetirse entre trabajadores cuando tenga valor.
+
+DESACTIVAR Y REACTIVAR:
+No se permite desactivar a alguien que todavía tiene trabajos activos.
+Una persona con fecha de salida no puede recibir nuevas asignaciones.
+Para reactivarla, primero debe resolverse su salida y cualquier conflicto
+con sus asignaciones.
+
+Reglas que debes memorizar:
+- Las áreas son mantenimiento mecánico y pintura.
+- El área del trabajador debe corresponder al tipo de servicio.
+- Cada trabajador puede tener como máximo dos servicios activos distintos.
+- Finalizar o cancelar un servicio libera las asignaciones de ese trabajo.
+
+No confundas trabajador con usuario:
+El trabajador es un empleado registrado. El usuario es una cuenta de acceso.
+Una persona puede estar registrada como trabajador sin tener una cuenta.
+
+
+6. CRUD DE PRODUCTOS E INVENTARIO
+------------------------------------------------------------
+
+¿Para qué sirve?
+Para registrar los productos o repuestos disponibles y controlar su consumo
+dentro de los servicios.
+
+CREAR:
+Registrar nombre, descripción, precio, costo de compra y existencias.
+
+CONSULTAR:
+Buscar el producto y revisar sus datos, existencias e historial de utilización.
+
+ACTUALIZAR:
+Corregir datos, precios o existencias. Si el saldo cambió mientras estaba
+abierto un formulario de edición, el sistema pide recargarlo para evitar
+sobrescribir las nuevas existencias con un saldo antiguo.
+
+DESACTIVAR Y REACTIVAR:
+Un producto desactivado conserva su historial y no admite nuevos consumos.
+Se puede reactivar cuando vuelva a utilizarse.
+
+Diferencia que pueden preguntarte:
+El costo de compra representa lo que cuesta adquirir el producto. El precio
+de venta representa su precio en el catálogo. No son el mismo dato.
+
+Precios, costos y existencias no deben ser negativos. Las existencias y las
+cantidades utilizadas pueden ser decimales.
+
+
+7. SERVICIOS: REGISTRAR, CONSULTAR, EDITAR Y CERRAR
+------------------------------------------------------------
+
+¿Para qué sirve?
+Un servicio representa un trabajo concreto realizado a un vehículo.
+
+REGISTRAR:
+Seleccionar vehículo, tipo de servicio, fecha, descripción, importe y un
+trabajador inicial habilitado del área correspondiente.
+
+Mantenimiento requiere describir la falla.
+Pintura requiere indicar el tipo de pintura y el color.
+
+CONSULTAR:
+Revisar placa, cliente, descripción, personal, productos, importe y estado.
+
+EDITAR:
+Se pueden corregir datos de un servicio abierto que no tenga una factura
+vigente. El vehículo y el tipo se conservan cuando el servicio ya tiene
+asignaciones, consumos o historial de facturación.
+
+CERRAR:
+- FINALIZAR: indicar una fecha de finalización válida y dar por terminado el
+  trabajo. La fecha no puede ser anterior al inicio.
+- CANCELAR: detener el trabajo y cerrar sus asignaciones, conservando el
+  registro y su historial.
+
+Estados que utiliza actualmente la aplicación:
+ABIERTO: trabajo en atención.
+FINALIZADO: trabajo terminado.
+CANCELADO: trabajo detenido o cancelado.
+
+No presentes “Pendiente” como un cuarto estado que pueda crearse desde el
+flujo actual. Tampoco afirmes que existe una opción para reabrir trabajos.
+
+Si el vehículo vuelve otro día por un mantenimiento, se crea otro servicio.
+No se modifica el trabajo anterior para representar la nueva visita.
+
+
+8. ASIGNACIONES Y PRODUCTOS UTILIZADOS
+------------------------------------------------------------
+
+ASIGNACIONES DE PERSONAL:
+Permiten agregar personas compatibles al servicio, consultar quiénes están
+asignados y retirar o volver a asignar personal cuando se cumplen las reglas.
+
+Un servicio puede tener varios trabajadores. Un trabajador puede participar
+en varios servicios a lo largo del tiempo, respetando el máximo simultáneo.
+
+No se duplica la misma persona dentro del mismo trabajo.
+No se puede retirar al último trabajador habilitado mientras siga abierto.
+Para cambiarlo, primero se agrega un reemplazo compatible.
+
+CONSUMOS DE PRODUCTOS:
+Dentro del servicio se puede agregar un producto, consultar su consumo,
+actualizar la cantidad y quitar un consumo registrado por error cuando la
+operación esté permitida.
+
+Ejemplo para entender las existencias:
+Hay 10 unidades y se registran 2: quedan 8.
+Se cambia el consumo de 2 a 3: quedan 7, porque se descuenta solamente 1 más.
+Guardar nuevamente la cantidad 3 no debe descontar otras 3 unidades.
+
+La cantidad debe ser mayor que cero y no puede superar las existencias.
+Se admite, por ejemplo, una cantidad de 0.5.
+
+Excepción importante al retiro lógico:
+Se puede quitar un consumo de un servicio abierto sin historial de facturas,
+como corrección explícita, y devolver su cantidad a las existencias. Esto
+no significa borrar el producto del catálogo ni eliminar un servicio.
+
+Cancelar un servicio o anular una factura NO devuelve productos automáticamente.
+Si un consumo se registró por error, se debe corregir mediante la operación
+permitida antes de cerrar el trabajo. No prometas una devolución posterior
+que el flujo actual no ofrezca.
+
+
+9. FACTURAS: QUÉ SE PUEDE HACER Y QUÉ NO
+------------------------------------------------------------
+
+EMITIR:
+Crear una factura con al menos un servicio finalizado de un cliente válido.
+
+CONSULTAR:
+Buscar y revisar número, cliente, fecha, servicios, forma de pago e importes.
+La vista permite imprimir; el navegador puede guardar la impresión como PDF.
+
+MODIFICAR:
+No existe una edición libre para cambiar los importes de una factura emitida.
+Si corresponde retirarla de validez, se utiliza la anulación.
+
+ELIMINAR:
+Las facturas no se borran. Se anulan y conservan número, cliente, servicios e
+importes, con una nota de anulación. No llames a esto borrado físico.
+
+Reglas principales:
+- Solo se facturan servicios finalizados.
+- Todos deben pertenecer al mismo cliente.
+- Se pueden incluir varios vehículos si pertenecen a ese mismo cliente.
+- Un servicio no puede estar en dos facturas vigentes al mismo tiempo.
+- Una factura anulada conserva su número; no se reutiliza para otro documento.
+- Un servicio liberado de una factura anulada puede facturarse nuevamente,
+  siempre que cumpla las condiciones. El documento anulado queda conservado.
+
+Sobre el dinero:
+El importe del trabajo debe incluir los productos que correspondan según lo
+registrado por el operador. El sistema no suma automáticamente el precio
+actual de los consumos al importe del servicio.
+
+El subtotal de la factura reúne los importes de sus servicios. Se calcula
+el importe del IVA según la configuración y el total es subtotal más IVA.
+
+Ejemplo: si el subtotal es C$ 1,000.00 y la tasa configurada es 15 %, el IVA es
+C$ 150.00 y el total C$ 1,150.00. Comprueba la tasa mostrada en tu demostración;
+no la presentes como un porcentaje que jamás pueda cambiar.
+
+El precio actual del catálogo no modifica una factura ya emitida. El RUC
+guardado en la factura tampoco cambia porque se edite después el RUC del
+cliente. No afirmes que el sistema guarda un precio histórico independiente
+para cada consumo de producto: esa función no existe actualmente.
+
+
+10. HISTORIAL Y REPORTES
+------------------------------------------------------------
+
+HISTORIAL:
+Se elige la placa y se consultan los servicios que ha recibido el vehículo,
+sus fechas, estados, personal, productos y referencias de facturación.
+Se conserva también al desactivar registros relacionados.
+
+REPORTES:
+Permiten revisar información de servicios, vehículos, trabajadores, productos
+y facturas utilizando los filtros disponibles. Son herramientas de consulta;
+no reemplazan la edición de las fichas correspondientes.
+
+Estas pantallas se centran en consultar información. No necesitan ofrecer
+un botón de crear, editar o borrar para cada fila de un reporte.
+
+
+11. PREGUNTAS PROBABLES CON RESPUESTAS CORTAS
+------------------------------------------------------------
+
+1) ¿Qué problema resuelve el sistema?
+Organiza la información y el trabajo del taller: clientes, vehículos,
+personal, productos utilizados, servicios y facturación.
+
+2) ¿Cuál es el recorrido principal?
+Registrar cliente y vehículo, abrir el servicio con personal, registrar los
+productos que correspondan, finalizar y emitir la factura.
+
+3) ¿Dónde se ve el CRUD más claramente?
+En clientes, vehículos, trabajadores y productos: registrar, consultar,
+editar y desactivar o reactivar.
+
+4) ¿Por qué desactivar en lugar de borrar?
+Para conservar las relaciones y el historial de los trabajos y cobros.
+
+5) ¿Un registro desactivado desaparece del historial?
+No. Se conserva para consulta; su uso en nuevas operaciones queda limitado.
+
+6) ¿Reactivar significa crear otra ficha?
+No. Se vuelve a habilitar el mismo registro, si cumple las condiciones.
+
+7) ¿Un cliente puede tener varios vehículos?
+Sí. Cada vehículo pertenece a un cliente y cada cliente puede tener varios.
+
+8) ¿Es obligatorio el RUC para todos?
+No. Para el particular se utiliza la cédula. El RUC corresponde a los casos
+de empresa. Se requiere al menos una identificación del cliente.
+
+9) ¿Se puede repetir la placa?
+No. Identifica al vehículo. Desactivarlo no permite reutilizar su placa para
+crear otra ficha duplicada.
+
+10) ¿Qué diferencia hay entre placa y número de servicio?
+La placa identifica al vehículo. El número identifica un trabajo concreto.
+Un mismo vehículo puede tener muchos servicios distintos.
+
+11) ¿Se puede cambiar de dueño un vehículo con historial?
+El flujo actual lo impide para conservar el significado de los trabajos
+anteriores. No ofrece transferencias históricas de propiedad.
+
+12) ¿Un trabajador es lo mismo que un usuario?
+No. Uno representa al empleado y el otro permite ingresar al sistema.
+
+13) ¿Un pintor puede recibir mantenimiento mecánico?
+No. Su área debe corresponder al tipo de trabajo.
+
+14) ¿Cuántos trabajos activos puede tener un trabajador?
+Como máximo dos servicios distintos simultáneamente. Los trabajos cerrados
+no ocupan un cupo activo.
+
+15) ¿Estar activo significa estar disponible?
+No siempre. También debe tener fecha de salida vacía, ser del área correcta
+y tener capacidad disponible.
+
+16) ¿Puede abrirse un servicio sin personal?
+No. Se selecciona un trabajador inicial habilitado al registrarlo.
+
+17) ¿Se puede retirar al único responsable?
+No mientras el servicio siga abierto. Primero se asigna un reemplazo.
+
+18) ¿Qué se exige para mantenimiento y para pintura?
+En mantenimiento, descripción de la falla. En pintura, tipo de pintura y color.
+
+19) ¿Cuándo se puede editar un servicio?
+Cuando está abierto, sin factura vigente y respetando las condiciones de
+sus datos y relaciones. No se cambia libremente vehículo o tipo.
+
+20) ¿Qué pasa si el cliente vuelve por otro mantenimiento?
+Se crea un servicio nuevo para conservar las visitas anteriores.
+
+21) ¿Se puede facturar un servicio abierto o cancelado?
+No. Debe estar finalizado.
+
+22) ¿Se pueden mezclar dos clientes en una factura?
+No. Pueden agruparse servicios de varios vehículos, pero del mismo cliente.
+
+23) ¿Se puede facturar el mismo servicio dos veces?
+No en dos facturas vigentes. Se conservan referencias anteriores a documentos
+anulados, sin que eso autorice dos cobros vigentes del mismo trabajo.
+
+24) ¿Anular una factura borra el servicio?
+No. Conserva el documento y el historial; tampoco reabre automáticamente el trabajo.
+
+25) ¿Anular una factura repone los productos?
+No. El consumo pertenece al trabajo. Reponer o corregir cantidades requiere
+la operación explícita permitida; no ocurre por anular el cobro.
+
+26) ¿Qué pasa si cambia el precio de un producto?
+Se actualiza su precio en el catálogo. Los importes de las facturas ya emitidas
+se conservan.
+
+27) ¿El sistema suma automáticamente los productos al trabajo?
+No. El operador registra el importe completo del trabajo. Los consumos sirven
+para registrar uso y existencias; no se suman nuevamente de forma automática.
+
+28) ¿Se pueden utilizar cantidades decimales?
+Sí, por ejemplo 0.5. No se aceptan cantidades cero, negativas o superiores
+a las existencias disponibles.
+
+29) ¿Qué ocurre si se cambia una cantidad utilizada?
+Se ajustan las existencias por la diferencia, evitando descontar nuevamente
+todo el consumo.
+
+30) ¿El sistema realiza el cobro bancario de una tarjeta?
+No. Registra la forma de pago; no es una pasarela bancaria.
+
+31) ¿Todos los módulos son CRUD completos y libres?
+No. Las operaciones se adaptan al negocio. Historial y reportes consultan;
+facturas permiten emitir, consultar y anular, sin edición libre de importes.
+
+32) ¿Qué ocurre si otro usuario cambia información que estoy viendo?
+Puede ser necesario recargar la pantalla para verla actualizada. Las
+operaciones verifican las condiciones al guardar; no debe suponerse que
+todas las ventanas se actualizan instantáneamente.
+
+
+12. GUION PARA DEMOSTRAR EL CRUD EN LA DEFENSA
+------------------------------------------------------------
+
+Utiliza datos de prueba. No dependas de registros reales del taller.
+
+ANTES:
+Verifica que puedas ingresar, que haya conexión y que los módulos carguen.
+Prepara personal disponible y productos con existencias. Elige documentos
+y placas de prueba que no estén registrados.
+
+PASO 1. CLIENTE.
+Registra un cliente de prueba con cédula y RUC vacío. Búscalo, abre su ficha,
+cambia su teléfono, desactívalo y reactívalo. Déjalo activo para continuar.
+Con esto muestras las cuatro operaciones del CRUD de clientes.
+
+PASO 2. VEHÍCULO.
+Registra una placa de prueba para ese cliente. Consulta la ficha y corrige
+el kilometraje. Si muestras desactivación y reactivación, hazlo antes de
+abrirle un servicio. Déjalo activo.
+
+PASO 3. PERSONAL.
+Registra o elige un mecánico disponible, del área de mantenimiento y sin
+fecha de salida. Explica su carga de trabajo. Si demuestras su CRUD, edita
+un dato de contacto y prueba desactivar/reactivar antes de asignarle trabajos.
+
+PASO 4. PRODUCTO.
+Registra o elige un producto de prueba. Por ejemplo, precio C$ 100.00,
+costo C$ 70.00 y 10 unidades. Consulta su ficha y explica ambos importes.
+
+PASO 5. SERVICIO.
+Abre un mantenimiento para la placa registrada. Selecciona al mecánico,
+describe la falla y el trabajo y registra un importe completo de C$ 1,000.00.
+Explica que empieza abierto y que repetir una visita genera otro servicio.
+
+PASO 6. CONSUMO.
+Agrega 2 unidades del producto: deben quedar 8. Actualiza la cantidad a 3:
+deben quedar 7. Si necesitas mostrar cómo quitar un consumo registrado por
+error, hazlo mientras esté abierto y sin historial de facturas. Después
+puedes registrar el consumo que realmente corresponda.
+
+PASO 7. CONSULTA Y EDICIÓN.
+Vuelve a la ficha del trabajo y corrige una descripción. Señala que el
+vehículo y el tipo se conservan. Explica que no se retira al último responsable.
+
+PASO 8. FINALIZACIÓN.
+Confirma la información y finaliza con una fecha igual o posterior al inicio.
+Muestra que el trabajo queda finalizado y las asignaciones se cierran.
+
+PASO 9. FACTURA.
+Pulsa Preparar factura, comprueba el cliente y selecciona el servicio.
+Revisa subtotal, IVA y total antes de emitir. Consulta la vista de impresión.
+
+PASO 10. HISTORIAL Y ANULACIÓN.
+Busca la placa en Historial. Si el docente pide demostrar anulación, anula
+la factura de prueba y comprueba que sigue existiendo con estado Anulada,
+conservando sus datos y sin devolver existencias automáticamente.
+
+
+13. CASOS INVÁLIDOS QUE DEBES SABER EXPLICAR
+------------------------------------------------------------
+
+- Cliente con cédula o RUC ya registrado: se rechaza el duplicado.
+- Vehículo con placa repetida: se rechaza.
+- Trabajo sin personal inicial: no se abre.
+- Pintor seleccionado para mantenimiento: no corresponde al área.
+- Trabajador con dos servicios activos: no recibe un tercero.
+- Retirar al último responsable: primero necesita reemplazo.
+- Mantenimiento sin falla o pintura sin tipo/color: faltan datos necesarios.
+- Cantidad cero, negativa o superior a existencias: no se registra el consumo.
+- Finalización anterior al inicio: se rechaza la fecha.
+- Factura vacía o con un servicio abierto: no se emite.
+- Servicios de clientes diferentes: no se mezclan en una factura.
+- Servicio con factura vigente: no se factura de nuevo.
+
+Si un botón aparece deshabilitado por una regla, explica el motivo. No necesitas
+manipular solicitudes ni mostrar programación para defender ese comportamiento.
+
+
+14. FRASES QUE CONVIENE EVITAR
+------------------------------------------------------------
+
+No digas: “Todo se elimina definitivamente”.
+Di: “Los registros principales se desactivan; se conserva el historial”.
+
+No digas: “Puedo editar cualquier dato de una factura”.
+Di: “Una factura emitida conserva sus importes; existe la anulación”.
+
+No digas: “Cancelar devuelve los productos”.
+Di: “Cancelar no devuelve existencias automáticamente”.
+
+No digas: “Los productos se agregan automáticamente al cobro”.
+Di: “Se registra el importe completo del trabajo; el consumo no se suma solo”.
+
+No digas: “Un empleado activo siempre está disponible”.
+Di: “También se revisan su salida, su área y su capacidad”.
+
+No digas: “El cliente entra a gestionar sus propios trabajos”.
+Di: “El sistema es de gestión interna del taller”.
+
+No digas: “Hay roles o funciones que no he comprobado”.
+Di únicamente lo que puedes mostrar en la aplicación actual.
+
+
+15. RESUMEN PARA REPASAR JUSTO ANTES DE ENTRAR
+------------------------------------------------------------
+
+¿QUÉ HACE? Organiza clientes, vehículos, personal, servicios, productos y facturas.
+¿QUÉ ES CRUD? Registrar, consultar, actualizar y retirar del uso según las reglas.
+¿POR QUÉ DESACTIVAR? Para conservar el historial.
+¿CÓMO SE ABRE UN SERVICIO? Con vehículo válido, tipo, datos y personal habilitado.
+¿CUÁNTOS TRABAJOS POR PERSONA? Máximo dos activos distintos.
+¿QUÉ PASA CON EL ÚLTIMO RESPONSABLE? Se necesita reemplazo antes de retirarlo.
+¿CÓMO SE CONTROLAN PRODUCTOS? Cantidad positiva y existencias suficientes.
+¿CUÁNDO SE FACTURA? Después de finalizar, con servicios del mismo cliente.
+¿SE EDITA LIBREMENTE UNA FACTURA? No; se conserva y puede anularse.
+¿ANULAR O CANCELAR DEVUELVE STOCK? No automáticamente.
+¿QUÉ CONSULTA EL HISTORIAL? Los trabajos anteriores de la placa elegida.
+
+Consejo final de estudio:
+Para cada módulo practica esta secuencia: qué registro, cómo lo busco, qué
+puedo modificar, cómo lo retiro del uso y qué regla puede impedir la operación.
+Responde primero con una frase clara y después demuestra un ejemplo en pantalla.
